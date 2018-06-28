@@ -5,7 +5,7 @@ from NCPA_application import NCPA_application
 from island_effect_piston import island_effect_piston
 from atmosphere import atmosphere
 
-def wavefront_abberations(wfo, npupil, atm_screen, TILT, NCPA,Island_Piston, Debug='False', 
+def wavefront_abberations(wfo, npupil, atm_screen,NCPA,Island_Piston, TILT=[0,0], Debug='False', 
           Debug_print='False', prefix='test'):
     
     lamda = proper.prop_get_wavelength(wfo)
