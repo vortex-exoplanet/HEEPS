@@ -36,10 +36,15 @@ f_lens = 658.6                  # float, meters, focal distance
 # =============================================================================
 TILT = np.array([0.,0.])
 Island_Piston = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-NCPA = 0
+NCPA = np.array([0.])
+
+
+
+#TILT = np.random.randn(5,2)
 atm_screen = fits.getdata(input_dir+'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits')
-#atm_screen = 0
-#atm_screen = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits')[10]
+#atm_screen *= 30
+#atm_screen = np.array([0.0])
+atm_screen = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits')[0:5]
 
 
 
@@ -70,7 +75,7 @@ else:
 
 
 amplitude_apodizer_file = 0 
-apodizer_misalignment = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+apodizer_misalignment = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
 LS = True
 LS_parameters = [0.98, 0.03, 1.1]
