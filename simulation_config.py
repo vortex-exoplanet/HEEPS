@@ -44,7 +44,7 @@ NCPA = np.array([0.])
 atm_screen = fits.getdata(input_dir+'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits')
 #atm_screen *= 30
 #atm_screen = np.array([0.0])
-atm_screen = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits')[0:5]
+#atm_screen = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits')[0:5]
 
 
 
