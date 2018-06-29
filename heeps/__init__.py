@@ -15,4 +15,4 @@ from .vortex import vortex
 from .lyotstop import lyotstop
 from .detector import detector
 from .wavefront_abberations import wavefront_abberations 
-
+from .coronagraphs import coronagraphs

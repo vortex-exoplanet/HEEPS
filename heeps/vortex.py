@@ -98,7 +98,7 @@ def vortex(wfo, charge, f_lens,diam,pixelsize, Debug_print=False):
         proper.prop_lens(wfo, f_lens, "apply pupil reimaging lens")
         proper.prop_propagate(wfo, f_lens, "lyot stop")
             
-    return
+    return wfo
 
 
 

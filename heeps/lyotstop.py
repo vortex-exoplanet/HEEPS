@@ -69,4 +69,4 @@ def lyotstop(wf, diam, r_obstr, npupil, RAVC, LS, LS_parameters, spiders_angle, 
         if (Debug == True):
             fits.writeto('LS_apodizer.fits', proper.prop_get_amplitude(wf), overwrite=True)
 
-    return
+    return wf

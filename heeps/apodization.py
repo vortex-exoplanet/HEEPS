@@ -4,6 +4,9 @@ import math
 import cv2
 from circular_apodization import circular_apodization
 
+
+
+
 def apodization(wf, r_obstr, npupil, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_file=0, apodizer_misalignment=0, Debug_print=False):
     
     n = int(proper.prop_get_gridsize(wf))
@@ -53,6 +56,6 @@ def apodization(wf, r_obstr, npupil, RAVC=False, phase_apodizer_file=0, amplitud
         apodizer = apodizer_large
     proper.prop_multiply(wf, apodizer)
     
-    return 
+    return wf
 
 
