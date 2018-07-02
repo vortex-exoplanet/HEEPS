@@ -17,7 +17,7 @@ from copy import deepcopy
 #  default simulation cofiguration defined in "simulation_config" can be overridden here
 wavelength = 3.80*10**-6
 charge = 2 # charge is modified here
-#n = gridsize
+TILT = np.random.randn(10,2)
 
 # =============================================================================
 #                         ELT Pupil Plane
@@ -83,7 +83,7 @@ if (atm_screen.ndim == 3) or (TILT.ndim == 2) or (LS_misalignment.ndim == 2) or 
  
 #       Coronagraph selection -- Classical Vortex / RAVC / APP --
         coronagraphs(wfo, r_obstr,npupil, phase_apodizer_file,amplitude_apodizer_file,apodizer_misalignment,charge,
-              f_lens,diam,LS_amplitude_apodizer_file,LS_misalignment,LS,LS_parameters,spiders_angle, LS_phase_apodizer_file, Debug_print,pixelsize, Debug, coronagraph_type= 'RAVC')
+              f_lens,diam,LS_amplitude_apodizer_file,LS_misalignment,LS,LS_parameters,spiders_angle, LS_phase_apodizer_file, Debug_print,pixelsize, Debug, coronagraph_type= coronagraph_type)
 
 #       Detector plane      
         psf = detector(wfo,f_lens,nd)	
