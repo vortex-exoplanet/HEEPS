@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 # =============================================================================
-#       Example file for creating a vortex PSF
+#       Example file for creating a multi-cube PSF
 # =============================================================================
 
 # Required libraries
@@ -26,13 +26,10 @@ charge = 2 # charge is modified here
 (npupil, wfo1) = pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wavelength,
           pupil_file=pupil_file, missing_segments_number=0, Debug=Debug, Debug_print=Debug_print, prefix=prefix) 
   
-# =============================================================================
-#                      Wavefront abberations
-# =============================================================================
 
-#proper.verbose = False
-#QUIT = True
-proper.print_it = True
+# =============================================================================
+#                     Multi-cube phase screens / abberations
+# =============================================================================
 
 if (atm_screen.ndim == 3) or (TILT.ndim == 2) or (LS_misalignment.ndim == 2) or (apodizer_misalignment.ndim == 2) or (Island_Piston.ndim == 2) or (NCPA.ndim == 3):
    
@@ -49,9 +46,7 @@ if (atm_screen.ndim == 3) or (TILT.ndim == 2) or (LS_misalignment.ndim == 2) or 
     if (NCPA.ndim == 3):
         length_cube = NCPA.shape[0]
     
-#    wfo = deepcopy(wfo1)
     psf_Coro = np.zeros((length_cube,nd,nd))
-
   
     for iter in range(0, length_cube):
         wfo = deepcopy(wfo1)
@@ -83,25 +78,19 @@ if (atm_screen.ndim == 3) or (TILT.ndim == 2) or (LS_misalignment.ndim == 2) or 
             else:
                 NCPA_iter = NCPA
                 
-        
+#       Wavefront abberations
         wavefront_abberations(wfo, npupil, atm_screen_iter, NCPA,Island_Piston,TILT=TILT_iter, Debug='False',Debug_print='False', prefix='test')  
-        # =============================================================================
-        #       Coronagraph selection -- Classical Vortex / RAVC / APP --
-        # =============================================================================
-        
+ 
+#       Coronagraph selection -- Classical Vortex / RAVC / APP --
         coronagraphs(wfo, r_obstr,npupil, phase_apodizer_file,amplitude_apodizer_file,apodizer_misalignment,charge,
-              f_lens,diam,LS_amplitude_apodizer_file,LS_misalignment,LS,LS_parameters,spiders_angle, LS_phase_apodizer_file, Debug_print,pixelsize, Debug,coronagraph_type= 'RAVC')
+              f_lens,diam,LS_amplitude_apodizer_file,LS_misalignment,LS,LS_parameters,spiders_angle, LS_phase_apodizer_file, Debug_print,pixelsize, Debug, coronagraph_type= 'RAVC')
 
-        
-        # =============================================================================
-        #       Detector plane
-        # =============================================================================
-        
+#       Detector plane      
         psf = detector(wfo,f_lens,nd)	
-        psf_Coro[iter,:,:] = psf
+        psf_Coro[iter,:,:] = psf       
+    fits.writeto(out_dir + prefix + '_PSF_cube_'+coronagraph_type+'.fits', psf_Coro, overwrite=True)
 
-        
-    fits.writeto(prefix+'_psf_cube_Coro_nonorm.fits', psf_Coro, overwrite=True)
+
         
 plt.figure()
 plt.imshow(np.sqrt(psf_Coro[1]))
