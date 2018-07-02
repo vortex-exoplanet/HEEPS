@@ -1,5 +1,5 @@
 import proper
-## define the apodizer
+
 def circular_apodization(wf, radius, t_in, t_out, xc = 0.0, yc = 0.0, **kwargs):
 
     if ("NORM" in kwargs and kwargs["NORM"]):
@@ -12,4 +12,4 @@ def circular_apodization(wf, radius, t_in, t_out, xc = 0.0, yc = 0.0, **kwargs):
     else:
          apodizer = proper.prop_shift_center(proper.prop_ellipse(wf, radius, radius, xc, yc, NORM = norm))*(t_out-t_in)+t_in
 
-    return(apodizer)
+    return apodizer
