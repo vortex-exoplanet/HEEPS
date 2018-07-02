@@ -11,7 +11,6 @@ def wavefront_abberations(wfo, npupil, atm_screen,NCPA,Island_Piston, TILT=[0,0]
     lamda = proper.prop_get_wavelength(wfo)
     
     if (isinstance(atm_screen, (list, tuple, np.ndarray)) == True) and (atm_screen.ndim >= 2): # when the atmosphere is present
-        print('atmosphere')
         atmosphere(wfo, npupil, atm_screen, Debug_print, Debug)
     
     if (isinstance(NCPA, (list, tuple, np.ndarray)) == True) and (NCPA.ndim >= 2): # when the atmosphere is present

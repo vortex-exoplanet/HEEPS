@@ -32,12 +32,14 @@ def coronagraphs(wfo, r_obstr,npupil, phase_apodizer_file,amplitude_apodizer_fil
         apodization(wfo, r_obstr, npupil, RAVC=False, phase_apodizer_file=phase_apodizer_file, amplitude_apodizer_file=amplitude_apodizer_file, apodizer_misalignment=apodizer_misalignment, Debug_print=Debug_print)
         lyotstop(wfo, diam, r_obstr, npupil, RAVC, LS, LS_parameters, spiders_angle, LS_phase_apodizer_file, 
          LS_amplitude_apodizer_file, LS_misalignment, Debug_print, Debug)
-
-    else:
+    elif coronagraph_type == 'None':
         print('No Coronagraph')    
         RAVC = False
         lyotstop(wfo, diam, r_obstr, npupil, RAVC, LS, LS_parameters, spiders_angle, LS_phase_apodizer_file, 
-         LS_amplitude_apodizer_file, LS_misalignment, Debug_print, Debug)
+        LS_amplitude_apodizer_file, LS_misalignment, Debug_print, Debug)
+    else:
+        print('No HCI')    
+        RAVC = False
 
     return wfo
 

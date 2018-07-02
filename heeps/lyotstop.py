@@ -46,7 +46,7 @@ def lyotstop(wf, diam, r_obstr, npupil, RAVC, LS, LS_parameters, spiders_angle, 
         if (Debug == True):
             fits.writeto('LS_apodizer.fits', proper.prop_get_phase(wf), overwrite=True)
 
-    
+
     
     if (isinstance(LS_amplitude_apodizer_file, (list, tuple, np.ndarray)) == True):
         print('4th')
