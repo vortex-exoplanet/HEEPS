@@ -17,7 +17,7 @@ os.makedirs(tmp_dir, exist_ok=True)
 # =============================================================================
 #           Define parameters for Telescope
 # =============================================================================
-gridsize = 512                    # (integar) grid size of the simulation array
+gridsize = 1024                    # (integar) grid size of the simulation array
 wavelength = 5.0*10**-6           # wavelength in micron
 diam = 37.0                       # diameter of the telescope in meters 
 r_obstr = 0.3                     # secondary obstruction in percentage??
@@ -40,13 +40,13 @@ Debug_print = False             # prints various values
 # =============================================================================
 #           Parameters for Wavefront abberations
 # =============================================================================
-TILT = np.array([0.3,0.]) 
-#TILT = np.random.randn(10,2)
+TILT = np.array([0.0,0.]) 
+#TILT = np.random.randn(10,2) # creates an array of (n,2) tip/tilt values
 
 atm_screen = np.array([0.0])        # No phase screen 
-atm_screen = fits.getdata(input_dir+'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits') # Single phase screen
+#atm_screen = fits.getdata(input_dir+'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits') # Single phase screen
 
-#atm_screen = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits')[0:3] # multi-cube phase screen
+atm_screen_cube = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits') # multi-cube phase screen
 
 
 Island_Piston = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # Not tested yet
@@ -61,8 +61,8 @@ NCPA = np.array([0.])   # Not tested yet
     2. Ring apodized vortex coronagraph (RAVC):
     3. Apodizing phase plate (APP):
 (a) By changing the "coronagraph_type" to "VC/RAVC/APP" coronagraphs can be selcted. 
-(b) If the "coronagraph_type" is "None" a non-coronagraphic PSF with lyot-stop is generated
-(c) If the "coronagraph_type" is anything except above keywords a normal PSF is generated
+(b) If the "coronagraph_type" is "OFFAXIS" a non-coronagraphic PSF with lyot-stop is generated
+(c) If the "coronagraph_type" is anything except above keywords a normal ELT PSF is generated
 
 """
 
@@ -88,7 +88,7 @@ LS_amplitude_apodizer_file = 0  # Not tested yet
 #           Detector plane
 # =============================================================================
 
-nd = 400                # final image size
+nd = 512                # final image size
 
 
 proper.print_it = False     # To suppress the printing of intermediate steps by PROPER routine

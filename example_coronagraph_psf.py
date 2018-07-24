@@ -26,7 +26,7 @@ charge = 2 # charge is modified here
 
 (npupil, wfo) = pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize, 
     r_obstr, wavelength, pupil_file=pupil_file, missing_segments_number=0, 
-    Debug=Debug, Debug_print=Debug_print, prefix=prefix)  
+    Debug=True, Debug_print=Debug_print, prefix=prefix)  
 
 # =============================================================================
 #                      Wavefront abberations
@@ -54,7 +54,7 @@ coronagraphs(wfo, r_obstr,npupil, phase_apodizer_file,amplitude_apodizer_file,
 # =============================================================================
 #       Detector plane
 # =============================================================================
-psf = detector(wfo,f_lens,nd)	
+psf = detector(wfo,f_lens,nd,coronagraph_type,prefix,Debug=True)	
 
 
 plt.figure()
