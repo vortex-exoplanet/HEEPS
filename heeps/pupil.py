@@ -10,7 +10,6 @@ out_dir = str('./output_files/')
 def pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wavelength, pupil_file,
           missing_segments_number=0, Debug='False', Debug_print='False', prefix='test'):
 
-
     beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
     wfo = proper.prop_begin(diam, wavelength, gridsize, beam_ratio)
     n = int(gridsize)
@@ -48,15 +47,14 @@ def pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wav
             for iter in range(0,len(spiders_angle)):
                 proper.prop_rectangular_obscuration(wfo, spiders_width, 2*diam,ROTATION=spiders_angle[iter]) # define the spiders    
     else:
-        PACKAGE_PATH = input_dir
         if (missing_segments_number == 1):
-            pupil = fits.getdata(PACKAGE_PATH+'/ELT_2048_37m_11m_5mas_nospiders_1missing_cut.fits')
+            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_1missing_cut.fits')
         if (missing_segments_number == 2):
-            pupil = fits.getdata(PACKAGE_PATH+'/ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits')
+            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits')
         if (missing_segments_number == 4):
-            pupil = fits.getdata(PACKAGE_PATH+'/ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits')
+            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits')
         if (missing_segments_number == 7):
-            pupil = fits.getdata(PACKAGE_PATH+'/ELT_2048_37m_11m_5mas_nospiders_7missing_1_cut.fits')
+            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_7missing_1_cut.fits')
 
         pupil_pixels = (pupil.shape)[0]## fits file size
         scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
@@ -78,8 +76,13 @@ def pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wav
                 proper.prop_rectangular_obscuration(wfo, spiders_width, 2*diam,ROTATION=spiders_angle[iter]) # define the spiders
 
     if (Debug==True):
-        fits.writeto(out_dir + prefix +'_pupil_pre_define.fits', proper.prop_get_amplitude(wfo)[int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50),int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50)], overwrite=True)
+        fits.writeto(out_dir + prefix +'_intial_pupil.fits', proper.prop_get_amplitude(wfo)[int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50),int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50)], overwrite=True)
         
     proper.prop_define_entrance(wfo) #define the entrance wavefront
-    
+    wfo.wfarr *= 1./np.amax(wfo._wfarr) # max(amplitude)=1
     return (npupil, wfo)
+
+
+
+
+

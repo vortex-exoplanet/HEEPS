@@ -22,8 +22,11 @@ def lyotstop(wf, diam, r_obstr, npupil, RAVC, LS, LS_parameters, spiders_angle, 
                 if (Debug_print==True):
                     print("LS_misalignment: ", LS_misalignment)
                 proper.prop_rectangular_obscuration(wf, LS_parameters[2], 2*diam,LS_misalignment[0], LS_misalignment[1], ROTATION=spiders_angle[iter]) # define the spiders
-
-    
+        if (Debug==True):
+            n = proper.prop_get_gridsize(wf)
+            out_dir = str('./output_files/')
+            fits.writeto(out_dir +'_Lyot_stop.fits', proper.prop_get_amplitude(wf)[int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50),int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50)], overwrite=True)
+        
     if (isinstance(LS_phase_apodizer_file, (list, tuple, np.ndarray)) == True):
         xc_pixels = int(LS_misalignment[3]*npupil)
         yc_pixels = int(LS_misalignment[4]*npupil)

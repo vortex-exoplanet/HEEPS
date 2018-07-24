@@ -13,7 +13,6 @@ from .pupil import pupil
 from .island_effect_piston import island_effect_piston
 from .atmosphere import atmosphere
 from .apodization import apodization
-from .NCPA_application import NCPA_application
 from .vortex import vortex
 from .lyotstop import lyotstop
 from .detector import detector

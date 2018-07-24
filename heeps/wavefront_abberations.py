@@ -1,7 +1,6 @@
 import numpy as np
 import proper
 
-from NCPA_application import NCPA_application
 from island_effect_piston import island_effect_piston
 from atmosphere import atmosphere
 
@@ -13,10 +12,6 @@ def wavefront_abberations(wfo, npupil, atm_screen,NCPA,Island_Piston, TILT=[0,0]
     if (isinstance(atm_screen, (list, tuple, np.ndarray)) == True) and (atm_screen.ndim >= 2): # when the atmosphere is present
         atmosphere(wfo, npupil, atm_screen, Debug_print, Debug)
     
-    if (isinstance(NCPA, (list, tuple, np.ndarray)) == True) and (NCPA.ndim >= 2): # when the atmosphere is present
-        NCPA_application(wfo, npupil, NCPA, Debug_print, Debug)
-    
-  
     if (all(v == 0 for v in Island_Piston) == False): # when the piston is present
         island_effect_piston(wfo, npupil, Island_Piston, Debug_print, Debug)
     
