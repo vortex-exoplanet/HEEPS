@@ -17,7 +17,19 @@ from copy import deepcopy
 #  default simulation cofiguration defined in "simulation_config" can be overridden here
 wavelength = 3.80*10**-6
 charge = 2 # charge is modified here
-atm_screen = atm_screen_cube[0:20]
+
+
+# =============================================================================
+#  Getting the multi cube phase screen file from google drive
+# =============================================================================
+
+gdrive_id = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH'    # [Required] google drive id linked to the fits file 
+
+# downloads the multicube phase screen file (if it doesnt exist) from google drive and saves it in the input dir
+download_from_gdrive(gdrive_id, input_dir, atm_screen_cube) 
+atm_screen_cube = fits.getdata(input_dir + atm_screen_cube) # read the fits file downloaded from google drive
+
+atm_screen = atm_screen_cube[0:10]  # number of phase screens to be used for simulation
 
 # =============================================================================
 #                         ELT Pupil Plane

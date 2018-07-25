@@ -46,7 +46,8 @@ TILT = np.array([0.0,0.])
 atm_screen = np.array([0.0])        # No phase screen 
 #atm_screen = fits.getdata(input_dir+'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits') # Single phase screen
 
-atm_screen_cube = fits.getdata(input_dir+'cube_atm_1000screens_Feb2018_RandomWind.fits') # multi-cube phase screen
+''' name of the multi-cube phase screen, it will be downloaded from google drive '''
+atm_screen_cube = 'cube_atm_1000screens_Feb2018_RandomWind.fits' 
 
 
 Island_Piston = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0])  # Not tested yet

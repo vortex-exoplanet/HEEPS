@@ -36,15 +36,11 @@ wavefront_abberations(wfo, npupil, atm_screen, NCPA,Island_Piston,TILT=TILT,
                       Debug='False', Debug_print='False', prefix='test')  
 
 # =============================================================================
-#       Coronagraph selection -- Vortex Classical (VC) / RAVC / APP --
+# 1.      Coronagraph selection -- Vortex Classical (VC) / RAVC / APP --
+# 2.      No HCI   -- OFFAXIS / ELT -- 
 # =============================================================================
-"""
-1. By changing the "coronagraph_type" to "VC/RAVC/APP" coronagraphs can be selcted. 
-2. If the input is "None" a non-coronagraphic PSF with lyot-stop is generated
-3. If the input is anything except above keywords a normal PSF is generated
-"""
 
-coronagraph_type = 'APP'
+coronagraph_type = 'VC'
 
 coronagraphs(wfo, r_obstr,npupil, phase_apodizer_file,amplitude_apodizer_file,
     apodizer_misalignment,charge,f_lens,diam,LS_amplitude_apodizer_file,LS_misalignment,
