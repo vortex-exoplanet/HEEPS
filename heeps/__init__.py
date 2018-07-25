@@ -6,6 +6,7 @@ import os
 PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
 sys.path.append(PACKAGE_PATH)
 
+from .download_from_gdrive import download_from_gdrive
 from .circular_apodization import circular_apodization
 from .writefield import writefield
 from .readfield import readfield
