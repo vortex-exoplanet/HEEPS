@@ -1,7 +1,13 @@
 import proper
 from astropy.io import fits 
 
-def detector(wfo,f_lens,nd,coronagraph_type,prefix,Debug=False):
+def detector(wfo, conf):
+    f_lens = conf['F_LENS']
+    nd = conf['N_D']
+    mode = conf['MODE']
+    prefix = conf['PREFIX']
+    Debug = conf['DEBUG']
+      
     n = proper.prop_get_gridsize(wfo)
     if (n >= nd):
         proper.prop_propagate(wfo, f_lens, "to reimaging lens")
@@ -13,6 +19,6 @@ def detector(wfo,f_lens,nd,coronagraph_type,prefix,Debug=False):
     psf = wfo[int(n/2-nd/2):int(n/2+nd/2),int(n/2-nd/2):int(n/2+nd/2)]
     out_dir = str('./output_files/')
     if (Debug==True): 
-        fits.writeto(out_dir + prefix + '_' + coronagraph_type+'_PSF'+'.fits', psf, overwrite=True)
+        fits.writeto(out_dir + prefix + '_' + mode+'_PSF'+'.fits', psf, overwrite=True)
     return psf 
 

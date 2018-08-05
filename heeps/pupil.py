@@ -4,19 +4,33 @@ import proper
 from astropy.io import fits
 
 
-input_dir = str('./input_files/')
-out_dir = str('./output_files/')
+def pupil(conf):
 
-def pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wavelength, pupil_file,
-          missing_segments_number=0, Debug='False', Debug_print='False', prefix='test'):
+    diam = conf['DIAM']
+    gridsize = conf['GRIDSIZE']
+    spiders_width = conf['SPIDERS_WIDTH']
+    spiders_angle = conf['SPIDERS_ANGLE']
+    pixelsize = conf['PIXEL_SCALE'] 
+    
+    r_obstr = conf['R_OBSTR']
+    wavelength = conf['WAVELENGTH']
+    pupil_file = conf['PUPIL_FILE']
+    missing_segments_number = conf['MIS_SEGMENTS_NU']
+    
+    Debug = conf['DEBUG']
+    Debug_print = conf['DEBUG_PRINT'] 
 
+    prefix = conf['PREFIX']
+    input_dir = conf['INPUT_DIR']
+    out_dir = conf['OUT_DIR'] 
+    
     beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
     wfo = proper.prop_begin(diam, wavelength, gridsize, beam_ratio)
     n = int(gridsize)
     npupil = np.ceil(gridsize*beam_ratio) # compute the pupil size --> has to be ODD (proper puts the center in the up right pixel next to the grid center)
     if npupil % 2 == 0:
         npupil = npupil +1
-
+    conf['NPUPIL'] = npupil
     if (Debug_print == True):
         print ("npupil: ", npupil)
         print("lambda: ", wavelength)
@@ -80,7 +94,7 @@ def pupil(diam, gridsize, spiders_width, spiders_angle, pixelsize,  r_obstr, wav
         
     proper.prop_define_entrance(wfo) #define the entrance wavefront
     wfo.wfarr *= 1./np.amax(wfo._wfarr) # max(amplitude)=1
-    return (npupil, wfo)
+    return wfo
 
 
 

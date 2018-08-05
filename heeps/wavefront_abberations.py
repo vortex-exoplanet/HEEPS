@@ -1,14 +1,28 @@
 import numpy as np
 import proper
+from astropy.io import fits
 
 from island_effect_piston import island_effect_piston
 from atmosphere import atmosphere
 
-def wavefront_abberations(wfo, npupil, atm_screen,NCPA,Island_Piston, TILT=[0,0], Debug='False', 
-          Debug_print='False', prefix='test'):
-    
+def wavefront_abberations(wfo, conf,atm_screen, TILT):
+    input_dir = conf['INPUT_DIR']
+    diam = conf['DIAM']
+    gridsize = conf['GRIDSIZE']
+    pixelsize = conf['PIXEL_SCALE'] 
+    wavelength = conf['WAVELENGTH']
     lamda = proper.prop_get_wavelength(wfo)
-    
+    Debug = conf['DEBUG']
+    Debug_print = conf['DEBUG_PRINT'] 
+
+    Island_Piston = np.array(conf['ISLAND_PISTON'])
+#    atm_screen = fits.getdata(input_dir + '/' + atm_screen)
+    beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
+    npupil = np.ceil(gridsize*beam_ratio) # compute the pupil size --> has to be ODD (proper puts the center in the up right pixel next to the grid center)
+
+    if npupil % 2 == 0:
+        npupil = npupil +1
+
     if (isinstance(atm_screen, (list, tuple, np.ndarray)) == True) and (atm_screen.ndim >= 2): # when the atmosphere is present
         atmosphere(wfo, npupil, atm_screen, Debug_print, Debug)
     

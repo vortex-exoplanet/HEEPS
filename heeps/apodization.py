@@ -7,8 +7,12 @@ from circular_apodization import circular_apodization
 
 
 
-def apodization(wf, r_obstr, npupil, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_file=0, apodizer_misalignment=0, Debug_print=False):
+def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_file=0, apodizer_misalignment=0, Debug_print=False):
     
+    r_obstr = conf['R_OBSTR']
+    npupil = conf['NPUPIL']
+    
+    apodizer_misalignment = np.array(conf['APODIZER_MIS_ALIGN'])
     n = int(proper.prop_get_gridsize(wf))
     apodizer = 1
     if (RAVC == True):
@@ -17,7 +21,7 @@ def apodization(wf, r_obstr, npupil, RAVC=False, phase_apodizer_file=0, amplitud
         if (Debug_print == True):
             print ("r1_opt: ", R1_opt)
             print ("t1_opt: ", t1_opt)
-        apodizer=circular_apodization(wf, R1_opt, 1., t1_opt, xc = apodizer_misalignment[0], yc = apodizer_misalignment[1],NORM=True) # define the apodizer
+        apodizer = circular_apodization(wf, R1_opt, 1., t1_opt, xc = apodizer_misalignment[0], yc = apodizer_misalignment[1],NORM=True) # define the apodizer
         apodizer = proper.prop_shift_center(apodizer)
 
     if (isinstance(phase_apodizer_file, (list, tuple, np.ndarray)) == True):

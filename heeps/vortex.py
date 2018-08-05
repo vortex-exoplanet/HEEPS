@@ -9,12 +9,18 @@ tmp_dir = str('./temp_files/')
 
 
 
-def vortex(wfo, charge, f_lens,diam,pixelsize, Debug_print=False):
+def vortex(wfo, conf):
 
     n = int(proper.prop_get_gridsize(wfo))
     ofst = 0 # no offset
     ramp_sign = 1 #sign of charge is positive
     ramp_oversamp = 11. # vortex is oversampled for a better discretization
+    
+    f_lens = conf['F_LENS']
+    diam = conf['DIAM']
+    charge = conf['CHARGE']
+    pixelsize = conf['PIXEL_SCALE']
+    Debug_print = conf['DEBUG_PRINT'] 
     
     if charge!=0:
         wavelength = proper.prop_get_wavelength(wfo) 

@@ -12,8 +12,8 @@ import os
 '''Downloads large mulit-cube phase screens from google drive'''
 
 def download_from_gdrive(id, destination, filename):    
-    my_file = str(destination + filename)
-    destination = destination + filename
+    my_file = str(destination + '/'+ filename)
+    destination = destination + '/'+ filename
     if (os.path.isfile(my_file) == False): 
         print('Downloading multi-cube phase screen from the google drive.....')
         URL = "https://docs.google.com/uc?export=download"    
