@@ -19,4 +19,4 @@ from .lyotstop import lyotstop
 from .detector import detector
 from .wavefront_abberations import wavefront_abberations 
 from .metis_hci import metis_hci, coronagraphs
-
+from .static_ncpa import static_ncpa

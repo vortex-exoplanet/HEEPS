@@ -4,9 +4,11 @@ from astropy.io import fits
 
 from island_effect_piston import island_effect_piston
 from atmosphere import atmosphere
+from static_ncpa import static_ncpa
+
 
 def wavefront_abberations(wfo, conf,atm_screen, TILT):
-    input_dir = conf['INPUT_DIR']
+
     diam = conf['DIAM']
     gridsize = conf['GRIDSIZE']
     pixelsize = conf['PIXEL_SCALE'] 
@@ -28,6 +30,13 @@ def wavefront_abberations(wfo, conf,atm_screen, TILT):
     
     if (all(v == 0 for v in Island_Piston) == False): # when the piston is present
         island_effect_piston(wfo, npupil, Island_Piston, Debug_print, Debug)
+
+    if conf['STATIC_NCPA'] == True:
+        filename = conf['IMG_LM_SCAO']
+        phase_screen = fits.getdata(conf['INPUT_DIR'] + filename)
+        phase_screen = np.nan_to_num(phase_screen)
+        phase_screen *= 10**-9
+        static_ncpa(wfo, npupil, phase_screen)
     
     if (TILT.any != 0.): # when tip/tilt
         if (Debug_print==True):
