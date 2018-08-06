@@ -28,7 +28,9 @@ conf['ATM_SCREEN_NO'] = 0.
 conf['ATM_SCREEN_2D'] = 'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits'
 conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits'
 conf['ISLAND_PISTON'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-conf['NCPA'] = ' 0.'
+conf['STATIC_NCPA'] = True
+conf['IMG_LM_SCAO'] = 'NCPA_IMG_LMPP1-SCAO_DET.fits'          # NCPA phase screen @ 3.7 um
+conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase screen @ 10 um
 
 conf['CHARGE'] = 2
 
