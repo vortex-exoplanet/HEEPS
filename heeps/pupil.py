@@ -14,7 +14,6 @@ def pupil(conf):
     
     r_obstr = conf['R_OBSTR']
     wavelength = conf['WAVELENGTH']
-    pupil_file = conf['PUPIL_FILE']
     missing_segments_number = conf['MIS_SEGMENTS_NU']
     
     Debug = conf['DEBUG']
@@ -34,9 +33,10 @@ def pupil(conf):
     if (Debug_print == True):
         print ("npupil: ", npupil)
         print("lambda: ", wavelength)
-
+    pupil_file = fits.getdata(input_dir + conf['PUPIL_FILE'])
     if (missing_segments_number == 0):
         if (isinstance(pupil_file, (list, tuple, np.ndarray)) == True):
+            print('True')
             pupil = pupil_file
             pupil_pixels = (pupil.shape)[0]## fits file size
             scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
