@@ -15,10 +15,10 @@ def pre_sim(conf):
 	filename = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
 	my_file = str(conf['INPUT_DIR'] + filename)
 	if (os.path.isfile(my_file) == False): 
-		get_input_files()
+		get_input_files(conf)
 
 
-def get_input_files():
+def get_input_files(conf):
 	id2 = '1YR4G_8E7TpznTxumQA1zD4z_v4V5ZlF2'
 	dir1 = '.'
 	name  = 'fits_files.zip' 
