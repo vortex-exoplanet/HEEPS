@@ -49,7 +49,7 @@ def check_dim(input):
 
 def propagation_test(a,b):
     if check_dim(a)==3 or check_dim(b)==2:
-        out = 'mutli'
+        out = 'multi'
     else:
         out = 'single'
     return out
