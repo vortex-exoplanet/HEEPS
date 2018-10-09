@@ -1,4 +1,4 @@
-# HEEPS: High-contrast End-to-end ELT Performance Simulator
+# HEEPS: High-contrast End-to-end Performance Simulator
 
 					    )               (      (     
 					 ( /(               )\ )   )\ )  
