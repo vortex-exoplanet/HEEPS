@@ -65,3 +65,18 @@ filename_PSF = conf['PREFIX'] + '_PSF_' + conf['MODE']
 filename_LS = conf['PREFIX'] + '_LS_' + conf['MODE']
 psf = detector(wfo, conf)
 fits.writeto(os.path.join(conf['OUT_DIR'], filename_PSF) + '.fits', psf, overwrite=True)
+
+""" Figures """
+plt.figure(1)
+#plt.imshow(psf**0.05, origin='lower')
+plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
+plt.colorbar()
+plt.show(block=False)
+plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
+
+LS_pupil = LS_pupil[50:-50,50:-50]
+plt.figure(2)
+plt.imshow(LS_pupil, origin='lower', cmap='gray', vmin=0, vmax=1)
+plt.colorbar()
+plt.show(block=False)
+plt.savefig(os.path.join(conf['OUT_DIR'], filename_LS) + '.png', dpi=300, transparent=True)
