@@ -4,4 +4,4 @@ from .circular_apodization import circular_apodization
 from .apodization import apodization
 from .vortex import vortex
 from .lyotstop import lyotstop
-
+from .lyot import lyot

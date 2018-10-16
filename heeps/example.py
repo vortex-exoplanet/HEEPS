@@ -11,7 +11,7 @@ from astropy.io import fits
 from heeps.config import conf, pre_sim, download_from_gdrive
 from heeps.pupil import pupil
 from heeps.abberations import wavefront_abberations
-from heeps.coronagraphs import apodization, vortex, lyotstop
+from heeps.coronagraphs import apodization, vortex, lyotstop, lyot
 from heeps.detector import detector
 import os.path
 
@@ -23,6 +23,7 @@ conf['TILT_2D'] = np.zeros(2) #np.random.randn(conf['TILT_CUBE'],2)
 conf['ATM_SCREEN'] = 0
 conf['PHASE_APODIZER_FILE'] = 0
 conf['MODE'] = 'ELT'
+conf['DIAM_CL'] = 4 # classical lyot diam in lam/D
 pre_sim(conf) 
 
 """ Pupil """
@@ -42,6 +43,9 @@ if conf['MODE'] == 'ELT': # no Lyot stop (1, -0.3, 0)
     _, LS_pupil = lyotstop(wfo, conf, RAVC=False)
 elif conf['MODE'] == 'OFFAXIS': # only lyot stop
     lyotstop(wfo, conf, RAVC=False)
+elif conf['MODE'] == 'CL': # classical lyot
+    lyot(wfo, conf)
+    _, LS_pupil = lyotstop(wfo, conf, RAVC=False)
 elif conf['MODE'] == 'VC':
     vortex(wfo, conf)
     lyotstop(wfo, conf, RAVC=False)
