@@ -80,4 +80,3 @@ plt.imshow(LS_pupil, origin='lower', cmap='gray', vmin=0, vmax=1)
 plt.colorbar()
 plt.show(block=False)
 plt.savefig(os.path.join(conf['OUT_DIR'], filename_LS) + '.png', dpi=300, transparent=True)
-
