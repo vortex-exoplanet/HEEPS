@@ -1,3 +1,8 @@
+# fits files
+input_files/
+output_files/
+temp_files/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
