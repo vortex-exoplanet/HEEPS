@@ -11,6 +11,6 @@ from . import detector
 from . import fits
 from . import pupil
 
-from .metis_hci import metis_hci, coronagraphs
+#from .metis_hci import metis_hci, coronagraphs
 
 
