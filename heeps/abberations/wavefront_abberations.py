@@ -26,7 +26,7 @@ def wavefront_abberations(wfo, conf,atm_screen, TILT):
         npupil = npupil + 1
 
     if (isinstance(atm_screen, (list, tuple, np.ndarray)) == True) and (atm_screen.ndim >= 2): # when the atmosphere is present
-        atmosphere(wfo, npupil, atm_screen, Debug_print, Debug)
+        atmosphere(wfo, npupil, atm_screen)
     
     if (all(v == 0 for v in Island_Piston) == False): # when the piston is present
         island_effect_piston(wfo, npupil, Island_Piston, Debug_print, Debug)
