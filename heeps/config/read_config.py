@@ -73,7 +73,7 @@ conf['AMP_APODIZER'] = 0
 conf['LYOT_STOP'] = True
 conf['LS_PARA'] = [0.98, 0.03, 1.1]
 conf['LS_MIS_ALIGN'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-
+conf['DIAM_CL'] = 4     # classical lyot diam in lam/D
 
 # =============================================================================
 #           Detector plane
