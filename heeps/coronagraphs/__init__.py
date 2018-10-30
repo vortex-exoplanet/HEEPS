@@ -5,3 +5,4 @@ from .apodization import apodization
 from .vortex import vortex
 from .lyotstop import lyotstop
 from .lyot import lyot
+from .metis_modes import metis_modes
