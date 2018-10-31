@@ -1,5 +1,5 @@
 import numpy as np
-import cv2
+from skimage.transform import resize
 import proper
 import os
 from ..fits import writefield 
@@ -69,8 +69,8 @@ def vortex(wfo, conf):
             y = 0
             vvc_tmp = np.exp(1j*(ofst + ramp_sign*charge*theta))
             theta = 0
-            vvc_real_resampled = cv2.resize(vvc_tmp.real, (0,0), fx=1/ramp_oversamp, fy=1/ramp_oversamp, interpolation=cv2.INTER_LINEAR) # scale the pupil to the pupil size of the simualtions
-            vvc_imag_resampled = cv2.resize(vvc_tmp.imag, (0,0), fx=1/ramp_oversamp, fy=1/ramp_oversamp, interpolation=cv2.INTER_LINEAR) # scale the pupil to the pupil size of the simualtions
+            vvc_real_resampled = resize(vvc_tmp.real, (n, n), order=1, preserve_range=True)
+            vvc_imag_resampled = resize(vvc_tmp.imag, (n, n), order=1, preserve_range=True)
             vvc = np.array(vvc_real_resampled, dtype=complex)
             vvc.imag = vvc_imag_resampled
             vvcphase = np.arctan2(vvc.imag, vvc.real) # create the vortex phase

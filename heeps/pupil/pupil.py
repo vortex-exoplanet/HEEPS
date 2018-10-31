@@ -1,5 +1,5 @@
 import numpy as np
-import cv2
+from skimage.transform import resize
 import proper
 from astropy.io import fits
 
@@ -41,7 +41,7 @@ def pupil(conf):
             scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
             if (Debug_print==True):
                 print ("scaling_factor: ", scaling_factor)
-            pupil_scale = cv2.resize(pupil.astype(np.float32), (0,0), fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_LINEAR) # scale the pupil to the pupil size of the simualtions
+            pupil_scale = resize(pupil.astype(np.float32), (npupil, npupil), order=1, preserve_range=True)
             if (Debug_print==True):
                 print ("pupil_resample", pupil_scale.shape)
             pupil_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
@@ -73,7 +73,7 @@ def pupil(conf):
         scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
         if (Debug_print==True):
             print ("scaling_factor: ", scaling_factor)
-        pupil_scale = cv2.resize(pupil.astype(np.float32), (0,0), fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_LINEAR) # scale the pupil to the pupil size of the simualtions
+        pupil_scale = resize(pupil.astype(np.float32), (npupil, npupil), order=1, preserve_range=True)
         if (Debug_print==True):
             print ("pupil_resample", pupil_scale.shape)
         pupil_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil

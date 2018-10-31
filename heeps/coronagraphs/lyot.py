@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 import proper
 import os
 from ..fits import writefield 
