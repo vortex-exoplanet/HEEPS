@@ -5,13 +5,16 @@ import numpy as np
 
 conf = collections.OrderedDict()
 
+# folder containing INPUT, OUTUT, and TEMP directories for data (e.g. fits files)
+conf['data_folder'] = '.'
 
-
-# to create directories for inputing and storing fits files
-conf['OUT_DIR'] = './output_files/'
-conf['TMP_DIR'] = './temp_files/'
-conf['INPUT_DIR'] = './input_files/'
-
+# Creates required directories for simulation 
+conf['OUT_DIR'] = os.path.join(conf['data_folder'], 'output_files', '')
+conf['TMP_DIR'] = os.path.join(conf['data_folder'], 'temp_files', '')
+conf['INPUT_DIR'] = os.path.join(conf['data_folder'], 'input_files', '')
+os.makedirs(conf['OUT_DIR'] , exist_ok=True)
+os.makedirs(conf['TMP_DIR'], exist_ok=True)
+os.makedirs(conf['INPUT_DIR'], exist_ok=True)
 
 
 # =============================================================================
@@ -90,10 +93,6 @@ conf['N_D'] = 512                # final image size
 
 collections.OrderedDict(sorted(conf.items()))
 
-# Creates required directories for simulation 
-os.makedirs(conf['OUT_DIR'] , exist_ok=True)
-os.makedirs(conf['TMP_DIR'], exist_ok=True)
-os.makedirs(conf['INPUT_DIR'], exist_ok=True)
 
 
 proper.print_it = False   # To suppress the printing of intermediate steps by PROPER routine
