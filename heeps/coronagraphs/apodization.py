@@ -31,7 +31,7 @@ def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_
         scaling_factor = float(npupil)/float(apodizer_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
         if (Debug_print==True):
             print ("scaling_factor: ", scaling_factor)
-        apodizer_scale = resize(phase_apodizer_file.astype(np.float32), (npupil, npupil), order=1, preserve_range=True)
+        apodizer_scale = resize(phase_apodizer_file.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
         if (Debug_print==True):
             print ("apodizer_resample", apodizer_scale.shape)
         apodizer_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
@@ -49,7 +49,7 @@ def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_
         scaling_factor = float(npupil)/float(apodizer_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
         if (Debug_print==True):
             print ("scaling_factor: ", scaling_factor)
-        apodizer_scale = resize(amplitude_apodizer_file.astype(np.float32), (npupil, npupil), order=1, preserve_range=True)
+        apodizer_scale = resize(amplitude_apodizer_file.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
         if (Debug_print==True):
             print ("apodizer_resample", apodizer_scale.shape)
         apodizer_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil

@@ -31,7 +31,7 @@ def island_effect_piston(wf, npupil, Island_Piston, path, Debug_print, Debug):
     scaling_factor = float(npupil)/float(piston_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
     if (Debug_print==True):
         print ("scaling_factor: ", scaling_factor)
-    piston_scale = resize(piston.astype(np.float32), (npupil, npupil), order=1, preserve_range=True)
+    piston_scale = resize(piston.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
     if (Debug_print==True):
         print ("piston_resample", piston_scale.shape)
     piston_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil

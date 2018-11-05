@@ -23,7 +23,7 @@ def atmosphere(wfo, phase_screen, **conf):
     # get the number of screens
     ncube = phase_screen.shape[0]
     # create a function for rescaling the phase screens
-    rescale = lambda p: resize(p, (npupil, npupil), order=1, preserve_range=True)
+    rescale = lambda p: resize(p, (npupil, npupil), preserve_range=True, mode='reflect')
     
     # for each phase screen:
     # - rescale to pupil size, 

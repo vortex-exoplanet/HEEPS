@@ -69,8 +69,8 @@ def vortex(wfo, conf):
             y = 0
             vvc_tmp = np.exp(1j*(ofst + ramp_sign*charge*theta))
             theta = 0
-            vvc_real_resampled = resize(vvc_tmp.real, (n, n), order=1, preserve_range=True)
-            vvc_imag_resampled = resize(vvc_tmp.imag, (n, n), order=1, preserve_range=True)
+            vvc_real_resampled = resize(vvc_tmp.real, (n, n), preserve_range=True, mode='reflect')
+            vvc_imag_resampled = resize(vvc_tmp.imag, (n, n), preserve_range=True, mode='reflect')
             vvc = np.array(vvc_real_resampled, dtype=complex)
             vvc.imag = vvc_imag_resampled
             vvcphase = np.arctan2(vvc.imag, vvc.real) # create the vortex phase
