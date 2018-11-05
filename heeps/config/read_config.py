@@ -1,6 +1,7 @@
 import collections
 import os
 import proper
+import numpy as np
 
 conf = collections.OrderedDict()
 
@@ -22,7 +23,7 @@ conf['DIAM'] = 37.0                        # diameter of the telescope in meters
 conf['R_OBSTR'] = 0.3                      # secondary obstruction in percentage??
 conf['SPIDERS_WIDTH'] = 0.60               # width of ELT spiders in meters
 conf['SPIDERS_ANGLE'] = [0, 60.0, 120.0]   # angles of spiders 
-conf['MIS_SEGMENTS_NU'] = 0                # number of mission segments
+conf['MIS_SEGMENTS_NU'] = 0                # number of missing segments
 
 # to input pupil as a fits file, 
 # SCAO team currently uses circular pupil with secondary obstruction
@@ -33,6 +34,11 @@ conf['F_LENS'] = 658.6                  # float, meters, focal distance
 conf['DEBUG'] = False                   # various fits files for coronagraphic propagation is saved in out_dir 
 conf['DEBUG_PRINT'] = False             # prints various values   
 
+# compute the beam ratio
+conf['beam_ratio'] = conf['PIXEL_SCALE']*4.85e-9/(conf['WAVELENGTH']/conf['DIAM'])
+# compute the pupil size, must be odd (PROPER sets the center up-right next to the grid center)
+npupil = np.ceil(conf['GRIDSIZE']*conf['beam_ratio'])
+conf['npupil'] = int(npupil + 1) if npupil % 2 == 0 else int(npupil)
 
 # =============================================================================
 #           Parameters for Wavefront abberations
@@ -42,6 +48,7 @@ conf['TILT_CUBE'] = 10                  # creates an array of (n,2) tip/tilt val
 conf['ATM_SCREEN_NO'] = 0               # No phase screen 
 conf['ATM_SCREEN_2D'] = 'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits'   # Single phase screen
 conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 phase screens
+#conf['ATM_SCREEN_CUBE'] = 'atm_cube_100ms.fits' # 6000 phase screens
 conf['GDRIVE_ID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH'   # google drive id linked to the fits file 
 
 conf['ISLAND_PISTON'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
@@ -63,8 +70,8 @@ conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase scree
     6. If conf['MODE'] = anything except above keywords ELT psf is generated    
 """
 
-conf['MODE'] = 'VC'                     # By default vortex coronagraph   
-conf['CHARGE'] = 2                      # For vortex coronagraph
+conf['MODE'] = 'VC'                     # default is vortex coronagraph   
+conf['CHARGE'] = 2                      # default is charge 2 (AGPM)
 
 conf['PHASE_APODIZER_FILE'] = 'app_phase_cut.fits'
 conf['APODIZER_MIS_ALIGN'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
