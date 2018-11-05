@@ -38,16 +38,16 @@ conf['tip_tilt'] = (0, 0)
 """ Loading AO residual values, getting multi-cube phase screen from Google Drive """
 if True:
     download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE'])
-    conf['AO_residuals'] = fits.getdata(conf['INPUT_DIR']+ conf['ATM_SCREEN_CUBE'])[0]
+    AO_residuals_cube = fits.getdata(conf['INPUT_DIR']+ conf['ATM_SCREEN_CUBE'])
 
-ncube = conf['AO_residuals'].shape[0]
+ncube = AO_residuals_cube.shape[0]
 print('ncube = %s'%ncube)
 psfs = None
 t0 = time.time()
 for i in range(ncube):
     print(i)
     wf = copy.copy(wfo)
-    wavefront_abberations(wf, **conf)
+    wavefront_abberations(wf, AO_residuals=AO_residuals_cube[i], **conf)
     
     """ Coronagraph """
     if conf['MODE'] == 'ELT': # no Lyot stop (1, -0.3, 0)

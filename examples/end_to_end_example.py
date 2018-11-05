@@ -40,10 +40,11 @@ tilt = np.array(conf['TILT_2D'])
 
 
 #   1. ELT Pupil Plane
-wfo = heeps.pupil.pupil(conf)  
+wfo = heeps.pupil.pupil(conf)
 
 #   2. Wavefront abberations
-heeps.abberations.wavefront_abberations(wfo, conf, conf['ATM_SCREEN'], tilt)  
+heeps.abberations.wavefront_abberations(wfo, AO_residuals=conf['ATM_SCREEN'], 
+        tip_tilt=tilt, **conf)
 
 #   3. Coronagraph selection -- Vortex Classical (VC) / RAVC / CL / APP --
 #    "Three coronagraphic planes Apodizer, focal plane mask & Lyot-stop"

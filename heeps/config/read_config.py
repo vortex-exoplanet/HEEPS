@@ -18,7 +18,7 @@ conf['INPUT_DIR'] = './input_files/'
 #           Define parameters for Telescope
 # =============================================================================
 conf['GRIDSIZE'] = 1024                    # (integar) grid size of the simulation array
-conf['WAVELENGTH'] = 5.0*10**-6            # wavelength in micron
+conf['WAVELENGTH'] = 5.0*10**-6            # wavelength in meters
 conf['DIAM'] = 37.0                        # diameter of the telescope in meters 
 conf['R_OBSTR'] = 0.3                      # secondary obstruction in percentage??
 conf['SPIDERS_WIDTH'] = 0.60               # width of ELT spiders in meters
@@ -51,7 +51,7 @@ conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 
 #conf['ATM_SCREEN_CUBE'] = 'atm_cube_100ms.fits' # 6000 phase screens
 conf['GDRIVE_ID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH'   # google drive id linked to the fits file 
 
-conf['ISLAND_PISTON'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+conf['ISLAND_PISTON'] = None
 conf['STATIC_NCPA'] = True
 conf['IMG_LM_SCAO'] = 'NCPA_IMG_LMPP1-SCAO_DET.fits'          # NCPA phase screen @ 3.7 um
 conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase screen @ 10 um
