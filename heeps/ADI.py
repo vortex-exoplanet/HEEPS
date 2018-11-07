@@ -22,7 +22,8 @@ length,x,y = cube.shape
 psf= psf/np.sum(psf_noMask)                                                 # off-axis PSF normalized wrt the total flux of the non-coronagraphic PSF
 cube = cube/np.sum(psf_noMask)                                              # cube normalized wrt the total flux of the non-coronagraphic PSF
 
-angs = np.linspace(-160,160,length)
+angs = np.linspace(-20, 20, length)
+#angs = (np.linspace(160, 200, length) + 180) % 360 - 180
 
 exp_t = 60*60/length                                                            # exposure time in sec for 1 hr sequence
 Lmag = 5                                                                       # choose the star magnitude here
@@ -98,4 +99,6 @@ ax.grid()
 ax.legend()
 ax.set_ylabel("Contrast")
 ax.set_xlabel("Arcsec")
-
+ax.set_xlim([0, 0.6])
+plt.show(block=False)
+plt.savefig(out_dir + 'ADI.png')
