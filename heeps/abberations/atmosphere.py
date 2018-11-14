@@ -15,13 +15,15 @@ def atmosphere(wfo, phase_screen, **conf):
     # check phase screen shape is 3D [N × nx × ny] where N = 1 by default
     phase_screen = np.array(phase_screen, ndmin=3, dtype='float32')
     
-    # load useful parameters
-    npupil = conf['npupil']
-    lam = (conf['WAVELENGTH']*u.m).to('um').value
-    # get the wavenumber (spatial angular frequency)
-    k = 2*np.pi/lam
-    # get the number of screens
+    # number of screens
     ncube = phase_screen.shape[0]
+    # pupil size
+    npupil = conf['NPUPIL']
+    # pupil useful radius
+    r = int((proper.prop_get_gridsize(wfo) - npupil)/2)
+    # wavenumber (spatial angular frequency) in rad / µm
+    k = 2*np.pi/(conf['WAVELENGTH']*u.m).to('um').value
+    
     # create a function for rescaling the phase screens
     rescale = lambda p: resize(p, (npupil, npupil), preserve_range=True, mode='reflect')
     
@@ -29,7 +31,6 @@ def atmosphere(wfo, phase_screen, **conf):
     # - rescale to pupil size, 
     # - pad with zeros to match PROPER gridsize
     # - multiply the wavefront by the complex atmosphere phase screen
-    r = int((proper.prop_get_gridsize(wfo) - npupil)/2)
     phi = np.array([np.pad(rescale(phase_screen[x,:,:]), [(r+1,r),(r+1,r)], \
             mode='constant') for x in range(ncube)])
     proper.prop_multiply(wfo, np.exp(1j*k*phi[0]))

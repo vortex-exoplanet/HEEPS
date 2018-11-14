@@ -37,12 +37,6 @@ conf['F_LENS'] = 658.6                  # float, meters, focal distance
 conf['DEBUG'] = False                   # various fits files for coronagraphic propagation is saved in out_dir 
 conf['DEBUG_PRINT'] = False             # prints various values   
 
-# compute the beam ratio
-conf['beam_ratio'] = conf['PIXEL_SCALE']*4.85e-9/(conf['WAVELENGTH']/conf['DIAM'])
-# compute the pupil size, must be odd (PROPER sets the center up-right next to the grid center)
-npupil = np.ceil(conf['GRIDSIZE']*conf['beam_ratio'])
-conf['npupil'] = int(npupil + 1) if npupil % 2 == 0 else int(npupil)
-
 # =============================================================================
 #           Parameters for Wavefront abberations
 # =============================================================================

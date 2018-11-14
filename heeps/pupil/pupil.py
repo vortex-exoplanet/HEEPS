@@ -2,100 +2,54 @@ import numpy as np
 from skimage.transform import resize
 import proper
 from astropy.io import fits
+import os.path
 
-
-def pupil(conf):
-
+def pupil(conf, pupil_file=None):
+    
+    # load useful parameters
+    lam = conf['WAVELENGTH']
     diam = conf['DIAM']
     gridsize = conf['GRIDSIZE']
-    spiders_width = conf['SPIDERS_WIDTH']
-    spiders_angle = conf['SPIDERS_ANGLE']
-    pixelsize = conf['PIXEL_SCALE'] 
     
-    r_obstr = conf['R_OBSTR']
-    wavelength = conf['WAVELENGTH']
-    missing_segments_number = conf['MIS_SEGMENTS_NU']
-    
-    Debug = conf['DEBUG']
-    Debug_print = conf['DEBUG_PRINT'] 
-
-    prefix = conf['PREFIX']
-    input_dir = conf['INPUT_DIR']
-    out_dir = conf['OUT_DIR'] 
-    
-    beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
-    wfo = proper.prop_begin(diam, wavelength, gridsize, beam_ratio)
-    n = int(gridsize)
-    npupil = np.ceil(gridsize*beam_ratio) # compute the pupil size --> has to be ODD (proper puts the center in the up right pixel next to the grid center)
-    if npupil % 2 == 0:
-        npupil = npupil +1
+    # compute the beam ratio
+    beam_ratio = conf['PIXEL_SCALE']*4.85e-9/(lam/diam)
+    conf['beam_ratio'] = beam_ratio
+    # compute the pupil size, must be odd (PROPER sets the center up-right next to the grid center)
+    npupil = np.ceil(gridsize*beam_ratio)
+    npupil = int(npupil + 1) if npupil % 2 == 0 else int(npupil)
     conf['NPUPIL'] = npupil
-    if (Debug_print == True):
-        print ("npupil: ", npupil)
-        print("lambda: ", wavelength)
-    pupil_file = fits.getdata(input_dir + conf['PUPIL_FILE'])
-    if (missing_segments_number == 0):
-        if (isinstance(pupil_file, (list, tuple, np.ndarray)) == True):
-            pupil = pupil_file
-            pupil_pixels = (pupil.shape)[0]## fits file size
-            scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
-            if (Debug_print==True):
-                print ("scaling_factor: ", scaling_factor)
-            pupil_scale = resize(pupil.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-            if (Debug_print==True):
-                print ("pupil_resample", pupil_scale.shape)
-            pupil_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
-            if (Debug_print==True):
-                print("n: ", n)
-                print("npupil: ", npupil)
-            pupil_large[int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2),int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2)] = pupil_scale # insert the scaled pupil into the 0s grid
-
-        proper.prop_circular_aperture(wfo, diam/2) # create a wavefront with a circular pupil
     
-        if (isinstance(pupil_file, (list, tuple, np.ndarray)) == True):
-            proper.prop_multiply(wfo, pupil_large) # multiply the saved pupil
-        else:
-            proper.prop_circular_obscuration(wfo, r_obstr, NORM=True) # create a wavefront with a circular central obscuration
-        if (spiders_width != 0):
-            for iter in range(0,len(spiders_angle)):
-                proper.prop_rectangular_obscuration(wfo, spiders_width, 2*diam, ROTATION = spiders_angle[iter]) # define the spiders    
+    # select pupil file, amongst various missing segments configurations
+    pupil_file = {
+    0: conf['PUPIL_FILE'],
+    1: '/ELT_2048_37m_11m_5mas_nospiders_1missing_cut.fits',
+    2: '/ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits',
+    4: '/ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits',
+    7: '/ELT_2048_37m_11m_5mas_nospiders_7missing_1_cut.fits'}
+    
+    # begin PROPER
+    wfo = proper.prop_begin(diam, lam, gridsize, beam_ratio)
+    
+    # create a pupil with circular obscuration (default), or load pupil from file
+    if pupil_file is None:
+        proper.prop_circular_aperture(wfo, diam/2)
+        proper.prop_circular_obscuration(wfo, conf['R_OBSTR'], NORM=True)
     else:
-        if (missing_segments_number == 1):
-            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_1missing_cut.fits')
-        if (missing_segments_number == 2):
-            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits')
-        if (missing_segments_number == 4):
-            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits')
-        if (missing_segments_number == 7):
-            pupil = fits.getdata(input_dir+'/ELT_2048_37m_11m_5mas_nospiders_7missing_1_cut.fits')
-
-        pupil_pixels = (pupil.shape)[0]## fits file size
-        scaling_factor = float(npupil)/float(pupil_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
-        if (Debug_print==True):
-            print ("scaling_factor: ", scaling_factor)
-        pupil_scale = resize(pupil.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-        if (Debug_print==True):
-            print ("pupil_resample", pupil_scale.shape)
-        pupil_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
-        if (Debug_print==True):
-            print("n: ", n)
-            print("npupil: ", npupil)
-        pupil_large[int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2),int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2)] =pupil_scale # insert the scaled pupil into the 0s grid
-
-            
-        proper.prop_multiply(wfo, pupil_large) # multiply the saved pupil
-        if (spiders_width!=0):
-            for iter in range(0,len(spiders_angle)):
-                proper.prop_rectangular_obscuration(wfo, spiders_width, 2*diam,ROTATION=spiders_angle[iter]) # define the spiders
-
-    if (Debug==True):
-        fits.writeto(out_dir + prefix +'_intial_pupil.fits', proper.prop_get_amplitude(wfo)[int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50),int(n/2)-int(npupil/2 + 50):int(n/2)+int(npupil/2 + 50)], overwrite=True)
+        # load pupil, resize, and pad with zeros to match PROPER gridsize
+        pupil = fits.getdata(os.path.join(conf['INPUT_DIR'], pupil_file[conf['MIS_SEGMENTS_NU']]))
+        pupil = resize(pupil, (npupil, npupil), preserve_range=True, mode='reflect')
+        r = int((proper.prop_get_gridsize(wfo) - npupil)/2)
+        pupil = np.pad(pupil, [(r+1,r),(r+1,r)], mode='constant')
+        # multiply the loaded pupil
+        proper.prop_multiply(wfo, pupil)
         
-    proper.prop_define_entrance(wfo) #define the entrance wavefront
-    wfo.wfarr *= 1./np.amax(wfo._wfarr) # max(amplitude)=1
+    # add spiders
+    if (conf['SPIDERS_WIDTH'] != 0):
+        for angle in conf['SPIDERS_ANGLE']:
+            proper.prop_rectangular_obscuration(wfo, conf['SPIDERS_WIDTH'], 2*diam, ROTATION=angle)
+    
+    # define the entrance wavefront
+    proper.prop_define_entrance(wfo)
+    wfo.wfarr /= np.amax(wfo._wfarr) # max(amplitude)=1
+    
     return wfo
-
-
-
-
-
