@@ -1,34 +1,29 @@
 import requests
-import os
+import os.path
 
-'''Downloads large mulit-cube phase screens from google drive'''
+'''Downloads files from google drive'''
 
-def download_from_gdrive(id, destination, filename):    
-    my_file = str(destination + '/'+ filename)
-    destination = destination + '/'+ filename
-    if (os.path.isfile(my_file) == False): 
-        print('Downloading multi-cube phase screen from the google drive.....')
-        URL = "https://docs.google.com/uc?export=download"    
-        session = requests.Session()    
-        response = session.get(URL, params = { 'id' : id }, stream = True)
-        token = get_confirm_token(response)    
+def download_from_gdrive(id, destination, filename):
+    my_file = str(os.path.join(destination, filename))
+    if not os.path.isfile(my_file): 
+        print('Downloading "%s" from google drive' %filename)
+        URL = "https://docs.google.com/uc?export=download"
+        session = requests.Session()
+        response = session.get(URL, params={'id':id}, stream=True)
+        token = get_confirm_token(response)
         if token:
-            params = { 'id' : id, 'confirm' : token }
-            response = session.get(URL, params = params, stream = True)
-    
-        save_response_content(response, destination)    
+            response = session.get(URL, params={'id':id, 'confirm':token}, stream=True)
+        save_response_content(response, my_file)
 
 def get_confirm_token(response):
     for key, value in response.cookies.items():
         if key.startswith('download_warning'):
             return value
-
     return None
 
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
+def save_response_content(response, my_file, chunk_size=32768):
+    
+    with open(my_file, "wb") as f:
+        for chunk in response.iter_content(chunk_size=chunk_size):
             if chunk: # filter out keep-alive new chunks
                 f.write(chunk)

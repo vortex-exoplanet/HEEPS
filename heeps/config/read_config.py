@@ -1,20 +1,37 @@
 import collections
 import os
 import proper
-import numpy as np
+import zipfile
+from heeps.config import download_from_gdrive
 
 conf = collections.OrderedDict()
 
-# folder containing INPUT, OUTUT, and TEMP directories for data (e.g. fits files)
-conf['data_folder'] = '.'
+# =============================================================================
+#           Console and file management 
+# =============================================================================
 
-# Creates required directories for simulation 
+# Printing intermediate steps by PROPER
+proper.print_it = False
+
+# Creates required directories for data (e.g. fits files)
+conf['data_folder'] = '.'
 conf['OUT_DIR'] = os.path.join(conf['data_folder'], 'output_files', '')
 conf['TMP_DIR'] = os.path.join(conf['data_folder'], 'temp_files', '')
 conf['INPUT_DIR'] = os.path.join(conf['data_folder'], 'input_files', '')
 os.makedirs(conf['OUT_DIR'] , exist_ok=True)
 os.makedirs(conf['TMP_DIR'], exist_ok=True)
 os.makedirs(conf['INPUT_DIR'], exist_ok=True)
+
+# Google Drive parameters
+conf['testfile'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
+conf['gdriveID'] = '1YR4G_8E7TpznTxumQA1zD4z_v4V5ZlF2'
+conf['gdriveZip'] = 'fits_files.zip'
+# if test file is missing, start downloading from Google drive
+if not os.path.isfile(os.path.join(conf['INPUT_DIR'], conf['testfile'])): 
+    download_from_gdrive(conf['gdriveID'], conf['data_folder'], conf['gdriveZip'])
+    with zipfile.ZipFile(conf['gdriveZip'],'r') as zip_ref:
+        zip_ref.extractall(conf['data_folder'])
+    os.remove(conf['gdriveZip'])
 
 
 # =============================================================================
@@ -37,6 +54,7 @@ conf['F_LENS'] = 658.6                  # float, meters, focal distance
 conf['DEBUG'] = False                   # various fits files for coronagraphic propagation is saved in out_dir 
 conf['DEBUG_PRINT'] = False             # prints various values   
 
+
 # =============================================================================
 #           Parameters for Wavefront abberations
 # =============================================================================
@@ -52,7 +70,6 @@ conf['ISLAND_PISTON'] = None
 conf['STATIC_NCPA'] = True
 conf['IMG_LM_SCAO'] = 'NCPA_IMG_LMPP1-SCAO_DET.fits'          # NCPA phase screen @ 3.7 um
 conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase screen @ 10 um
-
 
 
 # =============================================================================
@@ -79,14 +96,10 @@ conf['LS_PARA'] = [0.98, 0.03, 1.1]
 conf['LS_MIS_ALIGN'] = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 conf['DIAM_CL'] = 4     # classical lyot diam in lam/D
 
+
 # =============================================================================
 #           Detector plane
 # =============================================================================
 conf['N_D'] = 512                # final image size
 
-
 collections.OrderedDict(sorted(conf.items()))
-
-
-
-proper.print_it = False   # To suppress the printing of intermediate steps by PROPER routine

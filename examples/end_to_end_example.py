@@ -10,10 +10,9 @@ import numpy as np
 from astropy.io import fits 
 
 import heeps
-from heeps.config import conf, pre_sim, download_from_gdrive
+from heeps.config import conf, download_from_gdrive
 import os.path
 
-pre_sim(conf) 
 
 conf['WAVELENGTH'] = 3.80*10**-6 
 conf['CHARGE'] = 2 # charge is modified here
