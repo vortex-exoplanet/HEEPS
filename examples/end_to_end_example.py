@@ -16,7 +16,7 @@ import os.path
 
 conf['WAVELENGTH'] = 3.80*10**-6 
 conf['CHARGE'] = 2 # charge is modified here
-conf['MODE'] = 'CL'
+conf['MODE'] = 'MASK'
 conf['STATIC_NCPA'] = False
 
 
@@ -52,9 +52,6 @@ heeps.coronagraphs.metis_modes(wfo, conf)
 #   4. Detector plane
 psf = heeps.detector.detector(wfo,conf)	
 
-
-
-
 """ Science image """
 filename_PSF = conf['PREFIX'] + '_PSF_' + conf['MODE']
 
@@ -64,7 +61,7 @@ plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
-plt.show(block=False)
+plt.show()
 plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
 
 
