@@ -67,8 +67,9 @@ conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 
 conf['GDRIVE_ID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH'   # google drive id linked to the fits file 
 
 conf['ISLAND_PISTON'] = None
-conf['STATIC_NCPA'] = True
-conf['IMG_LM_SCAO'] = 'NCPA_IMG_LMPP1-SCAO_DET.fits'          # NCPA phase screen @ 3.7 um
+conf['STATIC_NCPA'] = False
+conf['POLISH_ERROR'] = False
+conf['IMG_LM_SCAO'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits'          # NCPA phase screen @ 3.7 um
 conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase screen @ 10 um
 
 
