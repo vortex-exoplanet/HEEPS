@@ -4,7 +4,7 @@ import proper
 from astropy.io import fits
 import os.path
 
-def pupil(conf, pupil_file=None):
+def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
     
     # load useful parameters
     lam = conf['WAVELENGTH']
@@ -18,6 +18,8 @@ def pupil(conf, pupil_file=None):
     npupil = np.ceil(gridsize*beam_ratio)
     npupil = int(npupil + 1) if npupil % 2 == 0 else int(npupil)
     conf['NPUPIL'] = npupil
+    # calculate the size of the pupil to pad with zeros
+    pad = int((gridsize - npupil)/2)
     
     # select pupil file, amongst various missing segments configurations
     pupil_file = {
@@ -38,8 +40,7 @@ def pupil(conf, pupil_file=None):
         # load pupil, resize, and pad with zeros to match PROPER gridsize
         pupil = fits.getdata(os.path.join(conf['INPUT_DIR'], pupil_file[conf['MIS_SEGMENTS_NU']]))
         pupil = resize(pupil, (npupil, npupil), preserve_range=True, mode='reflect')
-        r = int((proper.prop_get_gridsize(wfo) - npupil)/2)
-        pupil = np.pad(pupil, [(r+1,r),(r+1,r)], mode='constant')
+        pupil = np.pad(pupil, [(pad+1,pad),(pad+1,pad)], mode='constant')
         # multiply the loaded pupil
         proper.prop_multiply(wfo, pupil)
         
@@ -51,5 +52,13 @@ def pupil(conf, pupil_file=None):
     # define the entrance wavefront
     proper.prop_define_entrance(wfo)
     wfo.wfarr /= np.amax(wfo._wfarr) # max(amplitude)=1
+    
+    # get the pupil amplitude or phase for output
+    if get_pupil.lower() in 'amplitude':
+        return wfo, proper.prop_get_amplitude(wfo)[pad+1-dnpup:-pad+dnpup, pad+1-dnpup:-pad+dnpup]
+    elif get_pupil.lower() in 'phase':
+        return wfo, proper.prop_get_phase(wfo)[pad+1-dnpup:-pad+dnpup, pad+1-dnpup:-pad+dnpup]
+    else:
+        return wfo
     
     return wfo
