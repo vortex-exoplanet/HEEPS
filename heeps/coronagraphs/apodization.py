@@ -12,7 +12,7 @@ def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_
     r_obstr = conf['R_OBSTR']
     npupil = conf['NPUPIL']
     
-    apodizer_misalignment = np.array(conf['APODIZER_MIS_ALIGN'])
+    apodizer_misalignment = np.array(conf['RAVC_MISALIGN'])
     n = int(proper.prop_get_gridsize(wf))
     apodizer = 1
     if (RAVC == True):

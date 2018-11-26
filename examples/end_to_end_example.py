@@ -16,15 +16,14 @@ import os.path
 
 conf['WAVELENGTH'] = 3.80*10**-6 
 conf['CHARGE'] = 2 # charge is modified here
-conf['MODE'] = 'MASK'
+conf['MODE'] = 'OFFAXIS'
 conf['STATIC_NCPA'] = False
-
 
 # loading multi-cube phase screen
 get_cube = True
 if get_cube is True:
-    download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE']) 
-    conf['ATM_SCREEN'] = fits.getdata(conf['INPUT_DIR']+ conf['ATM_SCREEN_CUBE'])[0] 
+    download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE'])
+    conf['ATM_SCREEN'] = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[0]
 
 tilt = np.array(conf['TILT_2D']) 
 
@@ -36,7 +35,6 @@ tilt = np.array(conf['TILT_2D'])
 #   3. Coronagraph system
 #   4. Detector plane
 # =============================================================================
-
 
 #   1. ELT Pupil Plane
 wfo = heeps.pupil.pupil(conf)
@@ -61,10 +59,5 @@ plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
-plt.show()
+plt.show(block=False)
 plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
-
-
-
-
-

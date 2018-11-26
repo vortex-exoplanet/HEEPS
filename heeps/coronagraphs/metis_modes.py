@@ -15,28 +15,24 @@ def metis_modes(wfo, conf):
         7. Classical Lyot coronagraph, to use put conf['MODE'] = 'CL' 
     """
     mode = conf['MODE']
-    conf['PHASE_APODIZER_FILE'] = 0
-
-    if mode == 'APP': 
-        conf['PHASE_APODIZER_FILE'] = 'app_phase_cut.fits' 
-        lyotstop(wfo, conf, RAVC=False)   
-    if mode == 'RAVC':    
-        apodization(wfo, conf, RAVC=True)
+    if mode == 'APP':
+        lyotstop(wfo, conf, APP=True)
+    elif mode == 'RAVC':
+        RAVC = True
+        apodization(wfo, conf, RAVC=RAVC)
         vortex(wfo, conf)
-        lyotstop(wfo, conf, RAVC=True)
+        lyotstop(wfo, conf, RAVC=RAVC)
     elif mode == 'CL': # classical lyot
         lyot(wfo, conf)
-        lyotstop(wfo, conf, RAVC=False)
+        lyotstop(wfo, conf)
     elif mode == 'VC':
         vortex(wfo, conf)
-        lyotstop(wfo, conf, RAVC=False)
+        lyotstop(wfo, conf)
     elif mode == 'OFFAXIS':
-        print('No Coronagraph')    
-        lyotstop(wfo, conf, RAVC=False)
-    elif mode == 'MASK':
-        print('Ring apodizer and LS present')    
-        apodization(wfo, conf, RAVC=True)
-        lyotstop(wfo, conf, RAVC=True)
-    else: 
+        print('No phase mask') # Lyot-stop (and ring apodizer) are present
+        RAVC = False # False if VC, True if RAVC
+        apodization(wfo, conf, RAVC=RAVC)
+        lyotstop(wfo, conf, RAVC=RAVC)
+    else:
         print('ELT PSF')
     return wfo
