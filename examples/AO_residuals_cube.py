@@ -22,21 +22,21 @@ import time
 overridden here by updating the dictionary """
 conf['WAVELENGTH'] = 3.80*10**-6 
 conf['STATIC_NCPA'] = False
-conf['MODE'] = 'ELT'
+conf['MODE'] = 'VC'
 conf['CL_DIAM'] = 4 # classical lyot diam in lam/D
 
 """ Pupil """
 conf['PUPIL_FILE'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
-wfo = pupil(conf, get_pupil='amp')
+wfo, PUP = pupil(conf, get_pupil='amp')
 
 """ Loading tip-tilt values """
 conf['tip_tilt'] = (0, 0)
 # conf['tip_tilt'] = np.random.randn(conf['TILT_CUBE'], 2)
 
 """ Loading AO residual values, getting multi-cube phase screen from Google Drive """
-if False:
+if True:
     download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE'])
-    AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[51:151]
+    AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[1:15]
 else:
     AO_residuals_cube = np.array([None])
 ncube = AO_residuals_cube.shape[0]
@@ -53,8 +53,10 @@ for i in range(ncube):
     if conf['MODE'] == 'ELT': # no Lyot stop (1, -0.3, 0)
         conf['LS_PARAMS'] = [1., -0.3, 0.]
         lyotstop(wf, conf)
-    elif conf['MODE'] == 'OFFAXIS': # only ring apodizer (if True) and lyot stop
-        RAVC=False
+    elif conf['MODE'] == 'OFFAXIS': # only Lyot stop
+        lyotstop(wf, conf)
+    elif conf['MODE'] == 'OFFAXIS_RA': # only Lyot stop and ring apodizer
+        RAVC=True
         apodization(wf, conf, RAVC=RAVC)
         lyotstop(wf, conf, RAVC=RAVC)
     elif conf['MODE'] == 'CL': # classical lyot
@@ -83,31 +85,32 @@ for i in range(ncube):
 print(time.time() - t0)
 
 """ write cube to fits """
-if False:
+if True:
     filename_PSF_cube = 'NEW_compass_10min_100ms_' + conf['MODE']
     fits.writeto(os.path.join(conf['OUT_DIR'], filename_PSF_cube) + '.fits', psfs, overwrite=True)
 
 
-###
 
 """ write to fits """
-conf['PREFIX'] = ''
-filename_PSF = conf['PREFIX'] + conf['MODE'] + '_PSF'
-filename_LS = conf['PREFIX'] + conf['MODE'] + '_LS'
-fits.writeto(os.path.join(conf['OUT_DIR'], filename_PSF) + '.fits', psf, overwrite=True)
-fits.writeto(os.path.join(conf['OUT_DIR'], filename_LS) + '.fits', PUP, overwrite=True)
+if False:
+    conf['PREFIX'] = ''
+    filename_PSF = conf['PREFIX'] + conf['MODE'] + '_PSF'
+    filename_LS = conf['PREFIX'] + conf['MODE'] + '_LS'
+    fits.writeto(os.path.join(conf['OUT_DIR'], filename_PSF) + '.fits', psf, overwrite=True)
+    fits.writeto(os.path.join(conf['OUT_DIR'], filename_LS) + '.fits', PUP, overwrite=True)
 
 """ Figures """
-plt.figure(1)
-#plt.imshow(psf**0.05, origin='lower')
-plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
-plt.colorbar()
-plt.show(block=False)
-plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
+if False:
+    plt.figure(1)
+    #plt.imshow(psf**0.05, origin='lower')
+    plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
+    plt.colorbar()
+    plt.show(block=False)
+    plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
 
-plt.figure(2)
-plt.imshow(PUP[50:-50,50:-50], origin='lower', cmap='gray', vmin=0, vmax=1)
-#plt.imshow(PUP[50:-50,50:-50], origin='lower')
-plt.colorbar()
-plt.show(block=False)
-plt.savefig(os.path.join(conf['OUT_DIR'], filename_LS) + '.png', dpi=300, transparent=True)
+    plt.figure(2)
+    plt.imshow(PUP[50:-50,50:-50], origin='lower', cmap='gray', vmin=0, vmax=1)
+    #plt.imshow(PUP[50:-50,50:-50], origin='lower')
+    plt.colorbar()
+    plt.show(block=False)
+    plt.savefig(os.path.join(conf['OUT_DIR'], filename_LS) + '.png', dpi=300, transparent=True)

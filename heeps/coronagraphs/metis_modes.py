@@ -28,11 +28,14 @@ def metis_modes(wfo, conf):
     elif mode == 'VC':
         vortex(wfo, conf)
         lyotstop(wfo, conf)
-    elif mode == 'OFFAXIS':
-        print('No phase mask') # Lyot-stop (and ring apodizer) are present
-        RAVC = False # False if VC, True if RAVC
-        apodization(wfo, conf, RAVC=RAVC)
-        lyotstop(wfo, conf, RAVC=RAVC)
+    elif conf['MODE'] == 'OFFAXIS': # only Lyot stop
+        print('No phase mask')
+        lyotstop(wf, conf)
+    elif conf['MODE'] == 'OFFAXIS_RA': # only Lyot stop and ring apodizer
+        print('No phase mask')
+        RAVC=True
+        apodization(wf, conf, RAVC=RAVC)
+        lyotstop(wf, conf, RAVC=RAVC)
     else:
         print('ELT PSF')
     return wfo
