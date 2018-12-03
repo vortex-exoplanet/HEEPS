@@ -98,7 +98,7 @@ starphot = vip_hci.metrics.aperture_flux(psf_OFF_crop,[rim],[rim],fwhm)[0]
 """ VIP: ADI, ADI-PCA """
 # parallactic angles during observation
 angs = np.linspace(-dparall/2., dparall/2., ncube)
-cc_adi = vip_hci.metrics.contrast_curve(psf_ON[:10], angs[:10], psf_OFF_crop, \
+cc_adi = vip_hci.metrics.contrast_curve(psf_ON, angs, psf_OFF_crop, \
         fwhm, psc_inst, starphot, vip_hci.medsub.median_sub, nbranch=1, sigma=5, \
         debug=False, plot=False)
 #out, derot, psf_ON_adi = vip_hci.medsub.median_sub(psf_ON, angs, full_output=True) # ADI
