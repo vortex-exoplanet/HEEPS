@@ -9,7 +9,7 @@ import os.path
 """ user inputs """
 folder = '/Volumes/Data/METIS/compass600s10ms/'
 #folder = '/mnt/disk4tb/METIS/compass600s10ms/'
-mode = 'VC'                     # modes: ELT, VC, RAVC, APP, CL,...
+mode = 'CL_4'                   # modes: ELT, VC, RAVC, APP, CL_4, CL_5...
 scao_name = 'compass'           # SCAO simulator name
 cube_duration = 600             # SCAO cube duration in seconds
 cube_samp = 10                  # SCAO cube sampling in ms
@@ -40,7 +40,8 @@ if calc_trans is True:
 else:
     trans_all = {'ELT': 1.,
                   'VC': 0.9012406091763115,
-                'RAVC': 0.3392759549914341}
+                'RAVC': 0.3392759549914341,
+                'CL_4': 0.502257180317745} # 4-lam/D diam classical Lyot mask
     trans = trans_all[mode]
 
 """ normalize off-axis and on-axis (cube) psfs """
