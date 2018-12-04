@@ -16,8 +16,9 @@ cube_samp = 100                 # SCAO cube sampling in ms
 adi_cube_duration = 3600        # ADI cube duration in seconds
 adi_cube_samp = 100             # ADI cube sampling in ms
 adi_cube_avg = 0                # ADI cube averaging in ms
-dparall = 40                    # parallactic angle variation in deg
-Lmag = 5                        # star magnitude here
+lat = -24.63                    # telescope latitude in deg (Paranal -24.63)
+dec = -2.47                     # star declination in deg (e.g. 51 Eri -2.47)
+Lmag = 5                        # star magnitude at L
 mag5_ADU = 3.4539e9             # L'=5 star flux in counts(ADU) per sec (@NACO L' filter)
 bckg_ADU = 229.78e3             # background flux in counts(ADU) per sec (@NACO L' filter)
 rim = 19                        # psf image radius (in pixels)
@@ -28,9 +29,9 @@ plot_cc = True                  # true if plot contrast curve
 algo = vip_hci.medsub.median_sub# VIP post-processing algorithm
 
 # output filename (can carry some values)
-filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_par%sdeg_magL%s_%s' \
+filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_magL%s_%s' \
         %(scao_name, cube_duration, cube_samp, adi_cube_duration, adi_cube_samp, \
-        adi_cube_avg, dparall, Lmag, mode)
+        adi_cube_avg, dec, Lmag, mode)
 #filename = 'testname'
 
 """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
@@ -95,13 +96,21 @@ psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
 # FWHM aperture photometry of psf_OFF_crop
 starphot = vip_hci.metrics.aperture_flux(psf_OFF_crop,[rim],[rim],fwhm)[0]
 
+""" parallactic angles for ADI """
+# duration -> hour angle conversion
+ha = adi_cube_duration/3600/24*360
+# angles in rad
+hr = np.deg2rad(np.linspace(-ha/2, ha/2, ncube))
+dr = np.deg2rad(dec)
+lr = np.deg2rad(lat)
+# parallactic angle in deg
+pa = -np.rad2deg(np.arctan2(-np.sin(hr), np.cos(dr)*np.tan(lr)-np.sin(dr)*np.cos(hr)))
+
 """ VIP: post-processing (ADI, ADI-PCA,...) """
-# parallactic angles during observation
-angs = np.linspace(-dparall/2., dparall/2., ncube)
 # psf after post-processing
-out, derot, psf_pp = algo(psf_ON, angs, full_output=True)
+out, derot, psf_pp = algo(psf_ON, pa, full_output=True)
 # contrast curve after post-processing
-cc_pp = vip_hci.metrics.contrast_curve(psf_ON, angs, psf_OFF_crop, fwhm, psc_inst, \
+cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, fwhm, psc_inst, \
         starphot, algo=algo, nbranch=1, sigma=5, debug=False, plot=False)
 
 """ saving to fits files """
