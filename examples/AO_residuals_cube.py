@@ -22,7 +22,7 @@ import time
 overridden here by updating the dictionary """
 conf['WAVELENGTH'] = 3.80*10**-6 
 conf['STATIC_NCPA'] = False
-conf['MODE'] = 'VC'
+conf['MODE'] = 'RAVC'
 conf['CL_DIAM'] = 4 # classical lyot diam in lam/D
 
 """ Pupil """
@@ -36,7 +36,7 @@ conf['tip_tilt'] = (0, 0)
 """ Loading AO residual values, getting multi-cube phase screen from Google Drive """
 if True:
     download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE'])
-    AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[1:15]
+    AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[1:]
 else:
     AO_residuals_cube = np.array([None])
 ncube = AO_residuals_cube.shape[0]
