@@ -7,9 +7,7 @@ import os.path
 
 
 """ user inputs """
-folder = '/Volumes/Data/METIS/compass600s10ms/'
-#folder = '/mnt/disk4tb/METIS/compass600s10ms/'
-mode = 'RAVC'                   # modes: ELT, VC, RAVC, APP, CL_4, CL_5...
+mode = 'RAVC'                   # modes: ELT, VC, RAVC, APP, CL_4, CL_5,...
 scao_name = 'compass'           # SCAO simulator name
 cube_duration = 600             # SCAO cube duration in seconds
 cube_samp = 100                 # SCAO cube sampling in ms
@@ -19,8 +17,8 @@ adi_cube_avg = 0                # ADI cube averaging in ms
 lat = -24.63                    # telescope latitude in deg (Paranal -24.63)
 dec = -2.47                     # star declination in deg (e.g. 51 Eri -2.47)
 Lmag = 5                        # star magnitude at L
-mag5_ADU = 3.4539e9             # L'=5 star flux in counts(ADU) per sec (@NACO L' filter)
-bckg_ADU = 229.78e3             # background flux in counts(ADU) per sec (@NACO L' filter)
+mag5_ADU = 3.4539e9             # L'=5 star flux in counts/sec (@NACO L' filter)
+bckg_ADU = 229.78e3             # background flux in counts/sec (@NACO L' filter)
 rim = 19                        # psf image radius (in pixels)
 psc_simu = 0.005                # simulations (SCAO) platescale in arcsec/pix
 psc_inst = 0.00525              # instruments (METIS) platescale in arcsec/pix
@@ -28,11 +26,16 @@ calc_trans = False              # true if transmission must be calculated
 plot_cc = True                  # true if plot contrast curve
 algo = vip_hci.medsub.median_sub# VIP post-processing algorithm
 
-# output filename (can carry some values)
-filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_magL%s_%s' \
-        %(scao_name, cube_duration, cube_samp, adi_cube_duration, adi_cube_samp, \
-        adi_cube_avg, dec, Lmag, mode)
+""" working repository """
+#folder = '/mnt/disk4tb/METIS/compass600s10ms/'
+folder = '$HOME/INSTRUMENTS/METIS/compass600s10ms/'
+folder = os.path.expandvars(folder)
+
+""" output filename (can carry some values) """
 #filename = 'testname'
+filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_magL%s_%s' \
+        %(scao_name, cube_duration, cube_samp, adi_cube_duration, \
+        adi_cube_samp, adi_cube_avg, dec, Lmag, mode)
 
 """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
 if calc_trans is True:
