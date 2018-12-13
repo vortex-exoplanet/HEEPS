@@ -49,15 +49,29 @@ else:
                 'CL_4': 0.502257180317745} # 4-lam/D diam classical Lyot mask
     trans = trans_all[mode]
 
-""" normalize off-axis and on-axis (cube) psfs """
+""" get normalized off-axis PSF (single) """
 # total flux of the non-coronagraphic PSF
 psf_ELT = fits.getdata(os.path.join(folder, 'ELT_PSF.fits'))
 ELT_flux = np.sum(psf_ELT)
 # normalized off-axis PSF
 psf_OFF = fits.getdata(os.path.join(folder, 'OFFAXIS_%s_PSF.fits'%mode))
 psf_OFF /= ELT_flux
-# normalized coronagraphic (on-axis) PSFs cube
+
+""" get normalized on-axis PSFs (cube, resampled, and averaged) """
+# load cube, and format to 3D
 psf_ON = fits.getdata(os.path.join(folder, 'ONAXIS_%s_PSF.fits'%mode))
+if psf_ON.ndim != 3:
+    psf_ON = np.array(psf_ON, ndmin=3)
+# resample based on ADI sampling vs simulation sampling
+nsamp = int(adi_cube_samp/cube_samp + .5)
+psf_ON = psf_ON[::nsamp,:]
+# average frames
+navg = max(1, int(adi_cube_avg/adi_cube_samp + .5))
+if navg > 1:
+    (ncube, xon, yon) = psf_ON.shape
+    end = ncube - ncube % navg
+    psf_ON = np.mean(psf_ON[:end].reshape(-1, navg, xon, yon), axis=1)
+# normalized coronagraphic (on-axis) PSFs
 psf_ON /= ELT_flux
 
 """ VIP: resample psfs to match the instrument pixelscale """
