@@ -10,7 +10,7 @@ def metis_modes(wfo, conf):
         2. Ring apodized vortex coronagraph (RAVC), to use put conf['MODE'] = 'RAVC'
         3. Apodizing phase plate (APP), to use put conf['MODE'] = 'APP'
         4. No coronagraph, just Lyot-stop, to use put conf['MODE'] = 'OFFAXIS'    
-        5. No coronagraph, but Ring apodizer and LS present, to use put conf['MODE'] = 'MASK'
+        5. No coronagraph, but Ring apodizer and LS present, to use put conf['MODE'] = 'OFFAXIS_RA'
         6. If conf['MODE'] = ELT, an ELT psf is generated    
         7. Classical Lyot coronagraph, to use put conf['MODE'] = 'CL' 
     """
