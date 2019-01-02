@@ -81,7 +81,7 @@ conf['IMG_NQ_SCAO'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits'          # NCPA phase scree
     2. Ring apodized vortex coronagraph (RAVC), to use put conf['MODE'] = 'RAVC'
     3. Apodizing phase plate (APP), to use put conf['MODE'] = 'APP'
     4. No coronagraph, just Lyot-stop, to use put conf['MODE'] = 'OFFAXIS'
-    5. No coronagraph, but Ring apodizer and LS present, to use put conf['MODE'] = 'MASK'
+    5. No coronagraph, but Ring apodizer and LS present, to use put conf['MODE'] = 'OFFAXIS_RA'
     6. If conf['MODE'] = anything except above keywords ELT psf is generated
 """
 
