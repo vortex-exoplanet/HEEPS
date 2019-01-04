@@ -38,7 +38,7 @@ if not os.path.isfile(os.path.join(conf['INPUT_DIR'], conf['testfile'])):
 #           Define parameters for Telescope
 # =============================================================================
 conf['GRIDSIZE'] = 1024                    # (integer) grid size of the simulation array
-conf['WAVELENGTH'] = 5.0*10**-6            # wavelength in meters
+conf['WAVELENGTH'] = 5e-6                  # wavelength in meters
 conf['DIAM'] = 37.0                        # diameter of the telescope in meters
 conf['R_OBSTR'] = 0.3                      # secondary obstruction in percentage
 conf['SPIDERS_WIDTH'] = 0.60               # width of spiders in meters
@@ -62,8 +62,8 @@ conf['TILT_2D'] = [0.0, 0.0]
 conf['TILT_CUBE'] = 10                  # creates an array of (n,2) tip/tilt values
 conf['ATM_SCREEN_NO'] = 0               # no phase screen 
 conf['ATM_SCREEN_2D'] = 'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits'      # single phase screen
-conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 phase screens
-#conf['ATM_SCREEN_CUBE'] = 'atm_cube_100ms.fits'                          # 6000 phase screens
+#conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 phase screens
+conf['ATM_SCREEN_CUBE'] = 'cube_COMPASS_20180223_600s_100ms.fits'        # 5999 phase screens
 conf['GDRIVE_ID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH' # google drive ID linked to the fits file 
 
 conf['ISLAND_PISTON'] = None
