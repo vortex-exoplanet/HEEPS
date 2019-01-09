@@ -18,8 +18,8 @@ lat = -24.63                    # telescope latitude in deg (Paranal -24.63)
 dec = -2.47                     # star declination in deg (e.g. 51 Eri -2.47)
 band = 'Lp'                     # spectral band ('Lp', 'Mp', 'N1', 'N2')
 mag = 5                         # star magnitude at band
-psc_simu = 5                    # simulation (SCAO) platescale in mas/pix
-psc_inst = 5.25                 # instrument (METIS) platescale in mas/pix
+psc_simu = 5                    # simulation (HEEPS) pixel scale in mas/pix
+psc_inst = 5.21                 # METIS (LM=5.21, NQ=10.78) pixel scale in mas/pix
 rim = 19                        # psf image radius (in pixels)
 add_bckg = True                 # add background
 calc_trans = False              # true if transmission must be calculated
