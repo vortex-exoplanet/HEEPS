@@ -20,35 +20,41 @@ import time
 
 """ Default simulation configuration defined in "read_config.py" can be 
 overridden here by updating the dictionary """
-lams = (3.8e-6, 4.8e-6, 8.7e-6, 11.5e-6)
+
+# user inputs
+bands = ('Lp', 'Mp', 'N1', 'N2')
 pscales = (5, 5, 10, 10)
+conf['MODE'] = 'RAVC'
+conf['CL_DIAM'] = 4
 conf['ONAXIS'] = True
 conf['STATIC_NCPA'] = False
-conf['MODE'] = 'RAVC'
-conf['CL_DIAM'] = 4 # classical lyot diam in lam/D
 
-for pscale,lam in zip(pscales,lams):
+# tip-tilt values
+conf['tip_tilt'] = (0, 0)
+
+# AO residual values
+if True:
+    AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])
+else:
+    AO_residuals_cube = np.array([None])
+ncube = AO_residuals_cube.shape[0]
+print('ncube = %s'%ncube)
+
+""" Start looping on the different bands """
+
+lams = {'Lp' : 3.8e-6,
+        'Mp' : 4.8e-6,
+        'N1' : 8.7e-6,
+        'N2' : 11.5e-6}
+for pscale, band in zip(pscales, bands):
     
+    # compute beam ratio, pupil size, and create the entrance pupil
+    conf['WAVELENGTH'] = lams[band]
     conf['PIXEL_SCALE'] = pscale
-    conf['WAVELENGTH'] = lam
-    lamstr = str(round(conf['WAVELENGTH']*1e9))
-    
-    """ Pupil """
     conf['PUPIL_FILE'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
     wfo, PUP = pupil(conf, get_pupil='amp')
     
-    """ Loading tip-tilt values """
-    conf['tip_tilt'] = (0, 0)
-    # conf['tip_tilt'] = np.random.randn(conf['TILT_CUBE'], 2)
-    
-    """ Loading AO residual values, getting multi-cube phase screen from Google Drive """
-    if True:
-        AO_residuals_cube = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[:15]
-    else:
-        AO_residuals_cube = np.array([None])
-    ncube = AO_residuals_cube.shape[0]
-    print('ncube = %s'%ncube)
-    
+    # propagate each frame of the cube
     psfs = None
     t0 = time.time()
     for i in range(ncube):
@@ -56,7 +62,7 @@ for pscale,lam in zip(pscales,lams):
         wf = copy.copy(wfo)
         wavefront_abberations(wf, AO_residuals=AO_residuals_cube[i], **conf)
         
-        """ Coronagraph modes"""
+        # METIS coronagraph modes
         if conf['MODE'] == 'ELT': # no Lyot stop (1, -0.3, 0)
             conf['LS_PARAMS'] = [1., -0.3, 0.]
             _, PUP = lyotstop(wf, conf, get_pupil='amp')
@@ -84,33 +90,31 @@ for pscale,lam in zip(pscales,lams):
 #                _, PUP = lyotstop(wf, conf, APP=APP, get_pupil='phase')
                 lyotstop(wf, conf, APP=APP)
         
-        """ Science image """
+        # get science image and stack PSFs
         psf = detector(wf, conf)
-        
-        # stack psfs
         if psfs is None:
             psfs = psf[None, ...]
         else:
             psfs = np.concatenate([psfs, psf[None, ...]])
-    
-    print(time.time() - t0)
     if ncube == 1:
         psfs = psfs[0]
+    print(time.time() - t0)
     
-    """ write to fits """
-    # File name
+    """ Write to .fits """
+    
+    # file name
     conf['PREFIX'] = ''
-    filename = '%s%s_lam%s'%(conf['PREFIX'], conf['MODE'], lamstr)
-    # save PSF (or PSFs cube)
+    filename = '%s%s_%s'%(conf['PREFIX'], conf['MODE'], band)
+    # save PSF (or PSFs cube) and/or Lyot-Stop
     if True:
         fits.writeto(os.path.join(conf['OUT_DIR'], 'PSF_' + filename) \
                 + '.fits', psfs, overwrite=True)
-    # save Lyot-Stop
     if False:
         fits.writeto(os.path.join(conf['OUT_DIR'], 'LS_' + filename) \
                 + '.fits', PUP, overwrite=True)
     
-    """ Save figures in .png """
+    """ Save figures to .png """
+    
     if False:
         plt.figure()
         #plt.imshow(psf**0.05, origin='lower')
@@ -119,6 +123,7 @@ for pscale,lam in zip(pscales,lams):
         plt.show(block=False)
         plt.savefig(os.path.join(conf['OUT_DIR'], 'PSF_' + filename) \
                 + '.png', dpi=300, transparent=True)
+    if False:
         plt.figure()
         plt.imshow(PUP[50:-50,50:-50], origin='lower', cmap='gray', vmin=0, vmax=1)
         #plt.imshow(PUP[50:-50,50:-50], origin='lower')

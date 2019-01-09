@@ -7,7 +7,7 @@ import os.path
 
 
 """ user inputs """
-mode = 'RAVC'                   # modes: ELT, VC, RAVC, APP, CL_4, CL_5,...
+mode = 'RAVC'                   # modes: ELT, VC, RAVC, APP, CL4, CL5,...
 scao_name = 'compass'           # SCAO simulator name
 cube_duration = 600             # SCAO cube duration in seconds
 cube_samp = 100                 # SCAO cube sampling in ms
@@ -16,31 +16,40 @@ adi_cube_samp = 100             # ADI cube sampling in ms
 adi_cube_avg = 0                # ADI cube averaging in ms
 lat = -24.63                    # telescope latitude in deg (Paranal -24.63)
 dec = -2.47                     # star declination in deg (e.g. 51 Eri -2.47)
-Lmag = 5                        # star magnitude at L
-mag5_ADU = 3.4539e9             # L'=5 star flux in counts/sec (@NACO L' filter)
-bckg_ADU = 229.78e3             # background flux in counts/sec (@NACO L' filter)
+band = 'Lp'                     # spectral band ('Lp', 'Mp', 'N1', 'N2')
+mag = 5                         # star magnitude at band
+psc_simu = 5                    # simulation (SCAO) platescale in mas/pix
+psc_inst = 5.25                 # instrument (METIS) platescale in mas/pix
 rim = 19                        # psf image radius (in pixels)
-psc_simu = 0.005                # simulations (SCAO) platescale in arcsec/pix
-psc_inst = 0.00525              # instruments (METIS) platescale in arcsec/pix
+add_bckg = True                 # add background
 calc_trans = False              # true if transmission must be calculated
-plot_cc = True                  # true if plot contrast curve
+plot_cc = False                 # true if plot contrast curve
 algo = vip_hci.medsub.median_sub# VIP post-processing algorithm
 
 """ working repository """
-#folder = '/mnt/disk4tb/METIS/compass600s10ms/'
-folder = '$HOME/INSTRUMENTS/METIS/compass600s10ms/'
+#folder = '/mnt/disk4tb/METIS/heeps-analysis/'
+folder = '$HOME/INSTRUMENTS/METIS/heeps-analysis/'
+folder_output = 'output_files'
+folder_offaxis = 'offaxis'
+folder_onaxis = '../cube_COMPASS_20180223_600s_100ms'
+# absolute paths
 folder = os.path.expandvars(folder)
+folder_output = os.path.join(folder, folder_output)
+folder_offaxis = os.path.join(folder, folder_offaxis)
+folder_onaxis = os.path.join(folder, folder_onaxis)
 
 """ output filename (can carry some values) """
-#filename = 'testname'
-filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_magL%s_%s' \
+filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_bckg%s_dec%sdeg_%s_mag%s_%s' \
         %(scao_name, cube_duration, cube_samp, adi_cube_duration, \
-        adi_cube_samp, adi_cube_avg, dec, Lmag, mode)
+        adi_cube_samp, adi_cube_avg, int(add_bckg), dec, band, mag, mode)
+#filename = 'testname'
 
 """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
 if calc_trans is True:
-    I_ELT = fits.getdata(os.path.join(folder, 'ELT_LS.fits'))**2
-    I_OFFAXIS = fits.getdata(os.path.join(folder, 'OFFAXIS_%s_LS.fits'%mode))**2
+    I_ELT = fits.getdata(os.path.join(folder_offaxis, 'LS_%s_%s.fits' \
+            %('ELT', band)))**2
+    I_OFFAXIS = fits.getdata(os.path.join(folder_offaxis, 'LS_%s_%s.fits' \
+            %(mode, band)))**2
     trans = np.sum(I_OFFAXIS)/np.sum(I_ELT)
 else:
     trans_all = {'ELT': 1.,
@@ -51,24 +60,28 @@ else:
 
 """ get normalized off-axis PSF (single) """
 # total flux of the non-coronagraphic PSF
-psf_ELT = fits.getdata(os.path.join(folder, 'ELT_PSF.fits'))
+psf_ELT = fits.getdata(os.path.join(folder_offaxis, 'PSF_%s_%s.fits' \
+        %('ELT', band)))
 ELT_flux = np.sum(psf_ELT)
 # normalized off-axis PSF
-psf_OFF = fits.getdata(os.path.join(folder, 'OFFAXIS_%s_PSF.fits'%mode))
+psf_OFF = fits.getdata(os.path.join(folder_offaxis, 'PSF_%s_%s.fits' \
+        %(mode, band)))
 psf_OFF /= ELT_flux
 
 """ get normalized on-axis PSFs (cube, resampled, and averaged) """
 # load cube, and format to 3D
-psf_ON = fits.getdata(os.path.join(folder, 'ONAXIS_%s_PSF.fits'%mode))
+psf_ON = fits.getdata(os.path.join(folder_onaxis, 'PSF_%s_%s.fits' \
+        %(mode, band)))
 if psf_ON.ndim != 3:
     psf_ON = np.array(psf_ON, ndmin=3)
+# save PSF initial shape
+(ncube, xon, yon) = psf_ON.shape
 # resample based on ADI sampling vs simulation sampling
 nsamp = int(adi_cube_samp/cube_samp + .5)
 psf_ON = psf_ON[::nsamp,:]
 # average frames
 navg = max(1, int(adi_cube_avg/adi_cube_samp + .5))
 if navg > 1:
-    (ncube, xon, yon) = psf_ON.shape
     end = ncube - ncube % navg
     psf_ON = np.mean(psf_ON[:end].reshape(-1, navg, xon, yon), axis=1)
 # normalized coronagraphic (on-axis) PSFs
@@ -81,22 +94,33 @@ psf_OFF = vip_hci.preproc.frame_px_resampling(psf_OFF, psc_simu/psc_inst)
 psf_ON = psf_ON.clip(min=0)
 psf_OFF = psf_OFF.clip(min=0)
 
-""" add noises: star, background, photon """
-# cube shape
-(ncube, xon, yon) = psf_ON.shape
-# detector integration time
+""" calculate detector integration time (DIT) """
 DIT = adi_cube_duration/ncube
-# star flux
-star_flux = DIT * mag5_ADU * 10**(-0.4*(Lmag - 5))
-# background flux
-bckg_flux = DIT * bckg_ADU
-# add the stellar flux and the background
+
+""" rescale PSFs to stellar flux """
+# magnitude 5 star flux [e-/s], from Roy (Jan 8, 2019)
+mag5_ADU_all = {'Lp' : 1.834e+09,
+                'Mp' : 5.204e+08,
+                'N1': 2.291e+08,
+                'N2': 2.398e+08}
+# rescale to star flux
+star_flux = DIT * mag5_ADU_all[band] * 10**(-0.4*(mag - 5))
 psf_OFF *= star_flux
 psf_ON *= star_flux
-psf_ON += bckg_flux*trans
-# generate a cube of random noise ~ N(0,1) * sqrt(psf)
-noise = np.random.randn(ncube, xon, yon) * np.sqrt(psf_ON)
-psf_ON += noise
+
+""" add background and photon noise ~ N(0,1) * sqrt(psf)"""
+if add_bckg is True:
+    # background flux [e-/s/pix], from from Roy (Jan 8, 2019)
+    bckg_ADU_all = {'Lp' : 2.754e+05,
+                    'Mp' : 2.010e+06,
+                    'N1': 1.059e+08,
+                    'N2': 3.293e+08}
+    # add the background * transmission
+    bckg_flux = DIT * bckg_ADU_all[band]
+    psf_ON += bckg_flux*trans
+    # add photon noise
+    noise = np.random.standard_normal(psf_ON.shape) * np.sqrt(psf_ON)
+    psf_ON += noise
 
 """ VIP: aperture photometry of psf_OFF used to scale the contrast """
 # get the center pixel
@@ -127,13 +151,13 @@ pa = -np.rad2deg(np.arctan2(-np.sin(hr), np.cos(dr)*np.tan(lr)-np.sin(dr)*np.cos
 # psf after post-processing
 out, derot, psf_pp = algo(psf_ON, pa, full_output=True)
 # contrast curve after post-processing
-cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, fwhm, psc_inst, \
+cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, fwhm, psc_inst/1e3, \
         starphot, algo=algo, nbranch=1, sigma=5, debug=False, plot=False)
 
 """ saving to fits files """
-fits.writeto(os.path.join(folder, 'psf_' + filename + '.fits'), psf_pp, overwrite=True)
+fits.writeto(os.path.join(folder_output, 'psf_' + filename + '.fits'), psf_pp, overwrite=True)
 hdu = fits.PrimaryHDU(cc_pp)
-hdu.writeto(os.path.join(folder, 'cc_' + filename + '.fits'), overwrite=True)
+hdu.writeto(os.path.join(folder_output, 'cc_' + filename + '.fits'), overwrite=True)
 
 """ figure """
 if plot_cc is True:
@@ -148,7 +172,7 @@ if plot_cc is True:
     plt.xlabel("Angular separation [arcsec]")
     plt.ylabel(r"5-$\sigma$ sensitivity")
     plt.legend()
-    plt.xlim([0, 0.6])
+    plt.xlim(left=0)
     plt.ylim([1e-7, 1e-0])
     plt.show(block=False)
-    plt.savefig(os.path.join(folder, 'cc_' + filename + '.png'), dpi=300, transparent=True)
+    plt.savefig(os.path.join(folder_output, 'cc_' + filename + '.png'), dpi=300, transparent=True)

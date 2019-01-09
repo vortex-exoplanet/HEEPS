@@ -2,6 +2,7 @@ import numpy as np
 from skimage.transform import resize
 import proper
 from astropy.io import fits
+import astropy.units as u
 import os.path
 
 def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
@@ -12,7 +13,7 @@ def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
     gridsize = conf['GRIDSIZE']
     
     # compute the beam ratio
-    beam_ratio = conf['PIXEL_SCALE']*4.85e-9/(lam/diam)
+    beam_ratio = (conf['PIXEL_SCALE']*u.mas/(lam/diam)).to('rad').value
     conf['beam_ratio'] = beam_ratio
     # compute the pupil size, must be odd (PROPER sets the center up-right next to the grid center)
     npupil = np.ceil(gridsize*beam_ratio)
@@ -21,6 +22,9 @@ def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
     # calculate the size of the pupil to pad with zeros
     pad = int((gridsize - npupil)/2)
     
+    # begin PROPER
+    wfo = proper.prop_begin(diam, lam, gridsize, beam_ratio)
+    
     # select pupil file, amongst various missing segments configurations
     pupil_file = {
     0: conf['PUPIL_FILE'],
@@ -28,9 +32,6 @@ def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
     2: '/ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits',
     4: '/ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits',
     7: '/ELT_2048_37m_11m_5mas_nospiders_7missing_1_cut.fits'}
-    
-    # begin PROPER
-    wfo = proper.prop_begin(diam, lam, gridsize, beam_ratio)
     
     # create a pupil with circular obscuration (default), or load pupil from file
     if pupil_file is None:
@@ -60,5 +61,3 @@ def pupil(conf, pupil_file=None, get_pupil='no', dnpup=50):
         return wfo, proper.prop_get_phase(wfo)[pad+1-dnpup:-pad+dnpup, pad+1-dnpup:-pad+dnpup]
     else:
         return wfo
-    
-    return wfo
