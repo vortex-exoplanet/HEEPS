@@ -1,11 +1,4 @@
-#!/usr/bin/env python3
-
-# =============================================================================
-#       Example file for creating a coronagraphic/non-coronagraphic METIS PSF
-# =============================================================================
-
-""" Required libraries """
-import matplotlib.pyplot as plt # for plotting simulated PSFs
+import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits 
 from heeps.config import conf, download_from_gdrive
@@ -17,11 +10,7 @@ import os.path
 import copy
 import time
 
-
-""" Default simulation configuration defined in "read_config.py" can be 
-overridden here by updating the dictionary """
-
-# user inputs
+""" user inputs """
 bands = ('Lp', 'Mp', 'N1', 'N2')
 pscales = (5, 5, 10, 10)
 conf['MODE'] = 'RAVC'
@@ -29,7 +18,7 @@ conf['CL_DIAM'] = 4
 conf['ONAXIS'] = True
 conf['STATIC_NCPA'] = False
 
-# tip-tilt values
+# tip/tilt values
 conf['tip_tilt'] = (0, 0)
 
 # AO residual values
