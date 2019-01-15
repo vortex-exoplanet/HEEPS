@@ -30,12 +30,12 @@ def metis_modes(wfo, conf):
         lyotstop(wfo, conf)
     elif conf['MODE'] == 'OFFAXIS': # only Lyot stop
         print('No phase mask')
-        lyotstop(wf, conf)
+        lyotstop(wfo, conf)
     elif conf['MODE'] == 'OFFAXIS_RA': # only Lyot stop and ring apodizer
         print('No phase mask')
         RAVC=True
-        apodization(wf, conf, RAVC=RAVC)
-        lyotstop(wf, conf, RAVC=RAVC)
+        apodization(wfo, conf, RAVC=RAVC)
+        lyotstop(wfo, conf, RAVC=RAVC)
     else:
         print('ELT PSF')
     return wfo
