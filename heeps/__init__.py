@@ -4,7 +4,7 @@ __version__ = "0.1.0"
 
 
 from . import abberations  
-from . import adi  
+from . import contrast  
 from . import config  
 from . import coronagraphs  
 from . import detector  
