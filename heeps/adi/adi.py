@@ -129,7 +129,7 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_file',
     
     """ add background and photon noise ~ N(0,1) * sqrt(psf)"""
     if add_bckg is True:
-        # background flux [e-/s/pix], from from Roy (Jan 8, 2019)
+        # background flux [e-/s/pix], from Roy (Jan 8, 2019)
         bckg_ADU_all = {'Lp' : 2.754e+05,
                         'Mp' : 2.010e+06,
                         'N1': 1.059e+08,

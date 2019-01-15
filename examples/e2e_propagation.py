@@ -11,8 +11,8 @@ import copy
 import time
 
 """ user inputs """
-bands = ('Lp', 'Mp', 'N1', 'N2')
-pscales = (5, 5, 10, 10)
+bands = ['Lp', 'Mp', 'N1', 'N2']
+pscales = [5, 5, 10, 10]
 conf['MODE'] = 'RAVC'
 conf['CL_DIAM'] = 4
 conf['ONAXIS'] = True
