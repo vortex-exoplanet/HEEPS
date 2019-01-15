@@ -1,4 +1,4 @@
-import matplotlib; matplotlib.use('agg') # to run on a headless server
+#import matplotlib; matplotlib.use('agg') # to run on a headless server
 import matplotlib.pyplot as plt
 import os.path
 from astropy.io import fits
@@ -24,8 +24,8 @@ colors = ['C0', 'C1']
 linestyles = ['-','--']
 
 # working repository
-folder = '/mnt/disk4tb/METIS/heeps-analysis/'
-#folder = '$HOME/INSTRUMENTS/METIS/heeps-analysis/'
+#folder = '/mnt/disk4tb/METIS/heeps-analysis/'
+folder = '$HOME/INSTRUMENTS/METIS/heeps-analysis/'
 path_offaxis = 'offaxis'
 path_onaxis = '../cube_COMPASS_20180223_600s_100ms'
 path_output = 'output_files'
