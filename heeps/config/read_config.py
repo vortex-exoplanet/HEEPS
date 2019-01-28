@@ -33,6 +33,8 @@ if not os.path.isfile(os.path.join(conf['INPUT_DIR'], conf['testfile'])):
         zip_ref.extractall(conf['data_folder'])
     os.remove(conf['gdriveZip'])
 
+# number of cores for multiprocessing
+conf['cpucount'] = 1
 
 # =============================================================================
 #           Define parameters for Telescope
@@ -49,7 +51,7 @@ conf['MIS_SEGMENTS_NU'] = 0                # number of missing segments
 # SCAO team currently uses circular pupil with secondary obstruction
 conf['PUPIL_FILE'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
 conf['PREFIX'] = 'test'                 # prefix for saving fits_files
-conf['PIXEL_SCALE'] = 5.0               # plate scale in milli_arc_sec/pixel
+conf['PIXEL_SCALE'] = 5.21              # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
 conf['F_LENS'] = 658.6                  # float, meters, focal distance
 conf['DEBUG'] = False                   # various fits files for coronagraphic propagation is saved in out_dir
 conf['DEBUG_PRINT'] = False             # prints various values
@@ -62,8 +64,7 @@ conf['TILT_2D'] = [0.0, 0.0]
 conf['TILT_CUBE'] = 10                  # creates an array of (n,2) tip/tilt values
 conf['ATM_SCREEN_NO'] = 0               # no phase screen 
 conf['ATM_SCREEN_2D'] = 'metis_370P_35L_HCI_Feb18_rwf8160_cut.fits'      # single phase screen
-#conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 phase screens
-conf['ATM_SCREEN_CUBE'] = 'cube_COMPASS_20180223_600s_100ms.fits'        # 5999 phase screens
+conf['ATM_SCREEN_CUBE'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits' # 1000 phase screens
 conf['GDRIVE_ID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH' # google drive ID linked to the fits file 
 
 conf['ISLAND_PISTON'] = None

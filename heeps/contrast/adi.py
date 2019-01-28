@@ -5,10 +5,10 @@ from astropy.io import fits
 import os.path
 
 
-def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_file', 
+def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files', 
         mode='VC', scao_name='compass', cube_duration=600, cube_samp=100, 
         adi_cube_duration=3600, adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, 
-        dec=-2.47, band='Lp', mag=5, psc_simu=5, psc_inst=5.21, rim=19, 
+        dec=-2.47, band='Lp', mag=5, psc_simu=5.21, psc_inst=5.21, rim=19, 
         add_bckg=True, calc_trans=False, plot_cc=False):
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 

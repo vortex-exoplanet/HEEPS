@@ -4,7 +4,6 @@ from .coronagraphs import metis_modes
 from .detector import detector
 
 
-#from heeps import pupil, wavefront_abberations, detector, apodization, vortex,lyotstop # loads all HEEPS scripts required for simuation
 from copy import deepcopy
 import numpy as np
 from astropy.io import fits 
@@ -42,20 +41,19 @@ def multi_cube(atm_screen,TILT,conf,wfo1,iter):
     if (TILT.ndim == 2):
         TILT_iter = TILT[iter,:]
     else:
-        TILT_iter = TILT      
+        TILT_iter = TILT
     wavefront_abberations(wfo, AO_residuals=atm_screen_iter, tip_tilt=TILT_iter, **conf)
     metis_modes(wfo, conf)
-    psf = detector(wfo, conf)	
+    psf = detector(wfo, conf)
     return psf
 
-        
-def metis_hci(conf, atm_screen, TILT):     
-    if (propagation_test(atm_screen,TILT)=='single'):
+def metis_hci(conf, atm_screen, TILT):
+    if (propagation_test(atm_screen,TILT) == 'single'):
         wfo = pupil(conf) 
         wavefront_abberations(wfo,  AO_residuals=atm_screen, tip_tilt=TILT, **conf)
         metis_modes(wfo, conf)
-        psf = detector(wfo, conf)	
-        fits.writeto(conf['OUT_DIR'] + conf['PREFIX'] + '_PSF_'+ conf['MODE'] +'.fits', psf, overwrite=True)        
+        psf = detector(wfo, conf)
+        fits.writeto(conf['OUT_DIR'] + conf['PREFIX'] + '_PSF_'+ conf['MODE'] +'.fits', psf, overwrite=True)
     else:
         temp_prop(conf) # takes care of calibration files, if not present
         if (atm_screen.ndim == 3):
@@ -64,17 +62,17 @@ def metis_hci(conf, atm_screen, TILT):
             length_cube = TILT.shape[0]
         wfo1 = pupil(conf)
         
-        if platform == "linux" or platform == "linux2":
-            cpucount = 4 # number of CPUs to use 
-            p = Pool(cpucount)   
-            func = partial(multi_cube,atm_screen,TILT,conf,wfo1)
-            psf_cube = np.array(p.map(func, range(length_cube)))     
+        if conf['cpucount'] != 1 and platform in ('linux', 'linux2', 'darwin'):
+            p = Pool(conf['cpucount'])
+            func = partial(multi_cube, atm_screen, TILT, conf, wfo1)
+            psf_cube = np.array(p.map(func, range(length_cube)))
         else:
             psf_cube = np.zeros((length_cube, conf['N_D'], conf['N_D']))
             for i in range(length_cube):
                 psf_cube[i,:,:] = multi_cube(atm_screen,TILT,conf,wfo1,i)
         fits.writeto(conf['OUT_DIR'] + conf['PREFIX'] + '_PSF_cube_'+ conf['MODE'] +'.fits', psf_cube, overwrite=True)
         psf = psf_cube[0]
+    
     return psf
 
 

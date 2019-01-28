@@ -14,7 +14,7 @@ from heeps.config import conf, download_from_gdrive
 import os.path
 
 
-conf['WAVELENGTH'] = 3.80*10**-6 
+conf['WAVELENGTH'] = 3.8e-6 
 conf['CHARGE'] = 2 # charge is modified here
 conf['MODE'] = 'OFFAXIS'
 conf['STATIC_NCPA'] = False

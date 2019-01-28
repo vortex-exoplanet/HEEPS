@@ -13,11 +13,12 @@ from heeps.config import conf, download_from_gdrive
 
 
 """
-Default simulation cofiguration defined in "read_config.py" can be 
+Default simulation configuration defined in "read_config.py" can be 
 overridden here by updating the dictionary
 """
-conf['WAVELENGTH'] = 3.80*10**-6 
+conf['WAVELENGTH'] = 3.8e-6 
 conf['MODE'] = 'VC'
+conf['cpucount'] = 4
 
 # getting multi-cube phase screen
 
@@ -28,7 +29,7 @@ if get_cube is True:
 
 TILT = np.array(conf['TILT_2D']) 
 
-psf = metis_hci(conf, conf['ATM_SCREEN']  , TILT)
+psf = metis_hci(conf, conf['ATM_SCREEN'], TILT)
 
 
 plt.figure()
