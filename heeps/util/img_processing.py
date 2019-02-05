@@ -3,6 +3,74 @@ import scipy.optimize as opt
 import scipy.special as spe
 import matplotlib.pyplot as plt
 from matplotlib import cm           # palette for image display
+from skimage.transform import resize
+
+def resize_img(img, new_size):
+    ''' Resize an image. Handles even and odd sizes.
+    '''
+    requirement = "new_size must be an int or a tuple/list of size 2."
+    assert type(new_size) in [int, tuple, list], requirement
+    if type(new_size) is int:
+        new_size = (new_size, new_size)
+    else:
+        assert len(new_size) is 2, requirement
+    img = resize(img, new_size, preserve_range=True, mode='reflect', anti_aliasing=True)
+    
+    return img
+
+def pad_img(img, padded_size, pad_value=0):
+    ''' Pad an img with a value (default is zero). Handles even and odd sizes.
+    '''
+    requirement = "padded_size must be an int or a tuple/list of size 2."
+    assert type(padded_size) in [int, tuple, list], requirement
+    if type(padded_size) is int:
+        (x1, y1) = (padded_size, padded_size)
+    else:
+        assert len(padded_size) is 2, requirement
+        (x1, y1) = padded_size
+    (x2, y2) = img.shape
+    # determine padding region
+    assert not (x1<x2 or y1<y2), "padding region can't be smaller than image size."
+    dx = int((x1 - x2)/2)
+    dy = int((y1 - y2)/2)
+    padx = (dx, dx) if (x1-x2)%2==0 else (dx+1, dx)
+    pady = (dy, dy) if (y1-y2)%2==0 else (dy+1, dy)
+    # pad image
+    img = np.pad(img, [padx, pady], mode='constant', constant_values=pad_value)
+    
+    return img
+
+def crop_img(img, new_size, margin=0):
+    ''' Crop an img to a new size. Handles even and odd sizes. 
+    Can add an optional margin of length 1, 2 (x,y) or 4 (x1,x2,y1,y2).
+    '''
+    requirement = "new_size must be an int or a tuple/list of size 2."
+    assert type(new_size) in [int, tuple, list], requirement
+    if type(new_size) is int:
+        (x1, y1) = (new_size, new_size)
+    else:
+        assert len(new_size) is 2, requirement
+        (x1, y1) = new_size
+    (x2, y2) = img.shape
+    # determine cropping region
+    dx = int((x2 - x1)/2)
+    dy = int((y2 - y1)/2)
+    cropx = (dx, dx) if (x2-x1)%2==0 else (dx+1, dx)
+    cropy = (dy, dy) if (y2-y1)%2==0 else (dy+1, dy)
+    # check for margins
+    requirement2 = "margin must be an int or a tuple/list of size 2 or 4."
+    assert type(margin) in [int, tuple, list], requirement2
+    if type(margin) is int:
+        (mx1, mx2, my1, my2) = (margin, margin, margin, margin)
+    elif len(margin) is 2:
+        (mx1, mx2, my1, my2) = (margin[0], margin[0], margin[1], margin[1])
+    else:
+        assert len(margin) is 4, requirement2
+        (mx1, mx2, my1, my2) = margin
+    # crop image
+    img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
+    
+    return img
 
 def twoD_Gaussian(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     ''' Model function. 2D Gaussian.
