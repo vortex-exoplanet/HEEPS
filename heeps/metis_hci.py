@@ -1,5 +1,5 @@
 from .pupil import pupil
-from .abberations import wavefront_abberations
+from .aberrations import wavefront_aberrations
 from .coronagraphs import metis_modes
 from .detector import detector
 
@@ -42,7 +42,7 @@ def multi_cube(atm_screen,TILT,conf,wfo1,iter):
         TILT_iter = TILT[iter,:]
     else:
         TILT_iter = TILT
-    wavefront_abberations(wfo, AO_residuals=atm_screen_iter, tip_tilt=TILT_iter, **conf)
+    wavefront_aberrations(wfo, AO_residuals=atm_screen_iter, tip_tilt=TILT_iter, **conf)
     metis_modes(wfo, conf)
     psf = detector(wfo, conf)
     return psf
@@ -50,7 +50,7 @@ def multi_cube(atm_screen,TILT,conf,wfo1,iter):
 def metis_hci(conf, atm_screen, TILT):
     if (propagation_test(atm_screen,TILT) == 'single'):
         wfo = pupil(conf) 
-        wavefront_abberations(wfo,  AO_residuals=atm_screen, tip_tilt=TILT, **conf)
+        wavefront_aberrations(wfo,  AO_residuals=atm_screen, tip_tilt=TILT, **conf)
         metis_modes(wfo, conf)
         psf = detector(wfo, conf)
         fits.writeto(conf['OUT_DIR'] + conf['PREFIX'] + '_PSF_'+ conf['MODE'] +'.fits', psf, overwrite=True)

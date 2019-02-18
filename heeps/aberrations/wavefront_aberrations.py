@@ -7,7 +7,7 @@ from .atmosphere import atmosphere
 from .static_ncpa import static_ncpa
 
 
-def wavefront_abberations(wfo, AO_residuals=None, Island_Piston=None, tip_tilt=None,
+def wavefront_aberrations(wfo, AO_residuals=None, Island_Piston=None, tip_tilt=None,
             STATIC_NCPA=False, **conf):
     npupil = conf['NPUPIL']
     # add AO residuals

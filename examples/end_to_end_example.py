@@ -31,7 +31,7 @@ tilt = np.array(conf['TILT_2D'])
 # =============================================================================
 # End to end simulation example, showing propagation through each plane; 
 #   1. Pupil creation 
-#   2. Addition of wavefront abberations
+#   2. Addition of wavefront aberrations
 #   3. Coronagraph system
 #   4. Detector plane
 # =============================================================================
@@ -39,8 +39,8 @@ tilt = np.array(conf['TILT_2D'])
 #   1. ELT Pupil Plane
 wfo = heeps.pupil.pupil(conf)
 
-#   2. Wavefront abberations
-heeps.abberations.wavefront_abberations(wfo, AO_residuals=conf['ATM_SCREEN'], 
+#   2. Wavefront aberrations
+heeps.aberrations.wavefront_aberrations(wfo, AO_residuals=conf['ATM_SCREEN'], 
         tip_tilt=tilt, **conf)
 
 #   3. Coronagraph selection -- Vortex Classical (VC) / RAVC / CL / APP --
