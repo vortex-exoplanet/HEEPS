@@ -8,11 +8,11 @@ def lyotstop(wf, conf, RAVC=None, APP=None, get_pupil='no', dnpup=50):
     """Add a Lyot stop, or an APP."""
     
     # load parameters
-    npupil = conf['NPUPIL']
-    pad = int((conf['GRIDSIZE'] - npupil)/2)
+    npupil = conf['npupil']
+    pad = int((conf['gridsize'] - npupil)/2)
     
     # get LS misalignments
-    LS_misalignment = (np.array(conf['LS_MISALIGN'])*npupil).astype(int)
+    LS_misalignment = (np.array(conf['LS_misalign'])*npupil).astype(int)
     dx_amp, dy_amp, dz_amp = LS_misalignment[0:3]
     dx_phase, dy_phase, dz_phase = LS_misalignment[3:6]
     
@@ -21,10 +21,10 @@ def lyotstop(wf, conf, RAVC=None, APP=None, get_pupil='no', dnpup=50):
         
         # Lyot stop parameters: R_out, dR_in, spi_width
         # outer radius (absolute %), inner radius (relative %), spider width (m)
-        (R_out, dR_in, spi_width) = conf['LS_PARAMS']
+        (R_out, dR_in, spi_width) = conf['LS_params']
         
         # Lyot stop inner radius at least as large as obstruction radius
-        R_in = conf['R_OBSTR']
+        R_in = conf['R_obstr']
         
         # case of a ring apodizer
         if RAVC is True:
@@ -41,15 +41,15 @@ def lyotstop(wf, conf, RAVC=None, APP=None, get_pupil='no', dnpup=50):
         if R_in > 0:
             proper.prop_circular_obscuration(wf, R_in, dx_amp, dy_amp, NORM=True)
         if spi_width > 0:
-            for angle in conf['SPIDERS_ANGLE']:
-                proper.prop_rectangular_obscuration(wf, spi_width, 2*conf['DIAM'], \
+            for angle in conf['spiders_angle']:
+                proper.prop_rectangular_obscuration(wf, spi_width, 2*conf['diam'], \
                         dx_amp, dy_amp, ROTATION=angle)
     
     # case 2: APP (no Lyot stop)
     else: 
         # get amplitude and phase files
-        APP_amp_file = os.path.join(conf['INPUT_DIR'], conf['APP_AMP_FILE'])
-        APP_phase_file = os.path.join(conf['INPUT_DIR'], conf['APP_PHASE_FILE'])
+        APP_amp_file = os.path.join(conf['input_dir'], conf['APP_amp_file'])
+        APP_phase_file = os.path.join(conf['input_dir'], conf['APP_phase_file'])
         # get amplitude and phase data
         APP_amp = fits.getdata(APP_amp_file) if os.path.isfile(APP_amp_file) \
                 else np.ones((npupil, npupil))

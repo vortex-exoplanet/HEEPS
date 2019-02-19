@@ -9,10 +9,10 @@ from .circular_apodization import circular_apodization
 
 def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_file=0, apodizer_misalignment=0, Debug_print=False):
     
-    r_obstr = conf['R_OBSTR']
-    npupil = conf['NPUPIL']
+    r_obstr = conf['R_obstr']
+    npupil = conf['npupil']
     
-    apodizer_misalignment = np.array(conf['RAVC_MISALIGN'])
+    apodizer_misalignment = np.array(conf['RAVC_misalign'])
     n = int(proper.prop_get_gridsize(wf))
     apodizer = 1
     if (RAVC == True):

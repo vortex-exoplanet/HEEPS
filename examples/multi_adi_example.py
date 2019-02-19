@@ -12,26 +12,26 @@ conf['send_subject'] = 'fenrir'
 conf['send_message'] = 'ADI simulation finished'
 
 # list of cases
-cases = [{'band': 'Lp', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': True},
-         {'band': 'Lp', 'mode': 'VC', 'pscale': 5.21, 'add_bckg': True},
-         {'band': 'Lp', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': True},
-         {'band': 'Mp', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': True},
-         {'band': 'Mp', 'mode': 'VC', 'pscale': 5.21, 'add_bckg': True},
-         {'band': 'Mp', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': True},
+cases = [{'band': 'L', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': True},
+         {'band': 'L', 'mode': 'CVC', 'pscale': 5.21, 'add_bckg': True},
+         {'band': 'L', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': True},
+         {'band': 'M', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': True},
+         {'band': 'M', 'mode': 'CVC', 'pscale': 5.21, 'add_bckg': True},
+         {'band': 'M', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': True},
          {'band': 'N1', 'mode': 'ELT', 'pscale': 10.78, 'add_bckg': True},
-         {'band': 'N1', 'mode': 'VC', 'pscale': 10.78, 'add_bckg': True},
+         {'band': 'N1', 'mode': 'CVC', 'pscale': 10.78, 'add_bckg': True},
          {'band': 'N2', 'mode': 'ELT', 'pscale': 10.78, 'add_bckg': True},
-         {'band': 'N2', 'mode': 'VC', 'pscale': 10.78, 'add_bckg': True},
-         {'band': 'Lp', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': False},
-         {'band': 'Lp', 'mode': 'VC', 'pscale': 5.21, 'add_bckg': False},
-         {'band': 'Lp', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': False},
-         {'band': 'Mp', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': False},
-         {'band': 'Mp', 'mode': 'VC', 'pscale': 5.21, 'add_bckg': False},
-         {'band': 'Mp', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'N2', 'mode': 'CVC', 'pscale': 10.78, 'add_bckg': True},
+         {'band': 'L', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'L', 'mode': 'CVC', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'L', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'M', 'mode': 'ELT', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'M', 'mode': 'CVC', 'pscale': 5.21, 'add_bckg': False},
+         {'band': 'M', 'mode': 'RAVC', 'pscale': 5.21, 'add_bckg': False},
          {'band': 'N1', 'mode': 'ELT', 'pscale': 10.78, 'add_bckg': False},
-         {'band': 'N1', 'mode': 'VC', 'pscale': 10.78, 'add_bckg': False},
+         {'band': 'N1', 'mode': 'CVC', 'pscale': 10.78, 'add_bckg': False},
          {'band': 'N2', 'mode': 'ELT', 'pscale': 10.78, 'add_bckg': False},
-         {'band': 'N2', 'mode': 'VC', 'pscale': 10.78, 'add_bckg': False}]
+         {'band': 'N2', 'mode': 'CVC', 'pscale': 10.78, 'add_bckg': False}]
 
 def multi_cc(cases, ind):
     path_offaxis = '/mnt/disk4tb/METIS/offaxis'

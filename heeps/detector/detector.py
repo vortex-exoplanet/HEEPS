@@ -2,11 +2,11 @@ import proper
 from astropy.io import fits 
 
 def detector(wfo, conf):
-    f_lens = conf['F_LENS']
-    nd = conf['N_D']
-    mode = conf['MODE']
-    prefix = conf['PREFIX']
-    Debug = conf['DEBUG']
+    f_lens = conf['focal']
+    nd = conf['ndet']
+    mode = conf['mode']
+    prefix = conf['prefix']
+    Debug = False
       
     n = proper.prop_get_gridsize(wfo)
     if (n >= nd):

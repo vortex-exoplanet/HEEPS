@@ -18,11 +18,11 @@ def atmosphere(wfo, phase_screen, **conf):
     # number of screens
     ncube = phase_screen.shape[0]
     # pupil size
-    npupil = conf['NPUPIL']
+    npupil = conf['npupil']
     # pupil useful radius
     r = int((proper.prop_get_gridsize(wfo) - npupil)/2)
     # wavenumber (spatial angular frequency) in rad / µm
-    k = 2*np.pi/(conf['WAVELENGTH']*u.m).to('um').value
+    k = 2*np.pi/(conf['lam']*u.m).to('um').value
     
     # create a function for rescaling the phase screens
     rescale = lambda p: resize(p, (npupil, npupil), preserve_range=True, mode='reflect')

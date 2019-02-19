@@ -13,15 +13,15 @@ VIP cc data:
 """
 
 # inputs
-bands = ['Lp', 'Mp', 'N1', 'N2']#['N1', 'N2']# 
+bands = ['L', 'M', 'N1', 'N2']#['N1', 'N2']# 
 mag = 5# -1.6#
 bckg = False
 
 # modes per band
-modes = {'Lp': ['ELT', 'VC', 'RAVC'],
-         'Mp': ['ELT', 'VC', 'RAVC'],
-         'N1': ['ELT', 'VC'],
-         'N2': ['ELT', 'VC']}
+modes = {'L': ['ELT', 'CVC', 'RAVC'],
+         'M': ['ELT', 'CVC', 'RAVC'],
+         'N1': ['ELT', 'CVC'],
+         'N2': ['ELT', 'CVC']}
 colors = ['k', 'C0', 'C1']
 
 # file names

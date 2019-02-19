@@ -8,25 +8,24 @@
 import matplotlib.pyplot as plt # for plotting simulated PSFs
 import numpy as np
 from astropy.io import fits 
-
 import heeps
 from heeps.config import conf, download_from_gdrive
 import os.path
 
 
-conf['WAVELENGTH'] = 3.8e-6 
-conf['CHARGE'] = 2 # charge is modified here
-conf['MODE'] = 'OFFAXIS'
-conf['STATIC_NCPA'] = False
+# HCI mode inputs
+conf['lam'] = 3.8e-6
+conf['band'] = 'L'
+conf['mode'] = 'RAVC'
+conf['VC_charge'] = 2 # vortex charge is modified here
+conf['onaxis'] = True # True = on-axis, False = off-axis
+conf['tip_tilt'] = [0., 0.]
+conf['static_ncpa'] = False
+conf['prefix'] = 'test_'
 
-# loading multi-cube phase screen
-get_cube = True
-if get_cube is True:
-    download_from_gdrive(conf['GDRIVE_ID'], conf['INPUT_DIR'], conf['ATM_SCREEN_CUBE'])
-    conf['ATM_SCREEN'] = fits.getdata(conf['INPUT_DIR'] + conf['ATM_SCREEN_CUBE'])[0]
-
-tilt = np.array(conf['TILT_2D']) 
-
+# loading cube of atmosphere phase screens
+download_from_gdrive(conf['atm_screen_gdriveID'], conf['input_dir'], conf['atm_screen_cube'])
+atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_cube']))[0]
 
 # =============================================================================
 # End to end simulation example, showing propagation through each plane; 
@@ -40,24 +39,22 @@ tilt = np.array(conf['TILT_2D'])
 wfo = heeps.pupil.pupil(conf)
 
 #   2. Wavefront aberrations
-heeps.aberrations.wavefront_aberrations(wfo, AO_residuals=conf['ATM_SCREEN'], 
-        tip_tilt=tilt, **conf)
+heeps.aberrations.wavefront_aberrations(wfo, AO_residuals=atm_screen, **conf)
 
-#   3. Coronagraph selection -- Vortex Classical (VC) / RAVC / CL / APP --
-#    "Three coronagraphic planes Apodizer, focal plane mask & Lyot-stop"
+#   3. Coronagraph selection -- e.g. RAVC, CVC, APP, CLC --
+#    "Three coronagraphic planes: apodizer, focal plane mask & Lyot-stop"
 heeps.coronagraphs.metis_modes(wfo, conf)
 
 #   4. Detector plane
-psf = heeps.detector.detector(wfo,conf)	
-
-""" Science image """
-filename_PSF = conf['PREFIX'] + '_PSF_' + conf['MODE']
+psf = heeps.detector.detector(wfo, conf)
 
 
 """ Figures """
+filename_PSF = '%sPSF_%s_%s'%(conf['prefix'], conf['band'], conf['mode'])
 plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
 plt.show(block=False)
-plt.savefig(os.path.join(conf['OUT_DIR'], filename_PSF) + '.png', dpi=300, transparent=True)
+plt.savefig(os.path.join(conf['output_dir'], filename_PSF + '.png'), \
+        dpi=300, transparent=True)

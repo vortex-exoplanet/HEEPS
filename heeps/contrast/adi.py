@@ -6,9 +6,9 @@ import os.path
 
 
 def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files', 
-        mode='VC', scao_name='compass', cube_duration=600, cube_samp=100, 
+        mode='CVC', scao_name='compass', cube_duration=600, cube_samp=100, 
         adi_cube_duration=3600, adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, 
-        dec=-2.47, band='Lp', mag=5, psc_simu=5.21, psc_inst=5.21, rim=19, 
+        dec=-2.47, band='L', mag=5, psc_simu=5.21, psc_inst=5.21, rim=19, 
         add_bckg=True, calc_trans=False, plot_cc=False):
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -41,7 +41,7 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
         dec (float):
             Star declination in deg (e.g. 51 Eri -2.47)
         band ():
-            Spectral band ('Lp', 'Mp', 'N1', 'N2')
+            Spectral band ('L', 'M', 'N1', 'N2')
         mag (float):
             Star magnitude at band
         psc_simu (float):
@@ -72,7 +72,7 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
         trans = np.sum(I_OFFAXIS)/np.sum(I_ELT)
     else:
         trans_all = {'ELT': 1.,
-                      'VC': 0.9012406091763115,
+                      'CVC': 0.9012406091763115,
                     'RAVC': 0.3392759549914341,
                      'CL4': 0.502257180317745} # 4-lam/D diam classical Lyot mask
         trans = trans_all[mode]
@@ -118,8 +118,8 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     
     """ rescale PSFs to stellar flux """
     # magnitude 5 star flux [e-/s], from Roy (Jan 8, 2019)
-    mag5_ADU_all = {'Lp' : 1.834e+09,
-                    'Mp' : 5.204e+08,
+    mag5_ADU_all = {'L' : 1.834e+09,
+                    'M' : 5.204e+08,
                     'N1': 2.291e+08,
                     'N2': 2.398e+08}
     # rescale to star flux
@@ -130,8 +130,8 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     """ add background and photon noise ~ N(0,1) * sqrt(psf)"""
     if add_bckg is True:
         # background flux [e-/s/pix], from Roy (Jan 8, 2019)
-        bckg_ADU_all = {'Lp' : 2.754e+05,
-                        'Mp' : 2.010e+06,
+        bckg_ADU_all = {'L' : 2.754e+05,
+                        'M' : 2.010e+06,
                         'N1': 1.059e+08,
                         'N2': 3.293e+08}
         # add the background * transmission

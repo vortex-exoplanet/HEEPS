@@ -10,17 +10,17 @@ from ..fits import readfield
 
 
 def vortex(wfo, conf):
-    tmp_dir = conf['TMP_DIR']
+    tmp_dir = conf['temp_dir']
     n = int(proper.prop_get_gridsize(wfo))
     ofst = 0 # no offset
     ramp_sign = 1 #sign of charge is positive
     ramp_oversamp = 11. # vortex is oversampled for a better discretization
     
-    f_lens = conf['F_LENS']
-    diam = conf['DIAM']
-    charge = conf['CHARGE']
-    pixelsize = conf['PIXEL_SCALE']
-    Debug_print = conf['DEBUG_PRINT'] 
+    f_lens = conf['focal']
+    diam = conf['diam']
+    charge = conf['VC_charge']
+    pixelsize = conf['pscale']
+    Debug_print = False 
     
     if charge!=0:
         wavelength = proper.prop_get_wavelength(wfo) 
@@ -31,7 +31,7 @@ def vortex(wfo, conf):
 
         proper.prop_propagate(wfo, f_lens, 'inizio') # propagate wavefront
         proper.prop_lens(wfo, f_lens, 'focusing lens vortex') # propagate through a lens
-        proper.prop_propagate(wfo, f_lens, 'VC') # propagate wavefront
+        proper.prop_propagate(wfo, f_lens, 'CVC') # propagate wavefront
 
         if (os.path.isfile(my_file)==True):
             if (Debug_print == True):
@@ -55,7 +55,7 @@ def vortex(wfo, conf):
             proper.prop_define_entrance(wfo1)
             proper.prop_propagate(wfo1, f_lens, 'inizio') # propagate wavefront
             proper.prop_lens(wfo1, f_lens, 'focusing lens vortex') # propagate through a lens
-            proper.prop_propagate(wfo1, f_lens, 'VC') # propagate wavefront     
+            proper.prop_propagate(wfo1, f_lens, 'CVC') # propagate wavefront     
   
             writefield(tmp_dir,'zz_psf_'+calib, wfo1.wfarr) # write the pre-vortex field
             nramp = int(n*ramp_oversamp) #oversamp

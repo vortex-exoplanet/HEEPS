@@ -6,7 +6,7 @@ import heeps.util.img_processing as impro
 import numpy as np
 
 # inputs
-bands = ['Lp', 'Mp', 'N1', 'N2'] #['Lp'] #
+bands = ['L', 'M', 'N1', 'N2'] #['L'] #
 pscales = [5, 5, 10, 10] #[5] #
 N = 512
 (xc,yc) = (int(N/2),int(N/2))
@@ -16,10 +16,10 @@ rim = 250
 ylim = (1e-7, 1e0)
 
 # modes per band
-modes = {'Lp': ['VC', 'RAVC'],
-         'Mp': ['VC', 'RAVC'],
-         'N1': ['VC'],
-         'N2': ['VC']}
+modes = {'L': ['CVC', 'RAVC'],
+         'M': ['CVC', 'RAVC'],
+         'N1': ['CVC'],
+         'N2': ['CVC']}
 colors = ['C0', 'C1']
 linestyles = ['-','--']
 

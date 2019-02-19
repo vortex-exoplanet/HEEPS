@@ -6,15 +6,15 @@ from ..fits import readfield
 
 
 def lyot(wfo, conf):
-    tmp_dir = conf['TMP_DIR']
+    tmp_dir = conf['temp_dir']
     n = int(proper.prop_get_gridsize(wfo))
     ofst = 0 # no offset
     
-    f_lens = conf['F_LENS']
-    diam = conf['DIAM']
-    pixelsize = conf['PIXEL_SCALE']
-    Debug_print = conf['DEBUG_PRINT'] 
-    CL_diam = conf['CL_DIAM'] # classical lyot diam in lam/D
+    f_lens = conf['focal']
+    diam = conf['diam']
+    pixelsize = conf['pscale']
+    Debug_print = False 
+    CLC_diam = conf['CLC_diam'] # classical lyot diam in lam/D
     
     wavelength = proper.prop_get_wavelength(wfo) 
     gridsize = proper.prop_get_gridsize(wfo)
@@ -38,8 +38,8 @@ def lyot(wfo, conf):
         wfo._wfarr = (wfo._wfarr - psf_num)*vvc + perf_num # the wavefront takes into account the real pupil with the perfect-result vortex field
     else:
         samp = 100
-        n_samp = samp*int(np.ceil(CL_diam/beam_ratio))
-        Rext = round(samp/2.*CL_diam/beam_ratio)
+        n_samp = samp*int(np.ceil(CLC_diam/beam_ratio))
+        Rext = round(samp/2.*CLC_diam/beam_ratio)
         center = (n_samp - 1)/2. # 513
         temp = np.zeros([n_samp,n_samp])
         for i in range(n_samp):
