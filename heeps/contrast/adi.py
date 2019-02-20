@@ -16,47 +16,51 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     using the VIP package to perform ADI post-processing.
     
     Args:
-        path_offaxis (string):
+        path_offaxis (str):
             Path to off-axis PSFs
-        path_onaxis (string):
+        path_onaxis (str):
             Path to on-axis (cubes of) PSFs
-        path_output (string):
+        path_output (str):
             Path to output files
-        mode (string):
+        mode (str):
             HCI mode: ELT, VC, RAVC, APP, CL4, CL5,...
-        scao_name (string):
+        scao_name (str):
             SCAO simulator name
-        cube_duration (integer):
+        cube_duration (int):
             SCAO cube duration in seconds
-        cube_samp (integer):
+        cube_samp (int):
             SCAO cube sampling in ms
-        adi_cube_duration (integer):
+        adi_cube_duration (int):
             ADI cube duration in seconds
-        adi_cube_samp (integer):
+        adi_cube_samp (int):
             ADI cube sampling in ms
-        adi_cube_avg (integer):
+        adi_cube_avg (int):
             ADI cube averaging in ms
         lat (float):
             Telescope latitude in deg (Paranal -24.63)
         dec (float):
             Star declination in deg (e.g. 51 Eri -2.47)
-        band ():
-            Spectral band ('L', 'M', 'N1', 'N2')
+        band (str):
+            Spectral band (e.g. 'L', 'M', 'N1', 'N2')
         mag (float):
             Star magnitude at band
         psc_simu (float):
             Simulation (fits files) pixel scale in mas/pix
         psc_inst (float):
             Instrument pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
-        rim (integer):
+        rim (int):
             Psf image radius in pixels
-        add_bckg (boolean)
+        add_bckg (bool)
             True means background flux and photon noise are added 
-        calc_trans (boolean):
+        calc_trans (bool):
             True means transmission is calculated from fits files
-        plot_cc (boolean):
+        plot_cc (bool):
             True means contrast curve is plotted
     """
+    # format input folders
+    path_offaxis = os.path.normpath(os.path.expandvars(path_offaxis))
+    path_onaxis = os.path.normpath(os.path.expandvars(path_onaxis))
+    path_output = os.path.normpath(os.path.expandvars(path_output))
     
     """ output filename """
     filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s' \
@@ -66,31 +70,32 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
     if calc_trans is True:
         I_ELT = fits.getdata(os.path.join(path_offaxis, 'LS_%s_%s.fits' \
-                %('ELT', band)))**2
+                %(band, 'ELT')))**2
         I_OFFAXIS = fits.getdata(os.path.join(path_offaxis, 'LS_%s_%s.fits' \
-                %(mode, band)))**2
+                %(band, mode)))**2
         trans = np.sum(I_OFFAXIS)/np.sum(I_ELT)
     else:
         trans_all = {'ELT': 1.,
-                      'CVC': 0.9012406091763115,
                     'RAVC': 0.3392759549914341,
-                     'CL4': 0.502257180317745} # 4-lam/D diam classical Lyot mask
+                     'CVC': 0.9012406091763115,
+                     'APP': 1.,
+                     'CLC': 0.502257180317745} # CLC occulter diam = 4lam/D
         trans = trans_all[mode]
     
     """ get normalized off-axis PSF (single) """
     # total flux of the non-coronagraphic PSF
     psf_ELT = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
-            %('ELT', band)))
+            %(band, 'ELT')))
     ELT_flux = np.sum(psf_ELT)
     # normalized off-axis PSF
     psf_OFF = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
-            %(mode, band)))
+            %(band, mode)))
     psf_OFF /= ELT_flux
     
     """ get normalized on-axis PSFs (cube, resampled, and averaged) """
     # load cube, and format to 3D
     psf_ON = fits.getdata(os.path.join(path_onaxis, 'PSF_%s_%s.fits' \
-            %(mode, band)))
+            %(band, mode)))
     if psf_ON.ndim != 3:
         psf_ON = np.array(psf_ON, ndmin=3)
     # save PSF initial shape
@@ -105,6 +110,7 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
         psf_ON = np.mean(psf_ON[:end].reshape(-1, navg, xon, yon), axis=1)
     # normalized coronagraphic (on-axis) PSFs
     psf_ON /= ELT_flux
+    ncube = psf_ON.shape[0]
     
     """ VIP: resample psfs to match the instrument pixelscale """
     psf_ON = vip_hci.preproc.cube_px_resampling(psf_ON, psc_simu/psc_inst)
@@ -124,8 +130,12 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
                     'N2': 2.398e+08}
     # rescale to star flux
     star_flux = DIT * mag5_ADU_all[band] * 10**(-0.4*(mag - 5))
+    if mode == 'APP':
+        star_flux *= 0.48 # for APP separated PSFs (4% leakage term)
     psf_OFF *= star_flux
     psf_ON *= star_flux
+    if mode == 'APP':
+        psf_OFF *= 0.64 # for APP 64% Strehl ratio
     
     """ add background and photon noise ~ N(0,1) * sqrt(psf)"""
     if add_bckg is True:
