@@ -6,36 +6,57 @@ import heeps.util.img_processing as impro
 import numpy as np
 
 # inputs
-bands = ['L', 'M', 'N1', 'N2'] #['L'] #
-pscales = [5, 5, 10, 10] #[5] #
+bands = ['L', 'M', 'N1', 'N2']
 N = 512
 (xc,yc) = (int(N/2),int(N/2))
 xbin = 1
 rim = 250
 (xo,yo) = (rim,rim)
 ylim = (1e-7, 1e0)
+linestyles = ['-','--']
+thinline = 0.8
+markevery = 30
+markersize = 4
+APP_replaced = True
+plot_offaxis = False
+figsize = (12,4)
+suffix = '_atm_long'
 
 # modes per band
-modes = {'L': ['CVC', 'RAVC'],
-         'M': ['CVC', 'RAVC'],
-         'N1': ['CVC'],
-         'N2': ['CVC']}
-colors = ['C0', 'C1']
-linestyles = ['-','--']
+band_specs = {'L': {'lam': 3.8e-6,
+                    'mag': 5,
+                 'pscale': 5.21,
+                  'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC'],
+                 'colors': ['k', 'C2', 'C1', 'C3', 'C0'],
+                'markers': ['+', 'v', 'o', 'd', 'x']},
+              'M': {'lam': 4.8e-6,
+                    'mag': 5,
+                 'pscale': 5.21,
+                  'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC'],
+                 'colors': ['k', 'C2', 'C1', 'C3', 'C0'],
+                'markers': ['+', 'v', 'o', 'd', 'x']},
+              'N1':{'lam': 8.7e-6,
+                    'mag': -1.6,
+                 'pscale': 10.78,
+                  'modes': ['ELT', 'CVC', 'CLC'],
+                 'colors': ['k', 'C1', 'C0'],
+                'markers': ['+', 'o', 'x']},
+              'N2':{'lam': 11.5e-6,
+                    'mag': -1.6,
+                 'pscale': 10.78,
+                  'modes': ['ELT', 'CVC', 'CLC'],
+                 'colors': ['k', 'C1', 'C0'],
+                'markers': ['+', 'o', 'x']}}
 
 # working repository
-#folder = '/mnt/disk4tb/METIS/heeps-analysis/'
-folder = '$HOME/INSTRUMENTS/METIS/heeps-analysis/'
-path_offaxis = 'offaxis'
-path_onaxis = '../cube_COMPASS_20180223_600s_100ms'
-path_output = 'output_files'
-# absolute paths
-folder = os.path.expandvars(folder)
-path_offaxis = os.path.join(folder, path_offaxis)
-path_onaxis = os.path.join(folder, path_onaxis)
-path_output = os.path.join(folder, path_output)
+path_offaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/offaxis'
+#path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/onaxis'
+path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/cube_COMPASS_20181008_3600s_300ms_12000x512x512_averaged'
+path_output = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps-analysis/output_files'
+
+
 # saved file name
-savename = 'cc_raw_%s.png'
+savename = 'cc_raw_%s' + '%s.png'%suffix
 
 
 def savefig(fignum, band, ylim=ylim, savename=savename):
@@ -50,28 +71,37 @@ def savefig(fignum, band, ylim=ylim, savename=savename):
     plt.xlim(left=0)
     plt.ylim(ylim)
     plt.show(block=False)
-    plt.savefig(savename%band, dpi=300, transparent=True)
+    plt.savefig(os.path.join(path_output, savename%band), dpi=300, transparent=True)
     plt.close()
 
-for band, pscale in zip(bands, pscales):
-    x = np.arange(rim+1)*pscale*1e-3*xbin
-    plt.figure(1)
-    for i, mode in enumerate(modes[band]):
+for band in bands:
+    pscale = band_specs[band]['pscale']
+    modes = band_specs[band]['modes']
+    colors = band_specs[band]['colors']
+    markers = band_specs[band]['markers']
+    x = xbin*pscale*1e-3*np.arange(rim+1)[:-1]
+    plt.figure(1, figsize=figsize)
+    for mode, color, marker in zip(modes, colors, markers):
+        # if APP vertical band was replaced by horizontal one
+        replaced = '_replaced' if mode == 'APP' and APP_replaced is True else ''
+        
         # off-axis PSF
         psf_OFF = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
-                %(mode, band)))
+                %(band, mode)))
         psf_OFF_rim = psf_OFF[xc-rim+1:xc+rim,yc-rim+1:yc+rim]
         # on-axis PSFs (cube)
-        psf_ON = fits.getdata(os.path.join(path_onaxis, 'PSF_%s_%s.fits' \
-                %(mode, band)))[:15]
+        psf_ON = fits.getdata(os.path.join(path_onaxis, 'PSF_%s_%s%s.fits' \
+                %(band, mode, replaced)))
         if psf_ON.ndim != 3:
             psf_ON = np.array(psf_ON, ndmin=3)
         # averaged on-axis PSF
         psf_ON_avg = np.mean(psf_ON, 0)
         psf_ON_rim = psf_ON_avg[xc-rim+1:xc+rim,yc-rim+1:yc+rim]
         # radial profiles
-        y1 = impro.get_radial_profile(psf_OFF_rim, (xo,yo), xbin)
-        y2 = impro.get_radial_profile(psf_ON_rim, (xo,yo), xbin)
+        y1 = impro.get_radial_profile(psf_OFF_rim, (xo,yo), xbin)[:-1]
+        y2 = impro.get_radial_profile(psf_ON_rim, (xo,yo), xbin)[:-1]
+#        if mode == 'APP':
+#            y2 = psf_ON_rim[rim-1,rim-1:]
         # normalize by the peak of the off-axis PSF
         peak = np.max(y1)
         y1 /= peak
@@ -82,8 +112,17 @@ for band, pscale in zip(bands, pscales):
         y2[y2<ylim[0]] = np.min(y2[y2>bkgd])
         
         # figures
-        plt.plot(x, y1, 'k', linestyle=linestyles[i], label='%s off-axis'%mode)
-        plt.plot(x, y2, color=colors[i], linestyle=linestyles[i], label='%s on-axis'%mode)
+        if plot_offaxis is True:
+            plt.plot(x, y2, color=color, marker=marker, \
+                    markersize=markersize, markevery=markevery, \
+                    linestyle=linestyles[0], label='%s on-axis'%mode)
+            plt.plot(x, y1, color=color, linewidth=thinline, \
+                    marker=marker, markersize=markersize, markevery=markevery, \
+                    linestyle=linestyles[1], label='%s off-axis'%mode)
+        else:
+            plt.plot(x, y2, color=color, marker=marker, \
+                    markersize=markersize, markevery=markevery, \
+                    linestyle=linestyles[0], label='%s'%mode)
     savefig(1, band)
 
 
