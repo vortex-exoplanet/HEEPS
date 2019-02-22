@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 from astropy.io import fits
 import astropy.units as u
 from matplotlib.ticker import ScalarFormatter, FormatStrFormatter
+import time
 
 """
 VIP cc data:
@@ -27,6 +28,8 @@ student = True
 loglog = False
 ylim1 = (1e-7, 1e-2)
 ylim2 = (1e-8, 1e-2)
+xlabel = "Angular separation [arcsec]"
+ylabel = r"5-$\sigma$ sensitivity"
 
 #select figure types: 0=without bckg; 1=with bckg; 2=with and without; 3=double plot
 figtypes = [2]#range(4) #all
@@ -60,7 +63,8 @@ band_specs = {'L': {'lam': 3.8e-6,
 # file names
 loadname = 'cc_compass3600s_samp300ms_ADI3600s_samp300ms_avg0ms_dec-2.47deg_%s_mag%s_bckg%s_%s.fits'
 distrib = 'student' if student is True else 'normal'
-savename = 'cc_adi_%s_mag%s_figtype%s' + '_%s%s.png'%(distrib, suffix)
+savename_png = 'cc_adi_%s_mag%s_figtype%s' + '_%s%s'%(distrib, suffix)
+savename_fits = 'cc_adi_%s_mag%s_%s' #+ '_%s'%(distrib)
 
 # loop figure types
 for figtype in figtypes:
@@ -80,15 +84,15 @@ for figtype in figtypes:
             axes = fig.axes
             axes[0].set_title(r"Star mag %s=%s with background"%(band, mag), pad=title_pad)
             axes[1].set_title(r"%s band, no background"%(band), pad=title_pad)
-    #        axes[0].set_ylim(ylim1)
-    #        axes[1].set_ylim(ylim2)
+#            axes[0].set_ylim(ylim1)
+#            axes[1].set_ylim(ylim2)
             bckgs = [True, False]
             linestyles = ['-', '-']
             linewidths = [1, 1]
             labels = ['%s','%s']
         else:
             plt.title(r"Star mag %s = %s"%(band, mag))
-    #        plt.ylim(ylim2)
+#            plt.ylim(ylim2)
             wwo = {False:'without', True:'with'} # labels: with or without background
             if figtype in [0,1]:
                 axes = [fig.gca()]
@@ -121,6 +125,12 @@ for figtype in figtypes:
                 ax.plot(x, y, linestyle=linestyle, linewidth=linewidth, \
                         label=label%mode, color=color, marker=marker, \
                         markersize=markersize, markevery=markevery)
+                # save fits.hdu for each mode
+                date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+                header = fits.Header({'xlabel':xlabel,'ylabel':ylabel,\
+                        'date':date, 'wavelnth':lam, 'band':band, 'mag':mag, 'mode':mode})
+                hdu = fits.PrimaryHDU((x,y), header=header)
+                hdu.writeto(savename_fits%(band, mag, mode) + '.fits', overwrite=True)
         # customize figure axes (keep only 1 axis for figtype 2)
         if figtype is 2:
             axes = [axes[0]]
@@ -132,12 +142,13 @@ for figtype in figtypes:
                 ax.set_yscale('log')
                 ax.set_xlim(left=0)
             if i == len(axes)-1:
-                ax.set_xlabel("Angular separation [arcsec]")
-            ax.set_ylabel(r"5-$\sigma$ sensitivity")
+                ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
             ax.grid()
             ax.grid(which='minor', linestyle=':')
             ax.legend()
         # save figure
-        plt.show(block=False)
-        plt.savefig(savename%(band, mag, figtype), dpi=300, transparent=True)
-    #    plt.close()
+        if True:
+            plt.show(block=False)
+            plt.savefig(savename_png%(band, mag, figtype) + '.png', dpi=300, transparent=True)
+            plt.close()
