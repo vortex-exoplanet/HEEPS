@@ -53,14 +53,13 @@ def multi_cube(atm_screen,tip_tilt,conf,wf_start,iter):
 def metis_hci(atm_screen, **conf):
     atm_screen = np.array(np.float32(atm_screen), ndmin=3)
     tip_tilt = np.array(conf['tip_tilt'])
-    filename = os.path.join(conf['output_dir'], '%sPSF_%s.fits'%(conf['prefix'], conf['mode']))
     if (propagation_test(atm_screen,tip_tilt) == 'single'):
         wf = pupil(conf) 
         conf['tip_tilt'] = tip_tilt
         wavefront_aberrations(wf, AO_residuals=atm_screen, **conf)
         metis_modes(wf, conf)
         psf = detector(wf, conf)
-        fits.writeto(filename, psf, overwrite=True)
+        psf_cube = np.array(psf, ndmin=3)
     else:
         temp_prop(conf) # takes care of calibration files, if not present
         if (atm_screen.ndim == 3):
@@ -81,9 +80,5 @@ def metis_hci(atm_screen, **conf):
             psf_cube = np.zeros((length_cube, conf['ndet'], conf['ndet']))
             for i in range(length_cube):
                 psf_cube[i,:,:] = multi_cube(atm_screen,tip_tilt,conf,wf_start,i)
-        fits.writeto(filename, psf_cube, overwrite=True)
-        psf = psf_cube[0]
     
-    return psf
-
-
+    return psf_cube

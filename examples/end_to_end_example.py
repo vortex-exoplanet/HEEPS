@@ -5,27 +5,28 @@
 # =============================================================================
 
 # Required libraries
-import matplotlib.pyplot as plt # for plotting simulated PSFs
-import numpy as np
-from astropy.io import fits 
 import heeps
-from heeps.config import conf, download_from_gdrive
+from heeps.config import conf
 import os.path
+import numpy as np
+import matplotlib.pyplot as plt
+from astropy.io import fits 
 
-
-# HCI mode inputs
+"""
+Default simulation configuration defined in "read_config.py" can be 
+overridden here by updating the dictionary
+"""
 conf['lam'] = 3.8e-6
 conf['band'] = 'L'
-conf['mode'] = 'RAVC'
-conf['VC_charge'] = 2 # vortex charge is modified here
-conf['onaxis'] = True # True = on-axis, False = off-axis
+conf['mode'] = 'CVC'
+conf['prefix'] = 'test_'
+conf['VC_charge'] = 2   # vortex charge is modified here
+conf['onaxis'] = True   # True = on-axis, False = off-axis
 conf['tip_tilt'] = [0., 0.]
 conf['static_ncpa'] = False
-conf['prefix'] = 'test_'
 
-# loading cube of atmosphere phase screens
-download_from_gdrive(conf['atm_screen_gdriveID'], conf['input_dir'], conf['atm_screen_cube'])
-atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_cube']))[0]
+# loading one single atmosphere phase screen
+atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[0]
 
 # =============================================================================
 # End to end simulation example, showing propagation through each plane; 
@@ -50,11 +51,11 @@ psf = heeps.detector.detector(wfo, conf)
 
 
 """ Figures """
-filename_PSF = '%sPSF_%s_%s'%(conf['prefix'], conf['band'], conf['mode'])
+psf_filename = '%sPSF_%s_%s'%(conf['prefix'], conf['band'], conf['mode'])
 plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
 plt.show(block=False)
-plt.savefig(os.path.join(conf['output_dir'], filename_PSF + '.png'), \
+plt.savefig(os.path.join(conf['output_dir'], psf_filename + '.png'), \
         dpi=300, transparent=True)

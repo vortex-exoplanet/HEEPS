@@ -1,19 +1,30 @@
-import requests
 import os.path
+import zipfile
+import requests
 
 '''Downloads files from google drive'''
 
-def download_from_gdrive(id, destination, filename, 
+def extract_zip(googleID, destination):
+    # download zipfile in current directory, temporarily
+    zipfilename = 'temp.zip'
+    download(googleID, '', zipfilename)
+    # extract zipfile
+    with zipfile.ZipFile(zipfilename,'r') as zip_ref:
+        zip_ref.extractall(destination)
+    # remove zipfile
+    os.remove(zipfilename)
+
+def download(googleID, destination, filename, 
         url='https://docs.google.com/uc?export=download'):
     # path to file
     my_file = str(os.path.join(destination, filename))
     if not os.path.isfile(my_file): 
-        print('Downloading "%s" from google drive' %filename)
         session = requests.Session()
-        response = session.get(url, params={'id':id}, stream=True)
+        response = session.get(url, params={'id':googleID}, stream=True)
         token = get_confirm_token(response)
         if token:
-            response = session.get(url, params={'id':id, 'confirm':token}, stream=True)
+            response = session.get(url, params={'id':googleID, \
+                    'confirm':token}, stream=True)
         save_response_content(response, my_file)
 
 def get_confirm_token(response):

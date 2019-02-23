@@ -26,7 +26,7 @@ def wavefront_aberrations(wfo, AO_residuals=None, Island_Piston=None, tip_tilt=N
     
     # add static NCPAs
     if STATIC_NCPA == True:
-        filename = conf['ncpa_screen']
+        filename = conf['ncpa_screen_file']
         phase_screen = fits.getdata(conf['input_dir'] + filename)
         phase_screen = np.nan_to_num(phase_screen)
         phase_screen *= 10**-9          # scale the wavelenth to nm

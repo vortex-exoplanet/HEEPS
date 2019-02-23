@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits 
-from heeps.config import conf, download_from_gdrive
+from heeps.config import conf
 from heeps.pupil import pupil
 from heeps.aberrations import wavefront_aberrations
 from heeps.coronagraphs import apodization, vortex, lyotstop, lyot
@@ -21,7 +21,7 @@ conf['CLC_diam'] = 4
 conf['onaxis'] = True
 conf['static_ncpa'] = False
 conf['send_to'] = None #'cdelacroix@uliege.be'
-conf['send_message'] = 'HEEPS simulation finished.'
+conf['send_message'] = 'End-to-end simulation finished OK.'
 
 # specify CPU count: 1=single processing, None=max-1
 conf['cpucount'] = None
@@ -29,24 +29,24 @@ conf['cpucount'] = None
 # band specifications
 band_specs = {'L': {'lam': 3.8e-6,
                   'pscale': 5.21,
-                   'modes': ['ELT', 'CVC', 'RAVC']},
+                   'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
               'M': {'lam': 4.8e-6,
                   'pscale': 5.21,
-                   'modes': ['ELT', 'CVC', 'RAVC']},
+                   'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
               'N1': {'lam': 8.7e-6,
                   'pscale': 10.78,
-                   'modes': ['ELT', 'CVC']},
+                   'modes': ['ELT', 'CVC', 'CLC']},
               'N2': {'lam': 11.5e-6,
                   'pscale': 10.78,
-                   'modes': ['ELT', 'CVC']}}
+                   'modes': ['ELT', 'CVC', 'CLC']}}
 
 # tip/tilt values
 conf['tip_tilt'] = (0, 0)
 
 # AO residual values
 if True:
-    AO_residuals_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_cube']))[:5]
-#    AO_residuals_cube = fits.getdata('/mnt/disk4tb/METIS/SCAO/cube_compass_20181008_3600s_100ms.fits')[::3,:]
+    AO_residuals_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[:5]
+#    AO_residuals_cube = fits.getdata('/mnt/disk4tb/METIS/SCAO/cube_compass_20181008_3600s_100ms.fits')[::3,:][:6000]
 else:
     AO_residuals_cube = np.array([None])
 ncube = AO_residuals_cube.shape[0]
@@ -163,7 +163,8 @@ for band in conf['bands']:
         # print elapsed time
         print('      Elapsed %.3f seconds.'%(time.time() - t0))
 
-# Send email when simulation finished
-print(time.strftime("%Y-%m-%d %H:%M:%S: End-to-end simulation finished OK.\n", time.localtime()))
-os.system('echo "%s" | mail -s "%s" %s'%(conf['send_message'], \
-        conf['send_subject'], conf['send_to']))
+# send email when simulation finished
+print(time.strftime("%Y-%m-%d %H:%M:%S: " + '%s\n'%conf['send_message'], time.localtime()))
+if conf['send_to'] is not None:
+    os.system('echo "%s" | mail -s "%s" %s'%(conf['send_message'], \
+            conf['send_subject'], conf['send_to']))

@@ -1,8 +1,7 @@
+from heeps.util.download_from_gdrive import extract_zip
 import collections
-import os
 import proper
-import zipfile
-from heeps.config import download_from_gdrive
+import os
 
 conf = collections.OrderedDict()
 
@@ -13,34 +12,28 @@ conf = collections.OrderedDict()
 # allow PROPER to print intermediate steps
 proper.print_it = False
 
-# optional prefix for saved files: e.g. 'test_'
-conf['prefix'] = ''
-
-# create required directories for data (e.g. fits files)
-conf['current_dir'] = '.'
-conf['output_dir'] = os.path.join(conf['current_dir'], 'output_files', '')
-conf['temp_dir'] = os.path.join(conf['current_dir'], 'temp_files', '')
-conf['input_dir'] = os.path.join(conf['current_dir'], 'input_files', '')
-os.makedirs(conf['output_dir'], exist_ok=True)
-os.makedirs(conf['temp_dir'], exist_ok=True)
-os.makedirs(conf['input_dir'], exist_ok=True)
-
-# Google Drive parameters
-conf['testfile'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits'
-conf['gdriveID'] = '1YR4G_8E7TpznTxumQA1zD4z_v4V5ZlF2'
-conf['gdriveZip'] = 'fits_files.zip'
-# if test file is missing, start downloading from Google drive
-if not os.path.isfile(os.path.join(conf['input_dir'], conf['testfile'])): 
-    download_from_gdrive(conf['gdriveID'], conf['current_dir'], conf['gdriveZip'])
-    with zipfile.ZipFile(conf['gdriveZip'],'r') as zip_ref:
-        zip_ref.extractall(conf['current_dir'])
-    os.remove(conf['gdriveZip'])
-
 # server parameters, multiprocessing
-conf['cpucount'] = 1                       # 1 = single core; None = max-1 cores
+conf['cpucount'] = 1                        # 1 = single core; None = max-1 cores
 conf['send_subject'] = 'HEEPS noreply'
 conf['send_message'] = 'HEEPS simulation finished.'
 conf['send_to'] = None
+# optional prefix for saved files: e.g. 'test_'
+conf['prefix'] = ''
+
+# required directories for data (e.g. fits files)
+conf['current_dir'] = '.'                   #'$HOME/INSTRUMENTS/METIS/heeps-analysis'
+conf['input_dir'] = 'input_files'
+conf['output_dir'] = 'output_files'
+conf['temp_dir'] = 'temp_files'
+# create paths and directories
+conf['current_dir'] = os.path.normpath(os.path.expandvars(conf['current_dir']))
+conf['input_dir'] = os.path.join(conf['current_dir'], conf['input_dir'], '')
+conf['output_dir'] = os.path.join(conf['current_dir'], conf['output_dir'], '')
+conf['temp_dir'] = os.path.join(conf['current_dir'], conf['temp_dir'], '')
+os.makedirs(conf['input_dir'], exist_ok=True)
+os.makedirs(conf['output_dir'], exist_ok=True)
+os.makedirs(conf['temp_dir'], exist_ok=True)
+
 
 # =============================================================================
 #           Define parameters for Telescope
@@ -56,21 +49,23 @@ conf['pscale'] = 5.21                      # pixel scale in mas/pix (e.g. METIS 
 conf['focal'] = 658.6                      # focal distance in meters
 # SCAO team currently uses circular pupil with secondary obstruction
 conf['pupil_file'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits' # input pupil
+# downloading input files from Google Drive
+conf['gdriveID'] = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-'
+if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
+    print("Downloading input files from Google Drive.")
+    extract_zip(conf['gdriveID'], conf['input_dir'])
 
 
 # =============================================================================
 #           Parameters for Wavefront aberrations
 # =============================================================================
 conf['tip_tilt'] = [0., 0.]
-conf['atm_screen_cube'] = 'cube_atm_1000screens_Feb2018_RandomWind.fits'
-# google drive ID linked to the SCAO cube fits file 
-conf['atm_screen_gdriveID'] = '1AUtELRfn_xjnbsMM_SJG6W0c26zyzqNH'
-
+conf['atm_screen_file'] = 'cube_atm_100screens_Feb2018_RandomWind.fits'
+conf['ncpa_screen_file'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits' # IMG LM @ 3.7 um
+#conf['ncpa_screen_file'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits' # IMG NQ @ 10 um
 conf['petal_piston'] = None
 conf['static_ncpa'] = False
 conf['polish_error'] = False
-conf['ncpa_screen'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits' # IMG LM @ 3.7 um
-#conf['ncpa_screen'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits' # IMG NQ @ 10 um
 
 
 # =============================================================================
