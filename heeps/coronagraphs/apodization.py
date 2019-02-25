@@ -1,65 +1,50 @@
-import numpy as np
+import heeps.util.img_processing as impro
 import proper
-import math
-from skimage.transform import resize
+import numpy as np
 from .circular_apodization import circular_apodization
 
 
-
-
-def apodization(wf, conf, RAVC=False, phase_apodizer_file=0, amplitude_apodizer_file=0, apodizer_misalignment=0, Debug_print=False):
+def apodization(wf, conf, RAVC=False, RAVC_misalign=[0,0,0,0,0,0], 
+        RAVC_amplitude_file=None, RAVC_phase_file=None):
     
-    r_obstr = conf['R_obstr']
+    # load parameters
+    gridsize = conf['gridsize']
     npupil = conf['npupil']
+    R_obstr = conf['R_obstr']
     
-    apodizer_misalignment = np.array(conf['RAVC_misalign'])
-    n = int(proper.prop_get_gridsize(wf))
-    apodizer = 1
-    if (RAVC == True):
-        t1_opt = 1. - 1./4*(r_obstr**2 + r_obstr*(math.sqrt(r_obstr**2 + 8.))) # define the apodizer transmission [Mawet2013]
-        R1_opt = (r_obstr/math.sqrt(1. - t1_opt)) # define the apodizer radius [Mawet2013]
-        if (Debug_print == True):
-            print ("r1_opt: ", R1_opt)
-            print ("t1_opt: ", t1_opt)
-        apodizer = circular_apodization(wf, R1_opt, 1., t1_opt, xc = apodizer_misalignment[0], yc = apodizer_misalignment[1],NORM=True) # define the apodizer
+    # get apodizer misalignments
+    RAVC_misalign = np.int64(conf['RAVC_misalign'])*npupil
+    dx_amp, dy_amp, dz_amp = RAVC_misalign[0:3]
+    dx_phase, dy_phase, dz_phase = RAVC_misalign[3:6]
+    
+    if RAVC is True:
+        # define the apodizer transmission and radius [Mawet2013]
+        T_RAVC = 1 - (R_obstr**2 + R_obstr*np.sqrt(R_obstr**2 + 8))/4
+        R_RAVC = R_obstr/np.sqrt(1 - T_RAVC)
+        # define the apodizer as a ring (with % misalignments)
+        apodizer = circular_apodization(wf, R_RAVC, 1., T_RAVC, \
+                xc=conf['RAVC_misalign'][0], yc=conf['RAVC_misalign'][1], NORM=True)
         apodizer = proper.prop_shift_center(apodizer)
-
-    if (isinstance(phase_apodizer_file, (list, tuple, np.ndarray)) == True):
-        xc_pixels = int(apodizer_misalignment[3]*npupil)
-        yc_pixels = int(apodizer_misalignment[4]*npupil)
-        apodizer_pixels = (phase_apodizer_file.shape)[0]## fits file size
-        scaling_factor = float(npupil)/float(apodizer_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
-        if (Debug_print==True):
-            print ("scaling_factor: ", scaling_factor)
-        apodizer_scale = resize(phase_apodizer_file.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-        if (Debug_print==True):
-            print ("apodizer_resample", apodizer_scale.shape)
-        apodizer_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
-        if (Debug_print==True):
-            print("n: ", n)
-            print("npupil: ", npupil)
-        apodizer_large[int(n/2)+1-int(npupil/2)-1 + xc_pixels:int(n/2)+1+int(npupil/2)+ xc_pixels,int(n/2)+1-int(npupil/2)-1+ yc_pixels:int(n/2)+1+int(npupil/2)+ yc_pixels] =apodizer_scale # insert the scaled pupil into the 0s grid
-        apodizer = np.exp(1j*apodizer_large)
-
-
-    if (isinstance(amplitude_apodizer_file, (list, tuple, np.ndarray)) == True):
-        xc_pixels = int(apodizer_misalignment[0]*npupil)
-        yc_pixels = int(apodizer_misalignment[1]*npupil)
-        apodizer_pixels = (amplitude_apodizer_file.shape)[0]## fits file size
-        scaling_factor = float(npupil)/float(apodizer_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
-        if (Debug_print==True):
-            print ("scaling_factor: ", scaling_factor)
-        apodizer_scale = resize(amplitude_apodizer_file.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-        if (Debug_print==True):
-            print ("apodizer_resample", apodizer_scale.shape)
-        apodizer_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
-        if (Debug_print==True):
-            print("n: ", n)
-            print("npupil: ", npupil)
-        apodizer_large[int(n/2)+1-int(npupil/2)-1 + xc_pixels:int(n/2)+1+int(npupil/2)+ xc_pixels,int(n/2)+1-int(npupil/2)-1+ yc_pixels:int(n/2)+1+int(npupil/2)+ yc_pixels] =apodizer_scale # insert the scaled pupil into the 0s grid
-        apodizer = apodizer_large
+    else:
+        # get amplitude and phase files
+        RAVC_amp_file = os.path.join(conf['input_dir'], conf['RAVC_amp_file'])
+        RAVC_phase_file = os.path.join(conf['input_dir'], conf['RAVC_phase_file'])
+        # get amplitude and phase data
+        RAVC_amp = fits.getdata(RAVC_amp_file) if os.path.isfile(RAVC_amp_file) \
+                else np.ones((npupil, npupil))
+        RAVC_phase = fits.getdata(RAVC_phase_file) if os.path.isfile(RAVC_phase_file) \
+                else np.zeros((npupil, npupil))
+        # resize to npupil
+        RAVC_amp = impro.resize_img(RAVC_amp, npupil)
+        RAVC_phase = impro.resize_img(RAVC_phase, npupil)
+        # pad with zeros to match PROPER gridsize
+        RAVC_amp = impro.pad_img(RAVC_amp, gridsize)
+        RAVC_phase = impro.pad_img(RAVC_phase, gridsize)
+        # apodizer
+        apodizer = RAVC_amp*np.exp(1j*RAVC_phase)
+    
+    # multiply the loaded apodizer
     proper.prop_multiply(wf, apodizer)
     
     return wf
-
 
