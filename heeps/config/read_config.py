@@ -8,23 +8,20 @@ conf = collections.OrderedDict()
 # =============================================================================
 #           Console and file management 
 # =============================================================================
-
-# allow PROPER to print intermediate steps
-proper.print_it = False
-
-# server parameters, multiprocessing
+proper.print_it = False                     # allow intermediate prints from PROPER
 conf['cpucount'] = 1                        # 1 = single core; None = max-1 cores
+conf['send_to'] = None                      # email for sim end notification
 conf['send_subject'] = 'HEEPS noreply'
 conf['send_message'] = 'HEEPS simulation finished.'
-conf['send_to'] = None
-# optional prefix for saved files: e.g. 'test_'
-conf['prefix'] = ''
+conf['prefix'] = ''                         # for saved files: e.g. 'test_'
 
 # required directories for data (e.g. fits files)
-conf['current_dir'] = '.'                   #'$HOME/INSTRUMENTS/METIS/heeps-analysis'
+conf['current_dir'] = os.getcwd()           #default
+#conf['current_dir'] = '$HOME/INSTRUMENTS/METIS/heeps-analysis'
 conf['input_dir'] = 'input_files'
 conf['output_dir'] = 'output_files'
 conf['temp_dir'] = 'temp_files'
+
 # create paths and directories
 conf['current_dir'] = os.path.normpath(os.path.expandvars(conf['current_dir']))
 conf['input_dir'] = os.path.join(conf['current_dir'], conf['input_dir'], '')
@@ -39,10 +36,10 @@ os.makedirs(conf['temp_dir'], exist_ok=True)
 #           Define parameters for Telescope
 # =============================================================================
 conf['lam'] = 5e-6                         # wavelength in meters
-conf['diam'] = 37.0                        # diameter of the telescope in meters
+conf['diam'] = 37                          # diameter of the telescope in meters
 conf['R_obstr'] = 0.3                      # secondary obstruction in percentage
 conf['spiders_width'] = 0.60               # width of spiders in meters
-conf['spiders_angle'] = [0, 60.0, 120.0]   # angles of spiders
+conf['spiders_angle'] = [0, 60, 120]       # angles of spiders
 conf['N_mis_segments'] = 0                 # number of missing segments
 conf['gridsize'] = 1024                    # (integer) grid size of the simulation array
 conf['pscale'] = 5.21                      # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
@@ -52,20 +49,21 @@ conf['pupil_file'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits' # input pupil
 # downloading input files from Google Drive
 conf['gdriveID'] = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-'
 if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
-    print("Downloading input files from Google Drive.")
+    print("Downloading input files from Google Drive to '%s'."%conf['input_dir'])
     extract_zip(conf['gdriveID'], conf['input_dir'])
 
 
 # =============================================================================
 #           Parameters for Wavefront aberrations
 # =============================================================================
-conf['tip_tilt'] = [0., 0.]
+conf['tip_tilt'] = [0, 0]
+conf['petal_piston'] = [0,0,0,0,0,0]
+conf['static_ncpa'] = False
+conf['polish_error'] = False
 conf['atm_screen_file'] = 'cube_atm_100screens_Feb2018_RandomWind.fits'
 conf['ncpa_screen_file'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits' # IMG LM @ 3.7 um
 #conf['ncpa_screen_file'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits' # IMG NQ @ 10 um
-conf['petal_piston'] = None
-conf['static_ncpa'] = False
-conf['polish_error'] = False
+conf['polish_screen_file'] = 'polishing_error_90nm_RMS.fits'
 
 
 # =============================================================================

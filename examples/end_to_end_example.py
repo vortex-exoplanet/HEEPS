@@ -22,8 +22,10 @@ conf['mode'] = 'CVC'
 conf['prefix'] = 'test_'
 conf['VC_charge'] = 2   # vortex charge is modified here
 conf['onaxis'] = True   # True = on-axis, False = off-axis
-conf['tip_tilt'] = [0., 0.]
+conf['tip_tilt'] = [0, 0]
+conf['petal_piston'] = [0,0,0,0,0,0]
 conf['static_ncpa'] = False
+conf['polish_error'] = False
 
 # loading one single atmosphere phase screen
 atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[0]
@@ -40,7 +42,7 @@ atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file'
 wfo = heeps.pupil.pupil(conf)
 
 #   2. Wavefront aberrations
-heeps.aberrations.wavefront_aberrations(wfo, AO_residuals=atm_screen, **conf)
+heeps.aberrations.wavefront_aberrations(wfo, atm_screen=atm_screen, **conf)
 
 #   3. Coronagraph selection -- e.g. RAVC, CVC, APP, CLC --
 #    "Three coronagraphic planes: apodizer, focal plane mask & Lyot-stop"

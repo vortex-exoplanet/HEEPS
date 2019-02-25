@@ -1,50 +1,31 @@
-import numpy as np
-from skimage.transform import resize
+import heeps.util.img_processing as impro
 import proper
-import math
+import numpy as np
+import astropy.units as u
 from astropy.io import fits
-import os
+import os.path
 
-def island_effect_piston(wf, npupil, Island_Piston, path, Debug_print, Debug):
-
-    n = int(proper.prop_get_gridsize(wf))
-    lamda=proper.prop_get_wavelength(wf) #save the wavelength value [m] into lamda
-
-    PACKAGE_PATH = os.path.abspath(os.path.join(__file__, os.pardir))
-    petal1 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal1_243px.fits')
-    petal2 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal2_243px.fits')
-    petal3 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal3_243px.fits')
-    petal4 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal4_243px.fits')
-    petal5 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal5_243px.fits')
-    petal6 = fits.getdata(PACKAGE_PATH+'/1024_pixelsize5mas_petal6_243px.fits')
-
-    piston_petal1 = Island_Piston[0]*petal1
-    piston_petal2 = Island_Piston[1]*petal2
-    piston_petal3 = Island_Piston[2]*petal3
-    piston_petal4 = Island_Piston[3]*petal4
-    piston_petal5 = Island_Piston[4]*petal5
-    piston_petal6 = Island_Piston[5]*petal6
-
-    piston = piston_petal1 + piston_petal2 + piston_petal3 + piston_petal4 + piston_petal5 + piston_petal6
-
-    piston_pixels = (piston.shape)[0]## fits file size
-    scaling_factor = float(npupil)/float(piston_pixels) ## scaling factor between the fits file size and the pupil size of the simulation
-    if (Debug_print==True):
-        print ("scaling_factor: ", scaling_factor)
-    piston_scale = resize(piston.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-    if (Debug_print==True):
-        print ("piston_resample", piston_scale.shape)
-    piston_large = np.zeros((n,n)) # define an array of n-0s, where to insert the pupuil
-    if (Debug_print==True):
-        print("n: ", n)
-        print("npupil: ", npupil)
-    piston_large[int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2),int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2)] =piston_scale # insert the scaled pupil into the 0s grid
-    if (Debug == 1):
-        fits.writeto(path+'piston_phase.fits', piston_large, overwrite=True) # fits file for the screen
-
-
-    lambda2=lamda/(1e-6) # need to use lambda in microns
-    piston_phase = np.exp(1j*piston_large/lambda2*2*math.pi)
-    proper.prop_multiply(wf, piston_phase) # multiply the atm screen to teh wavefront
-
-    return
+def island_effect_piston(wf, petal_piston=[0,0,0,0,0,0], npetals=6, **conf):
+    
+    # get useful parameters
+    lam = conf['lam']
+    gridsize = conf['gridsize']
+    npupil = conf['npupil']
+    
+    # path to petal piston files
+    filename = os.path.join(conf['input_dir'], '1024_pixelsize5mas_petal%s_243px.fits')
+    
+    # multiply all pistons by their respective petal, and sum them up
+    piston_screen = np.sum(np.float32([petal_piston[x] \
+            *fits.getdata(filename%(x+1)) for x in range(npetals)]), 0)
+    
+    # resize and pad with zeros to match PROPER gridsize
+    piston_screen = impro.resize_img(piston_screen, npupil)
+    piston_screen = impro.pad_img(piston_screen, gridsize)
+    
+    # wavenumber (spatial angular frequency) in rad / µm
+    k = 2*np.pi/(lam*u.m).to('um').value
+    # multiply the wavefront by the complex phase screen
+    proper.prop_multiply(wf, np.exp(1j*k*piston_screen))
+    
+    return wf

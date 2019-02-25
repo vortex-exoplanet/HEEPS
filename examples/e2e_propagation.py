@@ -45,18 +45,18 @@ conf['tip_tilt'] = (0, 0)
 
 # AO residual values
 if True:
-    AO_residuals_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[:5]
-#    AO_residuals_cube = fits.getdata('/mnt/disk4tb/METIS/SCAO/cube_compass_20181008_3600s_100ms.fits')[::3,:][:6000]
+    atm_screen_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[:5]
+#    atm_screen_cube = fits.getdata('/mnt/disk4tb/METIS/SCAO/cube_compass_20181008_3600s_100ms.fits')[::3,:][:6000]
 else:
-    AO_residuals_cube = np.array([None])
-ncube = AO_residuals_cube.shape[0]
+    atm_screen_cube = np.array([None])
+ncube = atm_screen_cube.shape[0]
 print('\nCube size = %s.'%ncube)
 
 """ Create a function to propagate one single wavefront """
 
-def propagate(wf_start, AO_residuals_cube, conf, ind):
+def propagate(wf_start, atm_screen_cube, conf, ind):
     wf = deepcopy(wf_start)
-    wavefront_aberrations(wf, AO_residuals=AO_residuals_cube[ind], **conf)
+    wavefront_aberrations(wf, atm_screen=atm_screen_cube[ind], **conf)
     # METIS coronagraph modes
     if conf['mode'] == 'ELT': # no Lyot stop (1, -0.3, 0)
         conf['LS_params'] = [1., -0.3, 0.]
@@ -114,7 +114,7 @@ for band in conf['bands']:
                     %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
                     band, mode, conf['cpucount']))
             p = mpro.Pool(conf['cpucount'])
-            func = partial(propagate, wf_start, AO_residuals_cube, conf)
+            func = partial(propagate, wf_start, atm_screen_cube, conf)
             psfs = np.array(p.map(func, range(ncube)))
         else:
             print('%s: %s band, %s mode, using %s core.'\
@@ -122,7 +122,7 @@ for band in conf['bands']:
                     band, mode, 1))
             psfs = np.zeros((ncube, conf['ndet'], conf['ndet']))
             for i in range(ncube):
-                psfs[i,:,:] = propagate(wf_start, AO_residuals_cube, conf, i)
+                psfs[i,:,:] = propagate(wf_start, atm_screen_cube, conf, i)
         
         # if only one frame, make dim = 2
         if ncube == 1:

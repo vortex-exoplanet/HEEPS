@@ -1,41 +1,40 @@
-import numpy as np
 import proper
+import numpy as np
 from astropy.io import fits
-
-from .island_effect_piston import island_effect_piston
 from .atmosphere import atmosphere
+from .island_effect_piston import island_effect_piston
 from .static_ncpa import static_ncpa
 
-
-def wavefront_aberrations(wfo, AO_residuals=None, Island_Piston=None, tip_tilt=None,
-            STATIC_NCPA=False, **conf):
-    npupil = conf['npupil']
-    # add AO residuals
-    if AO_residuals is not None:
-        atmosphere(wfo, AO_residuals, **conf)
+def wavefront_aberrations(wf, tip_tilt=None, petal_piston=None, 
+            atm_screen=None, static_ncpa=False, polish_error=False, **conf):
     
-    # add island effect
-    if Island_Piston is not None:
-        island_effect_piston(wfo, npupil, Island_Piston)
-    
-    # add tip/tilt
+    # add zernikes 2: X tilt, and 3: Y tilt
     if tip_tilt is not None:
-        lam = conf['lam'] # in meters
-        tip_tilt = np.array(tip_tilt)*lam/4 # translate the tip/tilt from lambda/D into RMS phase errors
-        proper.prop_zernikes(wfo, [2,3], tip_tilt) # 2-->xtilt, 3-->ytip?
+        # translate the tip/tilt from lambda/D into RMS phase errors
+        lam = conf['lam']
+        tip_tilt = np.array(tip_tilt)*lam/4
+        proper.prop_zernikes(wf, [2,3], tip_tilt)
+    
+    # add petal piston (island effect)
+#    if petal_piston is not None:
+#        wf = island_effect_piston(wf, petal_piston, **conf)
+    
+    # add atmosphere
+    if atm_screen is not None:
+        wf = atmosphere(wf, atm_screen, **conf)
     
     # add static NCPAs
-    if STATIC_NCPA == True:
-        filename = conf['ncpa_screen_file']
-        phase_screen = fits.getdata(conf['input_dir'] + filename)
-        phase_screen = np.nan_to_num(phase_screen)
-        phase_screen *= 10**-9          # scale the wavelenth to nm
-        static_ncpa(wfo, npupil, phase_screen)
-        
-    if conf['polish_error'] == True:    
-        filename = "polishing_error_90nm_RMS.fits"
-        phase_screen = fits.getdata(conf['input_dir'] + filename)
-        phase_screen *= 10**-9
-        static_ncpa(wfo, npupil, phase_screen)         
+    if static_ncpa is True:
+        filename = os.path.join(conf['input_dir'], conf['ncpa_screen_file'])
+        ncpa_screen = fits.getdata(filename)
+        ncpa_screen = np.nan_to_num(ncpa_screen)
+        wf = static_ncpa(wf, ncpa_screen*1e-9, **conf)
     
-    return wfo
+    # add polishing errors
+    if polish_error is True:
+        filename = os.path.join(conf['input_dir'], conf['polish_screen_file'])
+        polish_screen = fits.getdata(filename)
+        polish_screen = np.nan_to_num(polish_screen)
+        wf = static_ncpa(wf, polish_screen*1e-9, **conf)
+    
+    return wf

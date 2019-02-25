@@ -23,8 +23,10 @@ conf['mode'] = 'CVC'
 conf['prefix'] = 'test_'
 conf['VC_charge'] = 2   # vortex charge is modified here
 conf['onaxis'] = True   # True = on-axis, False = off-axis
-conf['tip_tilt'] = [0., 0.]
+conf['tip_tilt'] = [0, 0]
+conf['petal_piston'] = [0,0,0,0,0,0]
 conf['static_ncpa'] = False
+conf['polish_error'] = False
 conf['cpucount'] = 8    # specify CPU count
 
 # loading cube of atmosphere phase screens

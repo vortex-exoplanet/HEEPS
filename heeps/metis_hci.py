@@ -45,7 +45,7 @@ def multi_cube(atm_screen,tip_tilt,conf,wf_start,iter):
     else:
         tip_tilt_iter = tip_tilt
     conf['tip_tilt'] = tip_tilt_iter
-    wavefront_aberrations(wf, AO_residuals=atm_screen_iter, **conf)
+    wavefront_aberrations(wf, atm_screen=atm_screen_iter, **conf)
     metis_modes(wf, conf)
     psf = detector(wf, conf)
     return psf
@@ -56,7 +56,7 @@ def metis_hci(atm_screen, **conf):
     if (propagation_test(atm_screen,tip_tilt) == 'single'):
         wf = pupil(conf) 
         conf['tip_tilt'] = tip_tilt
-        wavefront_aberrations(wf, AO_residuals=atm_screen, **conf)
+        wavefront_aberrations(wf, atm_screen=atm_screen, **conf)
         metis_modes(wf, conf)
         psf = detector(wf, conf)
         psf_cube = np.array(psf, ndmin=3)

@@ -1,18 +1,17 @@
-import numpy as np
-from skimage.transform import resize
+import heeps.util.img_processing as impro
 import proper
+import numpy as np
 
-def static_ncpa(wf, npupil, screen):
+def static_ncpa(wf, ncpa_screen, **conf):
     
-    n = int(proper.prop_get_gridsize(wf))
-
-    screen_pixels = (screen.shape)[0] # size of the phase screen
-    sf = float(npupil)/float(screen_pixels) # scaling factor the phase screen to the simulation pupil size
-
-    screen_scale = resize(screen.astype(np.float32), (npupil, npupil), preserve_range=True, mode='reflect')
-    screen_large = np.zeros((n,n)) # define an array of n-0s, where to insert the screen
-    screen_large[int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2),int(n/2)+1-int(npupil/2)-1:int(n/2)+1+int(npupil/2)] =screen_scale # insert the scaled screen into the 0s grid
-
-    proper.prop_add_phase(wf, screen_large)
+    # get useful parameters
+    gridsize = conf['gridsize']
+    npupil = conf['npupil']
+    
+    # resize the phase screen, and pad with zeros to match PROPER gridsize
+    ncpa_screen = impro.resize_img(ncpa_screen, npupil)
+    ncpa_screen = impro.pad_img(ncpa_screen, gridsize)
+    # add the phase screen
+    proper.prop_add_phase(wf, ncpa_screen)
     
     return wf
