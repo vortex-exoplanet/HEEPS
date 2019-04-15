@@ -32,12 +32,13 @@ def temp_prop(conf):
     metis_modes(wf, conf)
     return 
 
-def multi_cube(atm_screen,tip_tilt,conf,wf_start,iter):
+def multi_cube(atm_screen,tip_tilt,conf,wf_start,ncpa_scaling,iter):
     wf = deepcopy(wf_start)
     print(iter)
     if ((isinstance(atm_screen, (list, tuple, np.ndarray)) == True)):
         if (atm_screen.ndim == 3):
             atm_screen_iter = atm_screen[iter,:,:]
+            scaling = ncpa_scaling[iter]
         else:
             atm_screen_iter = atm_screen
     if (tip_tilt.ndim == 2):
@@ -45,18 +46,18 @@ def multi_cube(atm_screen,tip_tilt,conf,wf_start,iter):
     else:
         tip_tilt_iter = tip_tilt
     conf['tip_tilt'] = tip_tilt_iter
-    wavefront_aberrations(wf, atm_screen=atm_screen_iter, **conf)
+    wavefront_aberrations(wf, scaling, atm_screen=atm_screen_iter, **conf)
     metis_modes(wf, conf)
     psf = detector(wf, conf)
     return psf
 
-def metis_hci(atm_screen, **conf):
+def metis_hci(atm_screen, ncpa_scaling, **conf):
     atm_screen = np.array(np.float32(atm_screen), ndmin=3)
     tip_tilt = np.array(conf['tip_tilt'])
     if (propagation_test(atm_screen,tip_tilt) == 'single'):
         wf = pupil(conf) 
         conf['tip_tilt'] = tip_tilt
-        wavefront_aberrations(wf, atm_screen=atm_screen, **conf)
+        wavefront_aberrations(wf, ncpa_scaling, atm_screen=atm_screen, **conf)
         metis_modes(wf, conf)
         psf = detector(wf, conf)
         psf_cube = np.array(psf, ndmin=3)
@@ -74,7 +75,7 @@ def metis_hci(atm_screen, **conf):
             print('%s: simulation starts using %s cores.'\
                     %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), conf['cpucount']))
             p = Pool(conf['cpucount'])
-            func = partial(multi_cube, atm_screen, tip_tilt, conf, wf_start)
+            func = partial(multi_cube, atm_screen, tip_tilt, conf, wf_start, ncpa_scaling)
             psf_cube = np.array(p.map(func, range(length_cube)))
         else:
             psf_cube = np.zeros((length_cube, conf['ndet'], conf['ndet']))
