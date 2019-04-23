@@ -45,13 +45,17 @@ cases = [{'band':'L', 'mode':'ELT', 'pscale': 5.21,'mag': 5,  'add_bckg':True},
          {'band':'N2','mode':'CVC', 'pscale':10.78,'mag':-1.6,'add_bckg':False},
          {'band':'N2','mode':'CLC', 'pscale':10.78,'mag':-1.6,'add_bckg':False}]
 
+cases = [{'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':1},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':2},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':3}]
+
+# number of cases
+ncases = len(cases)
 # number of CPUs to use: one case per CPU
-cpucount = 3 #len(cases)+1
+conf['cpucount'] = ncases
 
 # define a wrapper function
-def multi_cc(cases, ind):
-    path_offaxis = '$HOME/INSTRUMENTS/METIS/offaxis'
-    path_onaxis = '$HOME/INSTRUMENTS/METIS/cube_COMPASS_20181008_3600s_300ms_12000x256x256'
+def multi_cc(cases, verbose, ind):
     cube_duration = 3600
     cube_samp = 300
     adi_cube_duration = 3600
@@ -61,25 +65,34 @@ def multi_cc(cases, ind):
     pscale = cases[ind]['pscale']
     add_bckg = cases[ind]['add_bckg']
     mag = cases[ind]['mag']
+    # optional sub-folder for onaxis PSFs
+    folder = str(cases[ind].get('folder',''))
+    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256'
+#    path_onaxis = 'cube_COMPASS_20190209_600s_100ms_6000x256x256_lag/%s/'%folder
+    path_offaxis = 'offaxis'
     # call adi function
-    adi(path_offaxis=path_offaxis, path_onaxis=path_onaxis, mode=mode, band=band,\
-            cube_duration=cube_duration, cube_samp=cube_samp,\
-            adi_cube_duration=adi_cube_duration, adi_cube_samp=adi_cube_samp,\
-            psc_simu=pscale, psc_inst=pscale, add_bckg=add_bckg, mag=mag)
+    adi(path_offaxis=path_offaxis, path_onaxis=path_onaxis, verbose=verbose, \
+            mode=mode, band=band, cube_duration=cube_duration, \
+            cube_samp=cube_samp, adi_cube_duration=adi_cube_duration, \
+            adi_cube_samp=adi_cube_samp, psc_simu=pscale, psc_inst=pscale, \
+            add_bckg=add_bckg, mag=mag)
     # print stuff
-    print('%s: Finished %s band, %s mode.'\
-            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), band, mode))
+    print('%s: Finished case %s.'%(time.strftime("%Y-%m-%d %H:%M:%S", \
+            time.localtime()), ind + 1))
 
 # start ADI
-print('%s: simulation starts, using %s cores.'\
-            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), cpucount))
-if cpucount > 1:
-    p = mpro.Pool(cpucount)
-    func = partial(multi_cc, cases)
-    p.map(func, range(len(cases)))
+print('%s: simulation starts, %s cases.'\
+            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), ncases))
+if conf['cpucount'] != 1 and platform in ['linux', 'linux2', 'darwin']:
+    print('Multiprocessing using %s cores'%conf['cpucount'])
+    verbose = False
+    func = partial(multi_cc, cases, verbose)
+    p = mpro.Pool(conf['cpucount'])
+    p.map(func, range(ncases))
 else:
     for ind in range(len(cases)):
-        multi_cc(cases, ind)
+        verbose = True
+        multi_cc(cases, verbose, ind)
 
 # send email when simulation finished
 print(time.strftime("%Y-%m-%d %H:%M:%S: " + '%s\n'%conf['send_message'], time.localtime()))

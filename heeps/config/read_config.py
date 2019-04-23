@@ -16,8 +16,9 @@ conf['send_message'] = 'HEEPS simulation finished.'
 conf['prefix'] = ''                         # for saved files: e.g. 'test_'
 
 # required directories for data (e.g. fits files)
-conf['current_dir'] = os.getcwd()           #default
-#conf['current_dir'] = '$HOME/INSTRUMENTS/METIS/heeps-analysis'
+conf['current_dir'] = os.getcwd()           # default
+#conf['current_dir'] = '$HOME/INSTRUMENTS/METIS/heeps_analysis'
+#conf['current_dir'] = '/mnt/disk4tb/METIS/heeps_analysis'
 conf['input_dir'] = 'input_files'
 conf['output_dir'] = 'output_files'
 conf['temp_dir'] = 'temp_files'

@@ -52,6 +52,10 @@ else:
 ncube = atm_screen_cube.shape[0]
 print('\nCube size = %s.'%ncube)
 
+# petal piston around 50nm rms (converted to µm): np.random.normal(0,50,6)*1e-3
+if False:
+    conf['petal_piston'] = 1e-3*np.array([ 18.53418778,  71.80204883,  41.09049854, -19.8792278 , -53.3468407 ,  43.69687695])
+
 """ Create a function to propagate one single wavefront """
 
 def propagate(wf_start, atm_screen_cube, conf, ind):
@@ -132,13 +136,15 @@ for band in conf['bands']:
         
         # file name
         conf['prefix'] = ''
-        filename = '%s%s_%s'%(conf['prefix'], conf['mode'], band)
+        on_off = {True:'onaxis', False:'offaxis'}[conf['onaxis']]
+        PSF_filename = '%s%s_PSF_%s_%s'%(conf['prefix'], on_off, band, mode)
+        LS_filename = '%s%s_LS_%s_%s'%(conf['prefix'], on_off, band, mode)
         # save PSF (or PSFs cube) and/or Lyot-Stop
         if True:
-            fits.writeto(os.path.join(conf['output_dir'], 'PSF_' + filename) \
+            fits.writeto(os.path.join(conf['output_dir'], PSF_filename) \
                     + '.fits', np.float32(psfs), overwrite=True)
         if False:
-            fits.writeto(os.path.join(conf['output_dir'], 'LS_' + filename) \
+            fits.writeto(os.path.join(conf['output_dir'], LS_filename) \
                     + '.fits', PUP, overwrite=True)
         
         """ Save figures to .png """
@@ -149,7 +155,7 @@ for band in conf['bands']:
             plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
             plt.colorbar()
             plt.show(block=False)
-            plt.savefig(os.path.join(conf['output_dir'], 'PSF_' + filename) \
+            plt.savefig(os.path.join(conf['output_dir'], PSF_filename) \
                     + '.png', dpi=300, transparent=True)
         if False:
             plt.figure()
@@ -157,7 +163,7 @@ for band in conf['bands']:
             #plt.imshow(PUP[50:-50,50:-50], origin='lower')
             plt.colorbar()
             plt.show(block=False)
-            plt.savefig(os.path.join(conf['output_dir'], 'LS_' + filename) \
+            plt.savefig(os.path.join(conf['output_dir'], LS_filename) \
                     + '.png', dpi=300, transparent=True)
         
         # print elapsed time

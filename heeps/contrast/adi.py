@@ -5,11 +5,12 @@ from astropy.io import fits
 import os.path
 
 
-def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files', 
-        mode='CVC', scao_name='compass', cube_duration=600, cube_samp=100, 
-        adi_cube_duration=3600, adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, 
-        dec=-2.47, band='L', mag=5, psc_simu=5.21, psc_inst=5.21, rim=19, 
-        add_bckg=True, calc_trans=False, plot_cc=False):
+def adi(path_offaxis='output_files', path_onaxis='output_files', 
+        path_output='output_files', prefix='', scao_name='compass', 
+        cube_duration=600, cube_samp=100, adi_cube_duration=3600, 
+        adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, dec=-2.47, band='L', 
+        mag=5, mode='CVC', psc_simu=5.21, psc_inst=5.21, rim=19, add_bckg=True, 
+        calc_trans=False, plot_cc=False, verbose=True):
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
     for a specific set of off-axis PSF and on-axis PSF (or cube of PSFs),
@@ -22,8 +23,8 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
             Path to on-axis (cubes of) PSFs
         path_output (str):
             Path to output files
-        mode (str):
-            HCI mode: ELT, VC, RAVC, APP, CL4, CL5,...
+        prefix (str):
+            Optional loadfiles prefix
         scao_name (str):
             SCAO simulator name
         cube_duration (int):
@@ -44,6 +45,8 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
             Spectral band (e.g. 'L', 'M', 'N1', 'N2')
         mag (float):
             Star magnitude at band
+        mode (str):
+            HCI mode: ELT, VC, RAVC, APP, CL4, CL5,...
         psc_simu (float):
             Simulation (fits files) pixel scale in mas/pix
         psc_inst (float):
@@ -56,23 +59,26 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
             True means transmission is calculated from fits files
         plot_cc (bool):
             True means contrast curve is plotted
+        verbose (bool):
+            True means VPI functions print to stdout intermediate info and timing
     """
     # format input folders
     path_offaxis = os.path.normpath(os.path.expandvars(path_offaxis))
     path_onaxis = os.path.normpath(os.path.expandvars(path_onaxis))
     path_output = os.path.normpath(os.path.expandvars(path_output))
     
-    """ output filename """
-    filename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s' \
+    """ filenames """
+    loadname = '%s%s_%s_%s_%s.fits'%(prefix,'%s','%s',band,'%s')
+    savename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s' \
             %(scao_name, cube_duration, cube_samp, adi_cube_duration, \
             adi_cube_samp, adi_cube_avg, dec, band, mag, int(add_bckg), mode)
     
     """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
     if calc_trans is True:
-        I_ELT = fits.getdata(os.path.join(path_offaxis, 'LS_%s_%s.fits' \
-                %(band, 'ELT')))**2
-        I_OFFAXIS = fits.getdata(os.path.join(path_offaxis, 'LS_%s_%s.fits' \
-                %(band, mode)))**2
+        I_ELT = fits.getdata(os.path.join(path_offaxis, \
+                loadname%('offaxis', 'LS', 'ELT')))**2
+        I_OFFAXIS = fits.getdata(os.path.join(path_offaxis, \
+                loadname%('offaxis', 'LS', mode)))**2
         trans = np.sum(I_OFFAXIS)/np.sum(I_ELT)
     else:
         trans_all = {'ELT': 1.,
@@ -84,18 +90,18 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     
     """ get normalized off-axis PSF (single) """
     # total flux of the non-coronagraphic PSF
-    psf_ELT = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
-            %(band, 'ELT')))
+    psf_ELT = fits.getdata(os.path.join(path_offaxis, \
+                loadname%('offaxis', 'PSF', 'ELT')))
     ELT_flux = np.sum(psf_ELT)
     # normalized off-axis PSF
-    psf_OFF = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
-            %(band, mode)))
+    psf_OFF = fits.getdata(os.path.join(path_offaxis, \
+                loadname%('offaxis', 'PSF', mode)))
     psf_OFF /= ELT_flux
     
     """ get normalized on-axis PSFs (cube, resampled, and averaged) """
     # load cube, and format to 3D
-    psf_ON = fits.getdata(os.path.join(path_onaxis, 'PSF_%s_%s.fits' \
-            %(band, mode)))
+    psf_ON = fits.getdata(os.path.join(path_onaxis, \
+                loadname%('onaxis', 'PSF', mode)))[:5]
     if psf_ON.ndim != 3:
         psf_ON = np.array(psf_ON, ndmin=3)
     # save PSF initial shape
@@ -113,8 +119,10 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     ncube = psf_ON.shape[0]
     
     """ VIP: resample psfs to match the instrument pixelscale """
-    psf_ON = vip_hci.preproc.cube_px_resampling(psf_ON, psc_simu/psc_inst)
-    psf_OFF = vip_hci.preproc.frame_px_resampling(psf_OFF, psc_simu/psc_inst)
+    psf_ON = vip_hci.preproc.cube_px_resampling(psf_ON, psc_simu/psc_inst, \
+            verbose=verbose)
+    psf_OFF = vip_hci.preproc.frame_px_resampling(psf_OFF, psc_simu/psc_inst, \
+            verbose=verbose)
     # clip negative values due to resampling
     psf_ON = psf_ON.clip(min=0)
     psf_OFF = psf_OFF.clip(min=0)
@@ -137,7 +145,7 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     if mode == 'APP':
         psf_OFF *= 0.64 # for APP 64% Strehl ratio
     
-    """ add background and photon noise ~ N(0,1) * sqrt(psf)"""
+    """ add background and photon noise ~ N(0,1) * sqrt(psf) """
     if add_bckg is True:
         # background flux [e-/s/pix], from Roy (Jan 8, 2019)
         bckg_ADU_all = {'L' : 2.754e+05,
@@ -156,15 +164,17 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     (xoff, yoff) = psf_OFF.shape
     (cx, cy) = (int(xoff/2), int(yoff/2))
     # fit a 2D Gaussian --> output: fwhm, x-y centroid
-    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1], True, \
-            (rim,rim), debug=False, full_output=True)
+    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1, \
+            cy-rim:cy+rim+1], True, (rim,rim), debug=False, full_output=True)
     # derive the FWHM
     fwhm = np.mean([fit['fwhm_x'],fit['fwhm_y']])
     # recenter and crop
-    psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, rim-fit['centroid_x'], rim-fit['centroid_y'])
+    shiftx, shifty = rim-fit['centroid_x'], rim-fit['centroid_y']
+    psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shiftx, shifty)
     psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
     # FWHM aperture photometry of psf_OFF_crop
-    starphot = vip_hci.metrics.aperture_flux(psf_OFF_crop,[rim],[rim],fwhm)[0]
+    starphot = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim], \
+            fwhm, verbose=False)[0]
     
     """ parallactic angles for ADI """
     # duration -> hour angle conversion
@@ -174,21 +184,25 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
     dr = np.deg2rad(dec)
     lr = np.deg2rad(lat)
     # parallactic angle in deg
-    pa = -np.rad2deg(np.arctan2(-np.sin(hr), np.cos(dr)*np.tan(lr)-np.sin(dr)*np.cos(hr)))
+    pa = -np.rad2deg(np.arctan2(-np.sin(hr), np.cos(dr)*np.tan(lr) \
+            - np.sin(dr)*np.cos(hr)))
     
     """ VIP: post-processing (ADI, ADI-PCA,...) """
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
     # psf after post-processing
-    out, derot, psf_pp = algo(psf_ON, pa, full_output=True)
+    out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
     # contrast curve after post-processing
-    cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, fwhm, psc_inst/1e3, \
-            starphot, algo=algo, nbranch=1, sigma=5, debug=False, plot=False)
+    cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
+            fwhm, psc_inst/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
+            debug=False, plot=False, verbose=verbose)
+    cc_pp= 0
     
     """ saving to fits files """
-    fits.writeto(os.path.join(path_output, 'psf_' + filename + '.fits'), psf_pp, overwrite=True)
+    fits.writeto(os.path.join(path_output, 'psf_' + savename + '.fits'), \
+            psf_pp, overwrite=True)
     hdu = fits.PrimaryHDU(cc_pp)
-    hdu.writeto(os.path.join(path_output, 'cc_' + filename + '.fits'), overwrite=True)
+    hdu.writeto(os.path.join(path_output, 'cc_' + savename + '.fits'), overwrite=True)
     
     """ figure """
     if plot_cc is True:
@@ -206,4 +220,5 @@ def adi(path_offaxis='offaxis', path_onaxis='onaxis', path_output='output_files'
         plt.xlim(left=0)
         plt.ylim([1e-7, 1e-0])
         plt.show(block=False)
-        plt.savefig(os.path.join(path_output, 'cc_' + filename + '.png'), dpi=300, transparent=True)
+        plt.savefig(os.path.join(path_output, 'cc_' + savename + '.png'), \
+                dpi=300, transparent=True)

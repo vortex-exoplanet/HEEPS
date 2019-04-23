@@ -57,15 +57,16 @@ psf_cube = metis_hci(atm_screen_cube, ncpa_scaling_linear, **conf)
 psf = psf_cube[0]
 
 # figures
-psf_filename = '%sPSF_%s_%s'%(conf['prefix'], conf['band'], conf['mode'])
+on_off = {True:'onaxis', False:'offaxis'}[conf['onaxis']]
+PSF_filename = '%s%s_PSF_%s_%s'%(conf['prefix'], on_off, conf['band'], conf['mode'])
 plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
 plt.show(block=False)
-plt.savefig(os.path.join(conf['output_dir'], psf_filename + '.png'), \
+plt.savefig(os.path.join(conf['output_dir'], PSF_filename + '.png'), \
         dpi=300, transparent=True)
 
 # save cube as fits file
-fits.writeto(os.path.join(conf['output_dir'], psf_filename + '.fits'), \
+fits.writeto(os.path.join(conf['output_dir'], PSF_filename + '.fits'), \
         psf_cube, overwrite=True)

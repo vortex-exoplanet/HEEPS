@@ -53,11 +53,12 @@ psf = heeps.detector.detector(wfo, conf)
 
 
 """ Figures """
-psf_filename = '%sPSF_%s_%s'%(conf['prefix'], conf['band'], conf['mode'])
+on_off = {True:'onaxis', False:'offaxis'}[conf['onaxis']]
+PSF_filename = '%s%s_PSF_%s_%s'%(conf['prefix'], on_off, conf['band'], conf['mode'])
 plt.figure(1)
 #plt.imshow(psf**0.05, origin='lower')
 plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
 plt.colorbar()
 plt.show(block=False)
-plt.savefig(os.path.join(conf['output_dir'], psf_filename + '.png'), \
+plt.savefig(os.path.join(conf['output_dir'], PSF_filename + '.png'), \
         dpi=300, transparent=True)

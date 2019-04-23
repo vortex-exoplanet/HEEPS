@@ -64,7 +64,7 @@ band_specs = {'L': {'lam': 3.8e-6,
 loadname = 'cc_compass3600s_samp300ms_ADI3600s_samp300ms_avg0ms_dec-2.47deg_%s_mag%s_bckg%s_%s.fits'
 distrib = 'student' if student is True else 'normal'
 savename_png = 'cc_adi_%s_mag%s_figtype%s' + '_%s%s'%(distrib, suffix)
-savename_fits = 'cc_adi_%s_mag%s_%s' #+ '_%s'%(distrib)
+savename_fits = 'cc_adi_%s_mag%s_%s_bckg%s' #+ '_%s'%(distrib)
 
 # loop figure types
 for figtype in figtypes:
@@ -128,9 +128,11 @@ for figtype in figtypes:
                 # save fits.hdu for each mode
                 date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
                 header = fits.Header({'xlabel':xlabel,'ylabel':ylabel,\
-                        'date':date, 'wavelnth':lam, 'band':band, 'mag':mag, 'mode':mode})
+                        'date':date, 'wavelnth':lam, 'band':band, 'mag':mag, \
+                        'bckg':bckg, 'mode':mode})
                 hdu = fits.PrimaryHDU((x,y), header=header)
-                hdu.writeto(savename_fits%(band, mag, mode) + '.fits', overwrite=True)
+                hdu.writeto(savename_fits%(band, mag, mode, int(bckg)) \
+                        + '.fits', overwrite=True)
         # customize figure axes (keep only 1 axis for figtype 2)
         if figtype is 2:
             axes = [axes[0]]
