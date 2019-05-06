@@ -8,7 +8,7 @@ import time
 import os
 
 # email when finished
-conf['send_to'] = None #'cdelacroix@uliege.be'
+conf['send_to'] = 'cdelacroix@uliege.be'
 conf['send_message'] = 'ADI simulation finished OK.'
 
 # list of cases
@@ -45,9 +45,13 @@ cases = [{'band':'L', 'mode':'ELT', 'pscale': 5.21,'mag': 5,  'add_bckg':True},
          {'band':'N2','mode':'CVC', 'pscale':10.78,'mag':-1.6,'add_bckg':False},
          {'band':'N2','mode':'CLC', 'pscale':10.78,'mag':-1.6,'add_bckg':False}]
 
-cases = [{'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':1},
-         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':2},
-         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 5,  'add_bckg':False, 'folder':3}]
+cases = [{'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':0},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':1},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':2},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':3},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':4},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':5},
+         {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':6}]
 
 # number of cases
 ncases = len(cases)
@@ -55,30 +59,33 @@ ncases = len(cases)
 conf['cpucount'] = ncases
 
 # define a wrapper function
-def multi_cc(cases, verbose, ind):
+def multi_cc(verbose, case):
     cube_duration = 3600
     cube_samp = 300
     adi_cube_duration = 3600
     adi_cube_samp = 300
-    band = cases[ind]['band']
-    mode = cases[ind]['mode']
-    pscale = cases[ind]['pscale']
-    add_bckg = cases[ind]['add_bckg']
-    mag = cases[ind]['mag']
+    band = case['band']
+    mode = case['mode']
+    pscale = case['pscale']
+    add_bckg = case['add_bckg']
+    mag = case['mag']
     # optional sub-folder for onaxis PSFs
-    folder = str(cases[ind].get('folder',''))
-    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256'
-#    path_onaxis = 'cube_COMPASS_20190209_600s_100ms_6000x256x256_lag/%s/'%folder
+    folder = str(case.get('folder',''))
+    tagname = '_%s'%folder
     path_offaxis = 'offaxis'
+#    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256'
+    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256_fig72/%s/'%folder
+    path_output = path_onaxis
     # call adi function
-    adi(path_offaxis=path_offaxis, path_onaxis=path_onaxis, verbose=verbose, \
+    adi(path_offaxis=path_offaxis, path_onaxis=path_onaxis, \
+            path_output=path_output, verbose=verbose, \
             mode=mode, band=band, cube_duration=cube_duration, \
             cube_samp=cube_samp, adi_cube_duration=adi_cube_duration, \
             adi_cube_samp=adi_cube_samp, psc_simu=pscale, psc_inst=pscale, \
-            add_bckg=add_bckg, mag=mag)
+            add_bckg=add_bckg, mag=mag, tagname=tagname)
     # print stuff
     print('%s: Finished case %s.'%(time.strftime("%Y-%m-%d %H:%M:%S", \
-            time.localtime()), ind + 1))
+            time.localtime()), folder))
 
 # start ADI
 print('%s: simulation starts, %s cases.'\
@@ -86,13 +93,13 @@ print('%s: simulation starts, %s cases.'\
 if conf['cpucount'] != 1 and platform in ['linux', 'linux2', 'darwin']:
     print('Multiprocessing using %s cores'%conf['cpucount'])
     verbose = False
-    func = partial(multi_cc, cases, verbose)
+    func = partial(multi_cc, verbose)
     p = mpro.Pool(conf['cpucount'])
-    p.map(func, range(ncases))
+    p.map(func, cases)
 else:
-    for ind in range(len(cases)):
+    for case in cases:
         verbose = True
-        multi_cc(cases, verbose, ind)
+        multi_cc(verbose, case)
 
 # send email when simulation finished
 print(time.strftime("%Y-%m-%d %H:%M:%S: " + '%s\n'%conf['send_message'], time.localtime()))

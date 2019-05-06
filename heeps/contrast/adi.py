@@ -10,7 +10,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         cube_duration=600, cube_samp=100, adi_cube_duration=3600, 
         adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, dec=-2.47, band='L', 
         mag=5, mode='CVC', psc_simu=5.21, psc_inst=5.21, rim=19, add_bckg=True, 
-        calc_trans=False, plot_cc=False, verbose=True):
+        tagname='', calc_trans=False, plot_cc=False, verbose=True):
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
     for a specific set of off-axis PSF and on-axis PSF (or cube of PSFs),
@@ -61,6 +61,8 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
             True means contrast curve is plotted
         verbose (bool):
             True means VPI functions print to stdout intermediate info and timing
+        tagname (str):
+            Tag name appended at the end of savename, e.g. '_test'
     """
     # format input folders
     path_offaxis = os.path.normpath(os.path.expandvars(path_offaxis))
@@ -69,9 +71,9 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     
     """ filenames """
     loadname = '%s%s_%s_%s_%s.fits'%(prefix,'%s','%s',band,'%s')
-    savename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s' \
+    savename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s%s' \
             %(scao_name, cube_duration, cube_samp, adi_cube_duration, \
-            adi_cube_samp, adi_cube_avg, dec, band, mag, int(add_bckg), mode)
+            adi_cube_samp, adi_cube_avg, dec, band, mag, int(add_bckg), mode, tagname)
     
     """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
     if calc_trans is True:
@@ -101,7 +103,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     """ get normalized on-axis PSFs (cube, resampled, and averaged) """
     # load cube, and format to 3D
     psf_ON = fits.getdata(os.path.join(path_onaxis, \
-                loadname%('onaxis', 'PSF', mode)))[:5]
+                loadname%('onaxis', 'PSF', mode)))
     if psf_ON.ndim != 3:
         psf_ON = np.array(psf_ON, ndmin=3)
     # save PSF initial shape
@@ -191,16 +193,14 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
     # psf after post-processing
-    out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
+    if False:
+        out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
+        fits.writeto(os.path.join(path_output, 'psf_' + savename + '.fits'), \
+                psf_pp, overwrite=True)
     # contrast curve after post-processing
     cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
             fwhm, psc_inst/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
             debug=False, plot=False, verbose=verbose)
-    cc_pp= 0
-    
-    """ saving to fits files """
-    fits.writeto(os.path.join(path_output, 'psf_' + savename + '.fits'), \
-            psf_pp, overwrite=True)
     hdu = fits.PrimaryHDU(cc_pp)
     hdu.writeto(os.path.join(path_output, 'cc_' + savename + '.fits'), overwrite=True)
     
