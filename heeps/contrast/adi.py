@@ -62,7 +62,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         verbose (bool):
             True means VPI functions print to stdout intermediate info and timing
         tagname (str):
-            Tag name appended at the end of savename, e.g. '_test'
+            Tag name appended to savename, e.g. '_test'
     """
     # format input folders
     path_offaxis = os.path.normpath(os.path.expandvars(path_offaxis))
