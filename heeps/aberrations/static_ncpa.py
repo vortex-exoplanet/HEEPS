@@ -2,7 +2,7 @@ import heeps.util.img_processing as impro
 import proper
 import numpy as np
 
-def ncpa_aberration(wf, ncpa_screen, **conf):
+def static_ncpa(wf, ncpa_screen, **conf):
     
     # get useful parameters
     gridsize = conf['gridsize']
