@@ -33,22 +33,7 @@ def vortex(wfo, conf):
         proper.prop_lens(wfo, f_lens, 'focusing lens vortex') # propagate through a lens
         proper.prop_propagate(wfo, f_lens, 'CVC') # propagate wavefront
 
-        if (os.path.isfile(my_file)==True):
-            if (Debug_print == True):
-                print ("Charge ", charge)
-            vvc = readfield(tmp_dir,'zz_vvc_'+calib) # read the theoretical vortex field
-            vvc = proper.prop_shift_center(vvc)
-            scale_psf = wfo._wfarr[0,0]
-            psf_num = readfield(tmp_dir,'zz_psf_'+calib) # read the pre-vortex field
-            psf0 = psf_num[0,0]
-            psf_num = psf_num/psf0*scale_psf
-            perf_num = readfield(tmp_dir,'zz_perf_'+calib) # read the perfect-result vortex field
-            perf_num = perf_num/psf0*scale_psf
-            wfo._wfarr = (wfo._wfarr - psf_num)*vvc + perf_num # the wavefront takes into account the real pupil with the perfect-result vortex field
-
-        else: # CAL==1: # create the vortex for a perfectly circular pupil
-            if (Debug_print == True):
-                print ("Charge ", charge)           
+        if not os.path.isfile(my_file): # CAL==1: # create the vortex for a perfectly circular pupil
 
             wfo1 = proper.prop_begin(diam, wavelength, gridsize, beam_ratio)
             proper.prop_circular_aperture(wfo1, diam/2)
@@ -90,16 +75,20 @@ def vortex(wfo, conf):
             proper.prop_propagate(wfo1, -f_lens)
             writefield(tmp_dir,'zz_perf_'+calib, wfo1.wfarr) # write the perfect-result vortex field
 
-            vvc = readfield(tmp_dir,'zz_vvc_'+calib)
-            vvc = proper.prop_shift_center(vvc)
-            scale_psf = wfo._wfarr[0,0]
-            psf_num = readfield(tmp_dir,'zz_psf_'+calib) # read the pre-vortex field
-            psf0 = psf_num[0,0]
-            psf_num = psf_num/psf0*scale_psf
-            perf_num = readfield(tmp_dir,'zz_perf_'+calib) # read the perfect-result vortex field
-            perf_num = perf_num/psf0*scale_psf
-            wfo._wfarr = (wfo._wfarr - psf_num)*vvc + perf_num # the wavefront takes into account the real pupil with the perfect-result vortex field
-
+        # read the theoretical vortex field
+        vvc = readfield(tmp_dir,'zz_vvc_'+calib)
+        vvc = proper.prop_shift_center(vvc)
+        scale_psf = wfo._wfarr[0,0]
+        # read the pre-vortex field
+        psf_num = readfield(tmp_dir,'zz_psf_'+calib)
+        psf0 = psf_num[0,0]
+        psf_num = psf_num/psf0*scale_psf
+        # read the perfect-result vortex field
+        perf_num = readfield(tmp_dir,'zz_perf_'+calib) 
+        perf_num = perf_num/psf0*scale_psf
+        # the wavefront takes into account the real pupil with the perfect-result vortex field
+        wfo._wfarr = (wfo._wfarr - psf_num)*vvc + perf_num 
+        
         proper.prop_propagate(wfo, f_lens, "propagate to pupil reimaging lens")  
         proper.prop_lens(wfo, f_lens, "apply pupil reimaging lens")
         proper.prop_propagate(wfo, f_lens, "lyot stop")
