@@ -1,20 +1,24 @@
+import heeps.util.img_processing as impro
 import numpy as np
 import proper
 from skimage.transform import resize
 from astropy.io import fits
 import os.path
 
-def lyotstop(wf, conf, RAVC=None, APP=None, get_pupil='no', dnpup=50):
+def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
     """Add a Lyot stop, or an APP."""
     
-    # load parameters
+    # load useful parameters
     npupil = conf['npupil']
     pad = int((conf['gridsize'] - npupil)/2)
+    get_amp = conf['get_amp']
+    get_phase = conf['get_phase']
     
     # get LS misalignments
-    LS_misalignment = (np.array(conf['LS_misalign'])*npupil).astype(int)
-    dx_amp, dy_amp, dz_amp = LS_misalignment[0:3]
-    dx_phase, dy_phase, dz_phase = LS_misalignment[3:6]
+#    LS_misalign = np.int64(np.array(conf['LS_misalign'])*npupil)
+    LS_misalign = conf['LS_misalign'] if conf['LS_misalign'] else [0,0,0,0,0,0]
+    dx_amp, dy_amp, dz_amp = LS_misalign[0:3]
+    dx_phase, dy_phase, dz_phase = LS_misalign[3:6]
     
     # case 1: Lyot stop (no APP)
     if APP is not True:
@@ -66,10 +70,10 @@ def lyotstop(wf, conf, RAVC=None, APP=None, get_pupil='no', dnpup=50):
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
     
-    # get the pupil amplitude or phase for output
-    if get_pupil.lower() in 'amplitude':
-        return wf, proper.prop_get_amplitude(wf)[pad+1-dnpup:-pad+dnpup, pad+1-dnpup:-pad+dnpup]
-    elif get_pupil.lower() in 'phase':
-        return wf, proper.prop_get_phase(wf)[pad+1-dnpup:-pad+dnpup, pad+1-dnpup:-pad+dnpup]
-    else:
-        return wf
+    # get the LS amplitude and phase for output
+    LS_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)\
+            if get_amp is True else None
+    LS_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)\
+            if get_phase is True else None
+    
+    return wf, LS_amp, LS_phase
