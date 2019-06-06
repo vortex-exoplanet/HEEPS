@@ -1,7 +1,6 @@
 import heeps.util.img_processing as impro
 import numpy as np
 import proper
-from skimage.transform import resize
 from astropy.io import fits
 import os.path
 
@@ -10,7 +9,7 @@ def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
     
     # load useful parameters
     npupil = conf['npupil']
-    pad = int((conf['gridsize'] - npupil)/2)
+    gridsize = conf['gridsize']
     get_amp = conf['get_amp']
     get_phase = conf['get_phase']
     
@@ -60,13 +59,11 @@ def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
         APP_phase = fits.getdata(APP_phase_file) if os.path.isfile(APP_phase_file) \
                 else np.zeros((npupil, npupil))
         # resize to npupil
-        APP_amp = resize(APP_amp, (npupil, npupil), preserve_range=True, mode='reflect')
-        APP_phase = resize(APP_phase, (npupil, npupil), preserve_range=True, mode='reflect')
+        APP_amp = impro.resize_img(APP_amp, npupil)
+        APP_phase = impro.resize_img(APP_phase, npupil)
         # pad with zeros to match PROPER gridsize
-        APP_amp = np.pad(APP_amp, [(pad+1+dx_amp, pad-dx_amp), \
-                (pad+1+dy_amp, pad-dy_amp)], mode='constant')
-        APP_phase = np.pad(APP_phase, [(pad+1+dx_phase, pad-dx_phase), \
-                (pad+1+dy_phase, pad-dy_phase)], mode='constant')
+        APP_amp = impro.pad_img(APP_amp, gridsize)
+        APP_phase = impro.pad_img(APP_phase, gridsize)
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
     

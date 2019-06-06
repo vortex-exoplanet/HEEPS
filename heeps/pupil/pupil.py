@@ -11,7 +11,7 @@ def pupil(conf, pupil_file=None, margin=0):
     lam = conf['lam']
     diam = conf['diam']
     gridsize = conf['gridsize']
-    beam_ratio = (conf['pscale']*u.mas/(lam/diam)).to('rad').value
+    beam_ratio = (conf['pscale']*u.mas/(lam/diam)).to('rad').value # lam/D per pix
     get_amp = conf['get_amp']
     get_phase = conf['get_phase']
     

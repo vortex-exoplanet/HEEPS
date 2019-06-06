@@ -57,16 +57,16 @@ if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
 # =============================================================================
 #           Parameters for Wavefront aberrations
 # =============================================================================
-conf['zernike'] = None          # zernike polynomials
+#conf['zernike'] = None          # zernike polynomials
 conf['zern_inds'] = [2,3]       # zernike indices
 
-conf['petal_piston'] = None     # petal piston (island effect)
+#conf['petal_piston'] = None     # petal piston (island effect)
 conf['npetals'] = 6             # number of petals in the pupil
 
-conf['atm_screen'] = None       # atmosphere SCAO phase screens
+#conf['atm_screen'] = None       # atmosphere SCAO phase screens
 conf['atm_screen_file'] = 'cube_atm_100screens_Feb2018_RandomWind.fits'
 
-conf['ncpa_screen'] = None      # quasi-static NCPAs
+#conf['ncpa_screen'] = None      # quasi-static NCPAs
 conf['ncpa_screen_file'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits' # IMG LM @ 3.7 um
 #conf['ncpa_screen_file'] = 'NCPA_IMG_NQPP1-SCAO_DET.fits' # IMG NQ @ 10 um
 

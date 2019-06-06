@@ -1,70 +1,63 @@
+import heeps.util.img_processing as impro
 import numpy as np
-from skimage.transform import resize
 import proper
 import os
 from ..fits import writefield 
 from ..fits import readfield
 
-
-
-
-
 def vortex(wfo, conf):
-    tmp_dir = conf['temp_dir']
-    n = int(proper.prop_get_gridsize(wfo))
-    ofst = 0 # no offset
-    ramp_sign = 1 #sign of charge is positive
-    ramp_oversamp = 11. # vortex is oversampled for a better discretization
     
-    f_lens = conf['focal']
+    # load parameters
+    lam = conf['lam']
+    gridsize = conf['gridsize']
+    beam_ratio = conf['beam_ratio']
     diam = conf['diam']
+    f_lens = conf['focal']
     charge = conf['VC_charge']
-    pixelsize = conf['pscale']
-    Debug_print = False 
+    tmp_dir = conf['temp_dir']
+    
+    # some more parameters
     
     if charge!=0:
-        wavelength = proper.prop_get_wavelength(wfo) 
-        gridsize = proper.prop_get_gridsize(wfo)
-        beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
         calib = str(charge)+str('_')+str(int(beam_ratio*100))+str('_')+str(gridsize)
         my_file = str(tmp_dir+'zz_perf_'+calib+'_r.fits')
-
+        
         proper.prop_propagate(wfo, f_lens, 'inizio') # propagate wavefront
         proper.prop_lens(wfo, f_lens, 'focusing lens vortex') # propagate through a lens
         proper.prop_propagate(wfo, f_lens, 'CVC') # propagate wavefront
-
-        if not os.path.isfile(my_file): # CAL==1: # create the vortex for a perfectly circular pupil
-
-            wfo1 = proper.prop_begin(diam, wavelength, gridsize, beam_ratio)
+        
+        if not os.path.isfile(my_file): # create the vortex for a perfectly circular pupil
+            wfo1 = proper.prop_begin(diam, lam, gridsize, beam_ratio)
             proper.prop_circular_aperture(wfo1, diam/2)
             proper.prop_define_entrance(wfo1)
             proper.prop_propagate(wfo1, f_lens, 'inizio') # propagate wavefront
             proper.prop_lens(wfo1, f_lens, 'focusing lens vortex') # propagate through a lens
             proper.prop_propagate(wfo1, f_lens, 'CVC') # propagate wavefront     
-  
             writefield(tmp_dir,'zz_psf_'+calib, wfo1.wfarr) # write the pre-vortex field
-            nramp = int(n*ramp_oversamp) #oversamp
-            # create the vortex by creating a matrix (theta) representing the ramp (created by atan 2 gradually varying matrix, x and y)
-            y1 = np.ones((nramp,), dtype=np.int)
-            y2 = np.arange(0, nramp, 1.) - (nramp/2) - int(ramp_oversamp)/2
-            y = np.outer(y2, y1)
-            x = np.transpose(y)
-            theta = np.arctan2(y,x)
-            x = 0
-            y = 0
-            vvc_tmp = np.exp(1j*(ofst + ramp_sign*charge*theta))
-            theta = 0
-            vvc_real_resampled = resize(vvc_tmp.real, (n, n), preserve_range=True, mode='reflect')
-            vvc_imag_resampled = resize(vvc_tmp.imag, (n, n), preserve_range=True, mode='reflect')
-            vvc = np.array(vvc_real_resampled, dtype=complex)
-            vvc.imag = vvc_imag_resampled
-            vvcphase = np.arctan2(vvc.imag, vvc.real) # create the vortex phase
-            vvc_complex = np.array(np.zeros((n,n)), dtype=complex)
-            vvc_complex.imag = vvcphase
+            
+            # vortex phase ramp is oversampled for a better discretization
+            ramp_oversamp = 11.
+            nramp = int(gridsize*ramp_oversamp)
+            start = -nramp/2 - int(ramp_oversamp)/2
+            end   =  nramp/2 - int(ramp_oversamp)/2
+            Vp = np.arange(start, end, 1.)
+            # Pancharatnam Phase = arg<Vref,Vp> (horizontal input polarization)
+            Vref = np.ones(Vp.shape)
+            prod = np.outer(Vref, Vp)
+            phiPan = np.angle(prod + 1j*prod.T)
+            # vortex phase ramp exp(ilphi) with optional offset
+            ofst = 0
+            vvc_tmp = np.exp(1j*(charge*phiPan + ofst))
+            vvc = np.array(impro.resize_img(vvc_tmp.real, gridsize), dtype=complex)
+            vvc.imag = impro.resize_img(vvc_tmp.imag, gridsize)
+            phase_ramp = np.angle(vvc)
+            
+            vvc_complex = np.array(np.zeros((gridsize, gridsize)), dtype=complex)
+            vvc_complex.imag = phase_ramp
             vvc = np.exp(vvc_complex)
             vvc_tmp = 0.
             writefield(tmp_dir,'zz_vvc_'+calib, vvc) # write the theoretical vortex field
-
+            
             proper.prop_multiply(wfo1, vvc)
             proper.prop_propagate(wfo1, f_lens, 'OAP2')
             proper.prop_lens(wfo1, f_lens)
@@ -74,7 +67,7 @@ def vortex(wfo, conf):
             proper.prop_lens(wfo1, -f_lens)
             proper.prop_propagate(wfo1, -f_lens)
             writefield(tmp_dir,'zz_perf_'+calib, wfo1.wfarr) # write the perfect-result vortex field
-
+        
         # read the theoretical vortex field
         vvc = readfield(tmp_dir,'zz_vvc_'+calib)
         vvc = proper.prop_shift_center(vvc)
@@ -94,9 +87,3 @@ def vortex(wfo, conf):
         proper.prop_propagate(wfo, f_lens, "lyot stop")
             
     return wfo
-
-
-
-
-
-
