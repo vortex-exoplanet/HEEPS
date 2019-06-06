@@ -3,22 +3,22 @@ from astropy.io import fits
 
 def detector(wfo, conf):
     f_lens = conf['focal']
-    nd = conf['ndet']
+    ndet = conf['ndet']
+    gridsize = conf['gridsize']
     mode = conf['mode']
     prefix = conf['prefix']
-    Debug = False
-      
-    n = proper.prop_get_gridsize(wfo)
-    if (n >= nd):
+    
+    if (gridsize >= ndet):
         proper.prop_propagate(wfo, f_lens, "to reimaging lens")
         proper.prop_lens(wfo, f_lens, "apply reimaging lens")
         proper.prop_propagate(wfo, f_lens, "final focus")
-        (wfo, sampling) = proper.prop_end(wfo, NOABS = False) # conclude the simulation --> noabs= the wavefront array will be complex
+        # conclude the simulation --> noabs = wavefront array will be complex
+        (wfo, sampling) = proper.prop_end(wfo, NOABS = False)
     else: 
-        print('Error: final image is bigger than initial grid size')            
-    psf = wfo[int(n/2-nd/2):int(n/2+nd/2),int(n/2-nd/2):int(n/2+nd/2)]
+        print('Error: final image is bigger than initial grid size')
+    start = int(gridsize/2 - ndet/2)
+    end = int(gridsize/2 + ndet/2)
+    psf = wfo[start:end, start:end]
     out_dir = str('./output_files/')
-    if (Debug==True): 
-        fits.writeto(out_dir + prefix + '_' + mode+'_PSF'+'.fits', psf, overwrite=True)
-    return psf 
-
+    
+    return psf
