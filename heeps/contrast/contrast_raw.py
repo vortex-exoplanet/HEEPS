@@ -7,11 +7,9 @@ import numpy as np
 
 # inputs
 bands = ['L', 'M', 'N1', 'N2']
-N = 512
-(xc,yc) = (int(N/2),int(N/2))
 xbin = 1
-rim = 250
-(xo,yo) = (rim,rim)
+rim = 400
+(xo,yo) = (rim-1,rim-1)
 ylim = (1e-7, 1e0)
 linestyles = ['-','--']
 thinline = 0.8
@@ -49,10 +47,10 @@ band_specs = {'L': {'lam': 3.8e-6,
                 'markers': ['+', 'o', 'x']}}
 
 # working repository
-path_offaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/offaxis'
-#path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/onaxis'
-path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/cube_COMPASS_20181008_3600s_300ms_12000x512x512_averaged'
-path_output = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps-analysis/output_files'
+path_offaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps_analysis/offaxis'
+#path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps_analysis/onaxis'
+path_onaxis = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps_analysis/cube_COMPASS_20181008_3600s_300ms_12000x512x512_averaged'
+path_output = '/Users/cdelacroix/INSTRUMENTS/METIS/heeps_analysis/output_files'
 
 
 # saved file name
@@ -79,29 +77,29 @@ for band in bands:
     modes = band_specs[band]['modes']
     colors = band_specs[band]['colors']
     markers = band_specs[band]['markers']
-    x = xbin*pscale*1e-3*np.arange(rim+1)[:-1]
+    x = pscale*1e-3/xbin*np.arange(rim)[:-1]
     plt.figure(1, figsize=figsize)
     for mode, color, marker in zip(modes, colors, markers):
         # if APP vertical band was replaced by horizontal one
         replaced = '_replaced' if mode == 'APP' and APP_replaced is True else ''
         
         # off-axis PSF
-        psf_OFF = fits.getdata(os.path.join(path_offaxis, 'PSF_%s_%s.fits' \
+        psf_OFF = fits.getdata(os.path.join(path_offaxis, 'offaxis_PSF_%s_%s.fits' \
                 %(band, mode)))
-        psf_OFF_rim = psf_OFF[xc-rim+1:xc+rim,yc-rim+1:yc+rim]
+        # resample
+        psf_OFF_rim = impro.resize_img(psf_OFF, 2*rim)
         # on-axis PSFs (cube)
-        psf_ON = fits.getdata(os.path.join(path_onaxis, 'PSF_%s_%s%s.fits' \
+        psf_ON = fits.getdata(os.path.join(path_onaxis, 'onaxis_PSF_%s_%s%s.fits' \
                 %(band, mode, replaced)))
         if psf_ON.ndim != 3:
             psf_ON = np.array(psf_ON, ndmin=3)
-        # averaged on-axis PSF
+        # average
         psf_ON_avg = np.mean(psf_ON, 0)
-        psf_ON_rim = psf_ON_avg[xc-rim+1:xc+rim,yc-rim+1:yc+rim]
+        # resample
+        psf_ON_rim = impro.resize_img(psf_ON_avg, 2*rim)
         # radial profiles
         y1 = impro.get_radial_profile(psf_OFF_rim, (xo,yo), xbin)[:-1]
         y2 = impro.get_radial_profile(psf_ON_rim, (xo,yo), xbin)[:-1]
-#        if mode == 'APP':
-#            y2 = psf_ON_rim[rim-1,rim-1:]
         # normalize by the peak of the off-axis PSF
         peak = np.max(y1)
         y1 /= peak
@@ -124,5 +122,3 @@ for band in bands:
                     markersize=markersize, markevery=markevery, \
                     linestyle=linestyles[0], label='%s'%mode)
     savefig(1, band)
-
-
