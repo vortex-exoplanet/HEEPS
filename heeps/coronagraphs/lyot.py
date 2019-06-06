@@ -1,74 +1,55 @@
+import heeps.util.img_processing as impro
 import numpy as np
 import proper
-import os
-from ..fits import writefield 
-from ..fits import readfield
+import os.path
+from astropy.io import fits
 
 
 def lyot(wfo, conf):
-    tmp_dir = conf['temp_dir']
-    n = int(proper.prop_get_gridsize(wfo))
-    ofst = 0 # no offset
     
     f_lens = conf['focal']
-    diam = conf['diam']
-    pixelsize = conf['pscale']
-    Debug_print = False 
-    CLC_diam = conf['CLC_diam'] # classical lyot diam in lam/D
+    beam_ratio = conf['beam_ratio']
+    CLC_diam = conf['CLC_diam'] # classical lyot diam in lam/D (default to 4)
+    gridsize = conf['gridsize']
+    tmp_dir = conf['temp_dir']
     
-    wavelength = proper.prop_get_wavelength(wfo) 
-    gridsize = proper.prop_get_gridsize(wfo)
-    beam_ratio = pixelsize*4.85e-9/(wavelength/diam)
-    calib = str(int(beam_ratio*100))+str('_')+str(gridsize)
-    my_file = str(tmp_dir+'zz_perf_'+calib+'_r.fits')
-
     proper.prop_propagate(wfo, f_lens, 'inizio') # propagate wavefront
     proper.prop_lens(wfo, f_lens, 'focusing lens LC') # apply lens
     proper.prop_propagate(wfo, f_lens, 'LC') # propagate wavefront
-
-    if (os.path.isfile(my_file)==True):
-        vvc = readfield(tmp_dir,'zz_vvc_'+calib) # read the theoretical vortex field
-        vvc = proper.prop_shift_center(vvc)
-        scale_psf = wfo._wfarr[0,0]
-        psf_num = readfield(tmp_dir,'zz_psf_'+calib) # read the pre-vortex field
-        psf0 = psf_num[0,0]
-        psf_num = psf_num/psf0*scale_psf
-        perf_num = readfield(tmp_dir,'zz_perf_'+calib) # read the perfect-result vortex field
-        perf_num = perf_num/psf0*scale_psf
-        wfo._wfarr = (wfo._wfarr - psf_num)*vvc + perf_num # the wavefront takes into account the real pupil with the perfect-result vortex field
-    else:
+    
+    # create or load the classical Lyot mask
+    calib = str(CLC_diam)+str('_')+str(int(beam_ratio*100))+str('_')+str(gridsize)
+    my_file = os.path.join(tmp_dir, 'clc_'+calib+'.fits')
+    if not os.path.isfile(my_file):
+        # calculate exact size of Lyot mask diameter, in pixels
+        Dmask = CLC_diam/beam_ratio
+        # oversample the Lyot mask (round up)
         samp = 100
-        n_samp = samp*int(np.ceil(CLC_diam/beam_ratio))
-        Rext = round(samp/2.*CLC_diam/beam_ratio)
-        center = (n_samp - 1)/2. # 513
-        temp = np.zeros([n_samp,n_samp])
-        for i in range(n_samp):
-            for j in range(n_samp):
-                r = np.sqrt((i - center)**2 + (j - center)**2)
-                if r > Rext:
-                    temp[i,j] = 1
-        
-        import scipy.misc
-        n_samp2 = int(n_samp/samp)
-        mask_samp = scipy.misc.imresize(temp, (n_samp2, n_samp2), interp="bilinear")/255.
-        
-        npts = 1024
-        mask = np.ones([npts,npts])
-        mask[int(np.ceil((npts - n_samp2)/2.)):int(np.ceil((npts + n_samp2)/2.)), \
-                int(np.ceil((npts - n_samp2)/2.)):int(np.ceil((npts + n_samp2)/2.))]\
-                = mask_samp
-        
-        mask = proper.prop_shift_center(mask)
-        wfo._wfarr *= mask # apply lyot mmask
+        ndisk = int(samp*np.ceil(Dmask))
+        ndisk = ndisk + 1 if not ndisk % 2 else ndisk # must be odd
+        # find center
+        cdisk = int((ndisk - 1)/2)
+        # calculate the distances to center
+        xy = range(-cdisk, cdisk + 1)
+        x,y = np.meshgrid(xy, xy)
+        dist = np.sqrt(x**2 + y**2)
+        # create the Lyot mask
+        mask = np.zeros((ndisk, ndisk))
+        mask[np.where(dist > samp*Dmask/2)] = 1
+        # resize to Lyot mask real size, and pad with ones
+        mask = impro.resize_img(mask, int(ndisk/samp))
+        mask = impro.pad_img(mask, gridsize, 1)
+        # write mask
+        fits.writeto(my_file, mask)
+    else:
+        mask = fits.getdata(my_file)
+    
+    # apply lyot mask
+    mask = proper.prop_shift_center(mask)
+    wfo._wfarr.real *= mask
     
     proper.prop_propagate(wfo, f_lens, "propagate to pupil reimaging lens")  
     proper.prop_lens(wfo, f_lens, "apply pupil reimaging lens")
     proper.prop_propagate(wfo, f_lens, "lyot stop")
-            
+    
     return wfo
-
-
-
-
-
-
