@@ -74,7 +74,7 @@ def multi_cc(verbose, case):
     tagname = '_%s'%folder
     path_offaxis = 'offaxis'
 #    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256'
-    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256_fig72/%s/'%folder
+    path_onaxis = 'cube_COMPASS_20181008_3600s_300ms_12000x256x256_aberrations/%s/'%folder
     path_output = path_onaxis
     # call adi function
     adi(path_offaxis=path_offaxis, path_onaxis=path_onaxis, \
@@ -96,6 +96,8 @@ if conf['cpucount'] != 1 and platform in ['linux', 'linux2', 'darwin']:
     func = partial(multi_cc, verbose)
     p = mpro.Pool(conf['cpucount'])
     p.map(func, cases)
+    p.close()
+    p.join()
 else:
     for case in cases:
         verbose = True

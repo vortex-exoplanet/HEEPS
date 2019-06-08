@@ -109,8 +109,10 @@ cases = [[0, atm_cube, ncpa_cube, None        , None         , None             
          [3, atm_cube, None     , None        , None         , point_jitter            , 2, 0],
          [4, atm_cube, None     , None        , pupil_drift  , None                    , 0, 0],
          [5, atm_cube, None     , piston_drift, None         , None                    , 0, 0],
-         [6, atm_cube, ncpa_cube, piston_drift, pupil_drift  , point_drift+point_jitter, 2, 7]]
-#cases = [cases[i] for i in [2,3,4,5,6]]
+         [6, atm_cube, ncpa_cube, piston_drift, pupil_drift  , point_drift+point_jitter, 2, 7],
+         [7, atm_cube, None     , None        , None         , None                    , 0, 0],
+         [8, None,     None     , None        , None         , None                    , 0, 0]]
+cases = [cases[i] for i in [8]]
 
 """ Start looping on the different cases, bands, modes """
 
@@ -127,16 +129,16 @@ for case in cases:
         conf['band'] = band
         conf['lam'] = band_specs[band]['lam']
         conf['pscale'] = band_specs[band]['pscale']
-    
+        
         # compute beam ratio, pupil size, and create the entrance pupil
         wf_start, pup_amp, pup_phase = pupil(conf)
-    
-        for i, mode in enumerate(band_specs[band]['modes']):
-            conf['mode'] = mode
         
+        for mode in band_specs[band]['modes']:
+            conf['mode'] = mode
+            
             # starting time
             t0 = time.time()
-        
+            
             # propagate the frames, using multiple cores if possible 
             if conf['cpucount'] != 1 and platform in ['linux', 'linux2', 'darwin']:
                 if conf['cpucount'] == None:
@@ -147,13 +149,16 @@ for case in cases:
                 p = mpro.Pool(conf['cpucount'])
                 func = partial(propagate, wf_start, conf, False)
                 psfs = np.array(p.starmap(func, zip(atm_screens, ncpa_screens, petal_pistons, misaligns, zernikes)))
+                p.close()
+                p.join()
             else:
                 print('%s: %s band, %s mode, using %s core.'\
                         %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
                         band, mode, 1))
                 psfs = np.zeros((nframes, conf['ndet'], conf['ndet']))
-                for atm_screen, ncpa_screen, petal_piston, misalign, zernike in \
-                        zip(atm_screens, ncpa_screens, petal_pistons, misaligns, zernikes):
+                for i, (atm_screen, ncpa_screen, petal_piston, misalign, \
+                        zernike) in enumerate(zip(atm_screens, ncpa_screens, \
+                        petal_pistons, misaligns, zernikes)):
                     psf, LS_amp, apo_amp = propagate(wf_start, conf, True, \
                             atm_screen, ncpa_screen, petal_piston, misalign, zernike)
                     psfs[i,:,:] = psf
