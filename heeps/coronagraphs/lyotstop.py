@@ -62,8 +62,8 @@ def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
         APP_amp = impro.resize_img(APP_amp, npupil)
         APP_phase = impro.resize_img(APP_phase, npupil)
         # pad with zeros to match PROPER gridsize
-        APP_amp = impro.pad_img(APP_amp, gridsize)
-        APP_phase = impro.pad_img(APP_phase, gridsize)
+        APP_amp = impro.pad_img(APP_amp, gridsize, 1)
+        APP_phase = impro.pad_img(APP_phase, gridsize, 0)
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
     
