@@ -92,8 +92,7 @@ conf['LS_params'] = [0.98, 0.03, 1.1]           # R_out(%), dR_in(%), LS spider 
 conf['APP_phase_file'] = 'app_phase_cut.fits'   # apodizing phase plate files
 conf['APP_amp_file'] = ''
 conf['CLC_diam'] = 4                            # CLC occulter diam in lam/D
-conf['get_amp'] = False
-conf['get_phase'] = False
+
 
 # =============================================================================
 #           Detector plane

@@ -39,7 +39,7 @@ atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file'
 # =============================================================================
 
 #   1. ELT Pupil Plane
-wfo, _, _ = heeps.pupil.pupil(conf)
+wfo = heeps.pupil.pupil(conf)
 
 #   2. Wavefront aberrations
 heeps.aberrations.wavefront_aberrations(wfo, atm_screen=atm_screen, **conf)
