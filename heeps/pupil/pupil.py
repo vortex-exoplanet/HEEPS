@@ -34,7 +34,7 @@ def pupil(conf, pupil_file=None, margin=0):
     7: 'ELT_2048_37m_11m_5mas_nospiders_7missing_cut_flower.fits'}
     
     # create a pupil with circular obscuration (default), or load pupil from file
-    if pupil_file is None:
+    if conf['pupil_file'] is None and conf['N_mis_segments'] == 0:
         proper.prop_circular_aperture(wf, diam/2)
         proper.prop_circular_obscuration(wf, conf['R_obstr'], NORM=True)
     else:
