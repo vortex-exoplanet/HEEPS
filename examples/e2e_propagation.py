@@ -1,4 +1,4 @@
-#import matplotlib; matplotlib.use('agg') # to run on a headless server
+import matplotlib; matplotlib.use('agg') # to run on a headless server
 import matplotlib.pyplot as plt
 import numpy as np
 from astropy.io import fits 
@@ -19,7 +19,7 @@ import astropy.units as u
 
 """ user inputs """
 
-conf['bands'] = ['L', 'M', 'N1', 'N2']
+conf['bands'] = ['L']#, 'M', 'N1', 'N2']
 conf['CLC_diam'] = 4
 conf['onaxis'] = True
 conf['static_ncpa'] = False
@@ -30,12 +30,12 @@ conf['get_phase'] = False
 conf['APP_phase_file'] = 'rot90_METIS_vAPP_PDR_L.fits'
 
 # specify CPU count: 1=single processing, None=max-1
-conf['cpucount'] = None
+conf['cpucount'] = 35#None
 
 # band specifications
 band_specs = {'L': {'lam': 3.8e-6,
                   'pscale': 5.21,
-                   'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
+                   'modes': ['RAVC']},#'ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
               'M': {'lam': 4.8e-6,
                   'pscale': 5.21,
                    'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
@@ -87,14 +87,22 @@ def propagate(wf_start, conf, full_output, atm_screen, ncpa_screen,
 """ load all wavefront aberrations """
 
 atm_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[:3]
-#atm_cube = fits.getdata('/mnt/disk4tb/METIS/COMPASS_243x243/cube_COMPASS_20181008_3600s_100ms.fits')[::3,:]
+#atm_cube = fits.getdata('/mnt/disk4tb/METIS/COMPASS_243x243/'+ \
+#        'cube_COMPASS_20181008_3600s_100ms.fits')[::3,:]
 nframes = atm_cube.shape[0]
 print('\nNumber of frames = %s.'%nframes)
 ncpa_cube = fits.getdata(os.path.join(conf['input_dir'], conf['ncpa_screen_file']))
 ncpa_scaling = 10*0.0089
-ncpa_cube = np.array([x*ncpa_cube for x in np.linspace(-ncpa_scaling,ncpa_scaling,nframes)])
-point_drift = (np.linspace(-0.2, 0.2, nframes)*u.mas).to('rad').value/(3.8e-6/37)
+ncpa_cube = np.array([ncpa_cube*x for x in np.linspace(-ncpa_scaling,ncpa_scaling,nframes)])
+#ncpa_scaling = 100*0.0089
+#ncpa_cube = np.array([ncpa_cube*ncpa_scaling]*nframes)
+conf['static_ncpa'] = 'ncpa_fc_10_residuals.fits'
+ncpa_static = fits.getdata(os.path.join(conf['input_dir'], conf['static_ncpa']))
+ncpa_static = np.array([ncpa_static]*nframes)
+ncpa_all = ncpa_cube + ncpa_static
 point_jitter = (np.random.normal(0, 1, nframes)*u.mas).to('rad').value/(3.8e-6/37)
+point_drift = (np.linspace(-0.2, 0.2, nframes)*u.mas).to('rad').value/(3.8e-6/37)
+point_all = point_jitter + point_drift
 pupil_drift = [[x,0,0,0,0,0] for x in np.linspace(-0.01,0.01,nframes)]
 np.random.seed(345678)
 piston_drift_ptv = 0.01 #µm 
@@ -103,16 +111,24 @@ piston_drift = np.random.normal(piston_drift_ptv/2,piston_drift_ptv/2/10,6) \
         *np.sin(np.array([range(nframes)]).T/nframes \
         *np.random.normal(2*np.pi*piston_drift_freq,2*np.pi*piston_drift_freq/10,6) \
         + np.random.uniform(0,2*np.pi,6))
-cases = [[0, atm_cube, ncpa_cube, None        , None         , None                    , 0, 0],
-         [1, atm_cube, None     , None        , None         , None                    , 0, 7],
-         [2, atm_cube, None     , None        , None         , point_drift             , 2, 0],
-         [3, atm_cube, None     , None        , None         , point_jitter            , 2, 0],
-         [4, atm_cube, None     , None        , pupil_drift  , None                    , 0, 0],
-         [5, atm_cube, None     , piston_drift, None         , None                    , 0, 0],
-         [6, atm_cube, ncpa_cube, piston_drift, pupil_drift  , point_drift+point_jitter, 2, 7],
-         [7, atm_cube, None     , None        , None         , None                    , 0, 0],
-         [8, None,     None     , None        , None         , None                    , 0, 0]]
-cases = [cases[i] for i in [8]]
+cases = [[0,  None,     None       , None        , None         , None         , 0, 0],
+         [1,  atm_cube, None       , None        , None         , None         , 0, 0],
+         [2,  atm_cube, None       , None        , None         , None         , 0, 7],
+         [3,  atm_cube, None       , None        , None         , point_jitter , 2, 0],
+         [4,  atm_cube, None       , None        , None         , point_drift  , 2, 0],
+         [5,  atm_cube, None       , None        , pupil_drift  , None         , 0, 0],
+         [6,  atm_cube, None       , piston_drift, None         , None         , 0, 0],
+         [7,  atm_cube, ncpa_cube  , None        , None         , None         , 0, 0],
+         [8,  atm_cube, ncpa_cube  , piston_drift, pupil_drift  , point_all    , 2, 7],
+
+         [100,atm_cube, ncpa_cube  , piston_drift, pupil_drift  , point_all    , 2, 0],
+         [101,atm_cube, ncpa_cube  , None        , None         , None         , 0, 0],
+
+         [10, atm_cube, ncpa_static, None        , None         , None         , 0, 0],
+         [11, atm_cube, ncpa_all   , None        , None         , None         , 0, 0],
+         [12, atm_cube, ncpa_all   , piston_drift, pupil_drift  , point_all    , 2, 7]]
+
+cases = [case for case in cases if case[0] in [10,11,12]]
 
 """ Start looping on the different cases, bands, modes """
 
@@ -124,7 +140,7 @@ for case in cases:
     zernikes = case[5] if np.any(case[5]) else [None]*nframes
     conf['zern_inds'] = case[6]
     conf['N_mis_segments'] = case[7]
-
+    
     for band in conf['bands']:
         conf['band'] = band
         conf['lam'] = band_specs[band]['lam']
@@ -148,7 +164,8 @@ for case in cases:
                         band, mode, conf['cpucount']))
                 p = mpro.Pool(conf['cpucount'])
                 func = partial(propagate, wf_start, conf, False)
-                psfs = np.array(p.starmap(func, zip(atm_screens, ncpa_screens, petal_pistons, misaligns, zernikes)))
+                psfs = np.array(p.starmap(func, zip(atm_screens, ncpa_screens, \
+                        petal_pistons, misaligns, zernikes)))
                 p.close()
                 p.join()
             else:

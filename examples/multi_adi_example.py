@@ -52,6 +52,7 @@ cases = [{'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 
          {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':4},
          {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':5},
          {'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':6}]
+cases = [{'band':'L', 'mode':'RAVC','pscale':5.21, 'mag': 6,  'add_bckg':False, 'folder':10}]
 
 # number of cases
 ncases = len(cases)

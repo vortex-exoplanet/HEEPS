@@ -16,8 +16,8 @@ VIP cc data:
 """
 
 # inputs
-bands = ['L', 'M', 'N1', 'N2']
-r_CLC = 2.5 # lam/D of CLC occulter
+bands = ['L']#, 'M', 'N1', 'N2']
+r_CLC = 2.5 # radius of CLC occulter in lam/D
 diam = 37
 figsize = (12,4)#None#
 title_pad = -20
@@ -26,7 +26,7 @@ markevery = 0.12
 markersize = 4
 student = True
 loglog = False
-save2hdu = False
+save2hdu = True
 two_cols = True
 add_top_xticks = True
 xticks_log = [0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5]
@@ -36,17 +36,17 @@ xlabel = r"Angular separation $[\lambda/D]$"
 ylabel = r"5-$\sigma$ sensitivity (star mag %s = %s)"
 
 #select figure types: 0=without bckg; 1=with bckg; 2=with and without; 3=double plot
-figtypes = [2]#range(4) #all
+figtypes = [1]#range(4) #all
 # add optional suffix
-suffix = '_test'
+#suffix = '_test'
 suffix = '_log' if loglog is True else '_lin'
 
 # modes per band
 colors = ['k', 'C1', 'C0', 'C3', 'C2']
 markers = ['+', 'o', 'x', 'd', 'v']
 band_specs = {'L': {'lam': 3.8e-6,
-                    'mag': 6,
-                  'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC'],
+                    'mag': 8.3,
+                  'modes': ['CVC'],#'ELT', 'RAVC', 'CVC', 'APP', 'CLC'],
                  'colors': ['k', 'C2', 'C1', 'C3', 'C0'],
                 'markers': ['+', 'v', 'o', 'd', 'x']},
               'M': {'lam': 4.8e-6,

@@ -3,7 +3,7 @@ import proper
 import numpy as np
 from astropy.io import fits
 import astropy.units as u
-from .static_ncpa import static_ncpa
+from heeps.aberrations.static_ncpa import static_ncpa
 import os.path
 
 def wavefront_aberrations(wf, zern_inds=[2,3], zernike=None, npetals=6,
