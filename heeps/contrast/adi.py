@@ -94,10 +94,14 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     # total flux of the non-coronagraphic PSF
     psf_ELT = fits.getdata(os.path.join(path_offaxis, \
                 loadname%('offaxis', 'PSF', 'ELT')))
+    if psf_ELT.ndim == 3: # if cube, take the first frame
+        psf_ELT = psf_ELT[0,:,:]
     ELT_flux = np.sum(psf_ELT)
     # normalized off-axis PSF
     psf_OFF = fits.getdata(os.path.join(path_offaxis, \
                 loadname%('offaxis', 'PSF', mode)))
+    if psf_OFF.ndim == 3: # if cube, take the first frame
+        psf_OFF = psf_OFF[0,:,:]
     psf_OFF /= ELT_flux
     
     """ get normalized on-axis PSFs (cube, resampled, and averaged) """
