@@ -3,22 +3,22 @@ import proper
 import numpy as np
 from astropy.io import fits
 import astropy.units as u
-from .static_ncpa import static_ncpa
+from heeps.aberrations.static_ncpa import static_ncpa
 import os.path
 
-def wavefront_aberrations(wf, zern_inds=[2,3], zernike=None, npetals=6,
-            petal_piston=None, atm_screen=None, ncpa_screen=None, **conf):
+def wavefront_aberrations(wf, zern_inds=[2,3], zernike=None, piston_screen=None, 
+            atm_screen=None, ncpa_screen=None, resized=False, nans=True, **conf):
     
     # get useful parameters
-    lam = conf['lam']
+    diam = conf['diam']
     gridsize = conf['gridsize']
     npupil = conf['npupil']
     
     """ tip-tilt = Zernike modes 2 and 3 """
     if zernike is not None:
-        # translate the tip/tilt from lambda/D into RMS phase errors
-        # RMS = x/2 = ((lam/D)*(D/2))/2 = lam/4
-        zernike = np.array(zernike, ndmin=1)*lam/4
+        # convert the tip/tilt (mas) to RMS phase errors (m)
+        # theta ~ tan(theta) = (2*RMS) / pupil radius => RMS = theta*D/4
+        zernike = np.array(zernike, ndmin=1)*u.mas.to('rad')*diam/4
         zern_inds = np.array(zern_inds, ndmin=1)
         assert zern_inds.size == zernike.size, \
             "Zernike values and indices must be arrays/lists of same length."
@@ -26,33 +26,34 @@ def wavefront_aberrations(wf, zern_inds=[2,3], zernike=None, npetals=6,
     
     """ phase screen (atmosphere, petal piston) """
     if atm_screen is not None:
-        atm_screen = np.nan_to_num(atm_screen)
-        # resize and pad with zeros to match PROPER gridsize
-        atm_screen = impro.resize_img(atm_screen, npupil)
-        atm_screen = impro.pad_img(atm_screen, gridsize)
+        if nans is True:
+            atm_screen = np.nan_to_num(atm_screen)
+        if resized is False:
+            atm_screen = impro.resize_img(atm_screen, npupil)
     else:
         atm_screen = 0
-    if petal_piston is not None:
-        # path to petal piston files
-        filename = os.path.join(conf['input_dir'], '1024_pixelsize5mas_petal%s_243px.fits')
-        # multiply all pistons by their respective petal, and sum them up
-        piston_screen = np.sum(np.float32([petal_piston[x] \
-                *fits.getdata(filename%(x+1)) for x in range(npetals)]), 0)
-        # resize and pad with zeros to match PROPER gridsize
-        piston_screen = impro.resize_img(piston_screen, npupil)
-        piston_screen = impro.pad_img(piston_screen, gridsize)
+    if piston_screen is not None:
+        if nans is True:
+            piston_screen = np.nan_to_num(piston_screen)
+        if resized is False:
+            piston_screen = impro.resize_img(piston_screen, npupil)
     else:
         piston_screen = 0
-    phase_screen = atm_screen + piston_screen
-    if np.any(phase_screen) != 0:
-        # wavenumber (spatial angular frequency) in rad / µm
-        k = 2*np.pi/(lam*u.m).to('um').value
-        # multiply the wavefront by the complex phase screen
-        proper.prop_multiply(wf, np.exp(1j*k*phase_screen))
-    
-    """ static NCPA """
     if ncpa_screen is not None:
-        ncpa_screen = np.nan_to_num(ncpa_screen)# in nm
-        wf = static_ncpa(wf, ncpa_screen*1e-9, **conf)
+        if nans is True:
+            ncpa_screen = np.nan_to_num(ncpa_screen)# in nm
+        if resized is False:
+            ncpa_screen = impro.resize_img(ncpa_screen, npupil)
+    else:
+        ncpa_screen = 0
+    # sum resized phase screens
+    phase_screen = atm_screen*1e-6 + piston_screen*1e-6 + ncpa_screen*1e-9
+    
+    if np.any(phase_screen) != 0:
+        # pad with zeros to match PROPER gridsize
+        phase_screen = impro.pad_img(phase_screen, gridsize)        
+        # add the phase screen
+        proper.prop_add_phase(wf, phase_screen)
+    
     
     return wf
