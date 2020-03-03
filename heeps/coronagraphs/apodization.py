@@ -18,7 +18,7 @@ def apodization(wf, conf, margin=50, RAVC=False, RAVC_amp_file=None, RAVC_phase_
         
         # get apodizer misalignments
         #RAVC_misalign = np.int64(np.array(conf['RAVC_misalign'])*npupil)
-        RAVC_misalign = conf['RAVC_misalign'] if conf['RAVC_misalign'] else [0,0,0,0,0,0]
+        RAVC_misalign = list(conf['RAVC_misalign']) if list(conf['RAVC_misalign']) else [0,0,0,0,0,0]
         dx_amp, dy_amp, dz_amp = RAVC_misalign[0:3]
         dx_phase, dy_phase, dz_phase = RAVC_misalign[3:6]
         
