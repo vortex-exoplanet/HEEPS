@@ -3,6 +3,9 @@ input_files/
 output_files/
 temp_files/
 
+# jupyter notebook
+.ipynb_checkpoints
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
