@@ -17,7 +17,7 @@ VIP cc data:
 
 # inputs
 bands = ['L', 'M', 'N1', 'N2']
-r_CLC = 2.5 # lam/D of CLC occulter
+r_CLC = 2.5 # radius of CLC occulter in lam/D
 diam = 37
 figsize = (12,4)#None#
 title_pad = -20
@@ -38,8 +38,7 @@ ylabel = r"5-$\sigma$ sensitivity (star mag %s = %s)"
 #select figure types: 0=without bckg; 1=with bckg; 2=with and without; 3=double plot
 figtypes = [2]#range(4) #all
 # add optional suffix
-suffix = '_test'
-suffix = '_log' if loglog is True else '_lin'
+suffix = '_log' if loglog is True else '_lin'# '_test'#
 
 # modes per band
 colors = ['k', 'C1', 'C0', 'C3', 'C2']
