@@ -11,7 +11,7 @@ def pupil(conf, pupil_file=None, margin=0):
     lam = conf['lam']
     diam = conf['diam']
     gridsize = conf['gridsize']
-    beam_ratio = (conf['pscale']*u.mas/(lam/diam)).to('rad').value # lam/D per pix
+    beam_ratio = conf['pscale']/(lam/diam)*u.mas.to('rad') # lam/D per pix
     get_amp = conf['get_amp']
     get_phase = conf['get_phase']
     
@@ -19,11 +19,17 @@ def pupil(conf, pupil_file=None, margin=0):
     wf = proper.prop_begin(diam, lam, gridsize, beam_ratio)
     
     # store the beam ratio and the pupil size in conf
-    # pupil size must be odd (PROPER sets the center up-right next to the grid center)
+    # pupil size must be odd for PROPER
+    def round_to_odd(x):
+        x1 = x + 0.5
+        n = int(x1)
+        if not (n % 2):
+            n += 1 if int(x1) == int(x) else -1
+        return n
     conf['beam_ratio'] = beam_ratio
-    npupil = np.ceil(gridsize*beam_ratio)
-    npupil = int(npupil + 1) if npupil % 2 == 0 else int(npupil)
+    npupil = round_to_odd(gridsize*beam_ratio)
     conf['npupil'] = npupil
+    print('npupil = %s'%npupil)
     
     # select a pupil file, amongst various missing segments configurations
     pupil_file = {
@@ -31,10 +37,10 @@ def pupil(conf, pupil_file=None, margin=0):
     1: 'ELT_2048_37m_11m_5mas_nospiders_1missing_cut.fits',
     2: 'ELT_2048_37m_11m_5mas_nospiders_2missing_cut.fits',
     4: 'ELT_2048_37m_11m_5mas_nospiders_4missing_cut.fits',
-    7: 'ELT_2048_37m_11m_5mas_nospiders_7missing_cut_flower.fits'}
+    7: 'ELT_allglass_flower_253.fits'}
     
     # create a pupil with circular obscuration (default), or load pupil from file
-    if conf['pupil_file'] is None and conf['N_mis_segments'] == 0:
+    if pupil_file is None:
         proper.prop_circular_aperture(wf, diam/2)
         proper.prop_circular_obscuration(wf, conf['R_obstr'], NORM=True)
     else:
@@ -46,9 +52,9 @@ def pupil(conf, pupil_file=None, margin=0):
         proper.prop_multiply(wf, pupil)
         
     # add spiders
-    if (conf['spiders_width'] != 0):
-        for angle in conf['spiders_angle']:
-            proper.prop_rectangular_obscuration(wf, conf['spiders_width'], 2*diam, ROTATION=angle)
+#    if (conf['spiders_width'] != 0):
+#        for angle in conf['spiders_angle']:
+#            proper.prop_rectangular_obscuration(wf, conf['spiders_width'], 2*diam, ROTATION=angle)
     
     # define the entrance wavefront
     proper.prop_define_entrance(wf)
