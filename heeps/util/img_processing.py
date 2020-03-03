@@ -4,8 +4,10 @@ import scipy.special as spe
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from skimage.transform import resize
+import warnings
 
-def resize_img(img, new_size):
+def resize_img(img, new_size, preserve_range=True, mode='reflect',
+        anti_aliasing=True):
     ''' Resize an image. Handles even and odd sizes.
     '''
     requirement = "new_size must be an int or a tuple/list of size 2."
@@ -14,8 +16,10 @@ def resize_img(img, new_size):
         new_size = (new_size, new_size)
     else:
         assert len(new_size) is 2, requirement
-    img = resize(img, new_size, preserve_range=True, mode='reflect', \
-            anti_aliasing=True)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
+        img = resize(img, new_size, preserve_range=preserve_range, \
+                mode=mode, anti_aliasing=anti_aliasing)
     
     return img
 
