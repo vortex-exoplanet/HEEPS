@@ -7,8 +7,8 @@ import os.path
 
 def adi(path_offaxis='output_files', path_onaxis='output_files', 
         path_output='output_files', prefix='', scao_name='compass', 
-        cube_duration=600, cube_samp=100, adi_cube_duration=3600, 
-        adi_cube_samp=100, adi_cube_avg=0, lat=-24.63, dec=-2.47, band='L', 
+        cube_duration=3600, cube_samp=300, adi_cube_duration=3600, 
+        adi_cube_samp=0, adi_cube_avg=0, lat=-24.63, dec=-2.47, band='L', 
         mag=5, mode='CVC', psc_simu=5.21, psc_inst=5.21, rim=19, add_bckg=True, 
         tagname='', calc_trans=False, plot_cc=False, verbose=True):
     """ 
@@ -32,11 +32,11 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         cube_samp (int):
             SCAO cube sampling in ms
         adi_cube_duration (int):
-            ADI cube duration in seconds
+            ADI cube duration in seconds, default to 3600s (1h).
         adi_cube_samp (int):
-            ADI cube sampling in ms
+            ADI cube sampling in ms. If 0 (default), same as cube_samp.
         adi_cube_avg (int):
-            ADI cube averaging in ms
+            ADI cube averaging in ms. If 0 (default), no averaging.
         lat (float):
             Telescope latitude in deg (Paranal -24.63)
         dec (float):
@@ -47,10 +47,10 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
             Star magnitude at band
         mode (str):
             HCI mode: ELT, VC, RAVC, APP, CL4, CL5,...
-        psc_simu (float):
-            Simulation (fits files) pixel scale in mas/pix
         psc_inst (float):
             Instrument pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
+        psc_simu (float):
+            Simulation pixel scale in mas/pix. If 0 (default), same as psc_inst.
         rim (int):
             Psf image radius in pixels
         add_bckg (bool)
@@ -71,9 +71,8 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     
     """ filenames """
     loadname = '%s%s_%s_%s_%s.fits'%(prefix,'%s','%s',band,'%s')
-    savename = '%s%ss_samp%sms_ADI%ss_samp%sms_avg%sms_dec%sdeg_%s_mag%s_bckg%s_%s%s' \
-            %(scao_name, cube_duration, cube_samp, adi_cube_duration, \
-            adi_cube_samp, adi_cube_avg, dec, band, mag, int(add_bckg), mode, tagname)
+    savename = '%s%ss_samp%sms_dec%s_%smag%s_bckg%s_%s%s' \
+            %(scao_name, cube_duration, cube_samp, dec, band, mag, int(add_bckg), mode, tagname)
     
     """ transmission : ratio of intensities (squared amplitudes) in Lyot-Stop plane """
     if calc_trans is True:
@@ -113,7 +112,9 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     # save PSF initial shape
     (ncube, xon, yon) = psf_ON.shape
     # resample based on ADI sampling vs simulation sampling
-    nsamp = int(adi_cube_samp/cube_samp + .5)
+    if adi_cube_samp == 0:
+        adi_cube_samp = cube_samp
+    nsamp = max(1, int(adi_cube_samp/cube_samp + .5))
     psf_ON = psf_ON[::nsamp,:]
     # average frames
     navg = max(1, int(adi_cube_avg/adi_cube_samp + .5))
@@ -125,6 +126,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     ncube = psf_ON.shape[0]
     
     """ VIP: resample psfs to match the instrument pixelscale """
+    psc_simu = psc_simu if psc_simu > 0 else psc_inst
     psf_ON = vip_hci.preproc.cube_px_resampling(psf_ON, psc_simu/psc_inst, \
             verbose=verbose)
     psf_OFF = vip_hci.preproc.frame_px_resampling(psf_OFF, psc_simu/psc_inst, \
@@ -137,13 +139,16 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     DIT = adi_cube_duration/ncube
     
     """ rescale PSFs to stellar flux """
-    # magnitude 5 star flux [e-/s], from Roy (Jan 8, 2019)
-    mag5_ADU_all = {'L' : 1.834e+09,
-                    'M' : 5.204e+08,
-                    'N1': 2.291e+08,
-                    'N2': 2.398e+08}
+    # magnitude 0 star flux [e-/s], from Roy (Jan 21, 2020)
+    mag_ref = 0
+    star_flux_all = {'L' : 8.999e+10, #HCI-L long
+                     'M' : 2.452e+10, #CO ref
+                     'N1': 3.684e+10, #GeoSnap N1
+                     'N2': 3.695e+10, #GeoSnap N2
+                    'N1a': 2.979e+10, #Aquarius N1
+                    'N2a': 2.823e+10} #Aquarius N2
     # rescale to star flux
-    star_flux = DIT * mag5_ADU_all[band] * 10**(-0.4*(mag - 5))
+    star_flux = DIT * star_flux_all[band] * 10**(-0.4*(mag - mag_ref))
     if mode == 'APP':
         star_flux *= 0.48 # for APP separated PSFs (4% leakage term)
     psf_OFF *= star_flux
@@ -153,13 +158,15 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     
     """ add background and photon noise ~ N(0,1) * sqrt(psf) """
     if add_bckg is True:
-        # background flux [e-/s/pix], from Roy (Jan 8, 2019)
-        bckg_ADU_all = {'L' : 2.754e+05,
-                        'M' : 2.010e+06,
-                        'N1': 1.059e+08,
-                        'N2': 3.293e+08}
+        # background flux [e-/s/pix], from Roy (Jan 21, 2020)
+        bckg_flux_all = {'L' : 8.878e+04, #HCI-L long
+                         'M' : 6.714e+05, #CO ref
+                         'N1': 4.725e+07, #GeoSnap N1
+                         'N2': 1.122e+08, #GeoSnap N2
+                        'N1a': 9.630e+07, #Aquarius N1
+                        'N2a': 2.142e+08} #Aquarius N2
         # add the background * transmission
-        bckg_flux = DIT * bckg_ADU_all[band]
+        bckg_flux = DIT * bckg_flux_all[band]
         psf_ON += bckg_flux*trans
         # add photon noise
         noise = np.random.standard_normal(psf_ON.shape) * np.sqrt(psf_ON)
