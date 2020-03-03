@@ -1,6 +1,7 @@
 #import matplotlib; matplotlib.use('agg') # to run on a headless server
 import matplotlib.pyplot as plt
 import numpy as np
+import astropy.units as u
 from astropy.io import fits 
 from heeps.config import conf
 from heeps.pupil import pupil
@@ -14,12 +15,10 @@ import multiprocessing as mpro
 from functools import partial
 from sys import platform
 import os
-from itertools import zip_longest
-import astropy.units as u
 
 """ user inputs """
 
-conf['bands'] = ['L', 'M', 'N1', 'N2']
+conf['bands'] = ['L']# , 'M', 'N1', 'N2']
 conf['CLC_diam'] = 4
 conf['onaxis'] = True
 conf['static_ncpa'] = False
@@ -27,34 +26,34 @@ conf['send_to'] = 'cdelacroix@uliege.be'
 conf['send_message'] = 'End-to-end simulation finished OK.'
 conf['get_amp'] = False
 conf['get_phase'] = False
-conf['APP_phase_file'] = 'rot90_METIS_vAPP_PDR_L.fits'
+conf['APP_phase_file'] = 'rot90_METIS_vAPP_PDR_L.fits'# 'rot90_METIS_vAPP_PDR_M.fits'#
 
 # specify CPU count: 1=single processing, None=max-1
 conf['cpucount'] = None
 
 # band specifications
-band_specs = {'L': {'lam': 3.8e-6,
+band_specs = {'L': {'lam': 3.812e-6,# 3.8204e-6,#
+                  'pscale': 5.21,
+                   'modes': ['RAVC']},#['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
+              'M': {'lam': 4.8091E-06,# 4.7970e-6,#
                   'pscale': 5.21,
                    'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
-              'M': {'lam': 4.8e-6,
-                  'pscale': 5.21,
-                   'modes': ['ELT', 'RAVC', 'CVC', 'APP', 'CLC']},
-              'N1': {'lam': 8.7e-6,
-                  'pscale': 10.78,
+              'N1': {'lam': 8.6313e-6, #8.6016e-6,
+                  'pscale': 6.79,
                    'modes': ['ELT', 'CVC', 'CLC']},
-              'N2': {'lam': 11.5e-6,
-                  'pscale': 10.78,
+              'N2': {'lam': 11.287e-6, #11.236e-6,
+                  'pscale': 6.79,
                    'modes': ['ELT', 'CVC', 'CLC']}}
 
 """ Create a function to propagate one single wavefront """
 
 def propagate(wf_start, conf, full_output, atm_screen, ncpa_screen, 
-            petal_piston, misalign, zernike):
+            piston_screen, misalign, zernike):
     # keep a copy of the input pupil wavefront
     wf = deepcopy(wf_start)
     # apply wavefront aberrations
-    wavefront_aberrations(wf, zernike=zernike, petal_piston=petal_piston, \
-            atm_screen=atm_screen, ncpa_screen=ncpa_screen, **conf)
+    wavefront_aberrations(wf, zernike=zernike, piston_screen=piston_screen, \
+            atm_screen=atm_screen, ncpa_screen=ncpa_screen, **conf) #resized=True, nans=False, **conf)
     conf['RAVC_misalign'] = misalign
     # define flags for special cases
     RAVC = True if conf['mode'] in ['RAVC'] else False
@@ -75,6 +74,9 @@ def propagate(wf_start, conf, full_output, atm_screen, ncpa_screen,
     # lyot-stop
     wf, LS_amp, LS_phase = lyotstop(wf, conf, RAVC=RAVC, APP=APP)
     # get science image
+    conf['ndet'] = int(np.ceil(2*conf['hfov']*1000/conf['pscale']))    
+    if conf['ndet'] % 2:
+        conf['ndet'] += 1
     psf = detector(wf, conf)
     # release memory: global variable set to None
     wf = None
@@ -86,45 +88,105 @@ def propagate(wf_start, conf, full_output, atm_screen, ncpa_screen,
 
 """ load all wavefront aberrations """
 
+conf['hfov'] = 0.666# 1.3#
+conf['gridsize'] = 1024
+conf['pupil_file'] = 'ELT_37_0.3_1025.fits'
+#conf['atm_screen_file'] = 'L_band_253/cube_COMPASS_20181008_3600s_300ms.fits'
 atm_cube = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[:3]
-#atm_cube = fits.getdata('/mnt/disk4tb/METIS/COMPASS_243x243/cube_COMPASS_20181008_3600s_100ms.fits')[::3,:]
-nframes = atm_cube.shape[0]
+nframes = atm_cube.shape[0]# 1#
 print('\nNumber of frames = %s.'%nframes)
-ncpa_cube = fits.getdata(os.path.join(conf['input_dir'], conf['ncpa_screen_file']))
-ncpa_scaling = 10*0.0089
-ncpa_cube = np.array([x*ncpa_cube for x in np.linspace(-ncpa_scaling,ncpa_scaling,nframes)])
-point_drift = (np.linspace(-0.2, 0.2, nframes)*u.mas).to('rad').value/(3.8e-6/37)
-point_jitter = (np.random.normal(0, 1, nframes)*u.mas).to('rad').value/(3.8e-6/37)
-pupil_drift = [[x,0,0,0,0,0] for x in np.linspace(-0.01,0.01,nframes)]
-np.random.seed(345678)
-piston_drift_ptv = 0.01 #µm 
-piston_drift_freq = 1 #1/T_adi
-piston_drift = np.random.normal(piston_drift_ptv/2,piston_drift_ptv/2/10,6) \
-        *np.sin(np.array([range(nframes)]).T/nframes \
-        *np.random.normal(2*np.pi*piston_drift_freq,2*np.pi*piston_drift_freq/10,6) \
-        + np.random.uniform(0,2*np.pi,6))
-cases = [[0, atm_cube, ncpa_cube, None        , None         , None                    , 0, 0],
-         [1, atm_cube, None     , None        , None         , None                    , 0, 7],
-         [2, atm_cube, None     , None        , None         , point_drift             , 2, 0],
-         [3, atm_cube, None     , None        , None         , point_jitter            , 2, 0],
-         [4, atm_cube, None     , None        , pupil_drift  , None                    , 0, 0],
-         [5, atm_cube, None     , piston_drift, None         , None                    , 0, 0],
-         [6, atm_cube, ncpa_cube, piston_drift, pupil_drift  , point_drift+point_jitter, 2, 7],
-         [7, atm_cube, None     , None        , None         , None                    , 0, 0],
-         [8, None,     None     , None        , None         , None                    , 0, 0]]
-cases = [cases[i] for i in [8]]
+
+if False:
+    # load ncpa maps (spatial frequencies)    
+    ncpa_allSF = fits.getdata(os.path.join(conf['input_dir'], 'ncpa_allSF_253.fits'))
+    ncpa_LSF = fits.getdata(os.path.join(conf['input_dir'], 'ncpa_LSF_10cpp_253.fits'))
+    ncpa_HSF = fits.getdata(os.path.join(conf['input_dir'], 'ncpa_HSF_10cpp_253.fits'))
+    mean_allSF = np.nanmean(ncpa_allSF)
+    mean_LSF = np.nanmean(ncpa_LSF)
+    mean_HSF = np.nanmean(ncpa_HSF)
+
+    # load time series (temporal frequencies)
+    LTF1 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_LTF_0-0.01Hz_12000x1rms_seed=832404.fits'))
+    LTF2 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_LTF_0-0.01Hz_12000x1rms_seed=523364.fits'))
+    LTF3 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_LTF_0-0.01Hz_12000x1rms_seed=409566.fits'))
+    LTF4 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_LTF_0-0.01Hz_12000x1rms_seed=224788.fits'))
+    HTF1 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_HTF_0.01-1Hz_12000x1rms_seed=832404.fits'))
+    HTF2 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_HTF_0.01-1Hz_12000x1rms_seed=523364.fits'))
+    HTF3 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_HTF_0.01-1Hz_12000x1rms_seed=409566.fits'))
+    HTF4 = fits.getdata(os.path.join(conf['input_dir'], \
+            'time_series_HTF_0.01-1Hz_12000x1rms_seed=224788.fits'))
+
+    # create ncpa cubes
+    #ncpa_STA = np.array([ncpa_HSF]*nframes)
+    ncpa_STA = np.array([ncpa_HSF]*12000)
+    ncpa_QLSF = np.array([x*ncpa_LSF for x in LTF1])
+    ncpa_QHSF = np.array([x*ncpa_HSF for x in LTF2])
+    ncpa_DYN = np.array([x*ncpa_allSF for x in HTF1])
+    ncpa_ALL = ncpa_STA*35.9 + ncpa_QLSF*20 + ncpa_QHSF*20 + ncpa_DYN*40
+
+    # petal piston
+    piston_QLSF = fits.getdata(os.path.join(conf['input_dir'], \
+            'cube_petal_piston_LTF_LSF_1rms_seed=123456.fits'))
+    piston_QHSF = fits.getdata(os.path.join(conf['input_dir'], \
+            'cube_petal_piston_LTF_HSF_1rms_seed=234567.fits'))
+    piston_DYN = fits.getdata(os.path.join(conf['input_dir'], \
+            'cube_petal_piston_HTF_allSF_1rms_seed=345678.fits'))
+
+    # ncpa + piston:
+    ncpa_piston_QLSF = (ncpa_QLSF + piston_QLSF)/np.sqrt(2)
+    ncpa_piston_QHSF = (ncpa_QHSF + piston_QHSF)/np.sqrt(2)
+    ncpa_piston_DYN = (ncpa_DYN + piston_DYN)/np.sqrt(2)
+    # norm (almost 1)
+    ncpa_piston_QLSF /= np.mean([np.nanstd(x) for x in ncpa_piston_QLSF])
+    ncpa_piston_QHSF /= np.mean([np.nanstd(x) for x in ncpa_piston_QHSF])
+    ncpa_piston_DYN /= np.mean([np.nanstd(x) for x in ncpa_piston_DYN])
+    # total
+    ncpa_piston_ALL = ncpa_STA*35.9 + ncpa_piston_QLSF*20 + ncpa_piston_QHSF*20 + ncpa_piston_DYN*40
+
+    # apodizer drift
+    drift_ptv = 0.01 # 1% ptv
+    pupil_drift = np.array([[x,0,0,0,0,0] for x in np.linspace(-drift_ptv/2, drift_ptv/2, nframes)])
+
+    # create pointing errors (zernikes [2,3])
+    #point_drift_x = np.linspace(-0.2, 0.2, nframes)
+    #point_jit_x = (np.random.normal(0, 2, nframes)*u.mas).to('rad').value/(3.8e-6/37)
+    point_QSTA = np.array([LTF3, LTF4]).T/np.sqrt(2) # in xy
+    point_DYN = np.array([HTF3, HTF4]).T/np.sqrt(2) # in xy
+    point_ALL = point_QSTA*0.4 + point_DYN*2      # factors in mas  
+
+
+# cases
+cases = [[0,  None,     None       , None        , None         , None         , 0, 0],
+         [1,  atm_cube, None       , None        , None         , None         , 0, 0],
+
+         #[11,  atm_cube, ncpa_piston_ALL, None, pupil_drift    , point_ALL    , [2,3], 0],
+         #[22,  atm_cube, ncpa_piston_ALL, None, pupil_drift*2  , point_ALL    , [2,3], 0],
+         #[33,  atm_cube, ncpa_piston_ALL, None, pupil_drift*3  , point_ALL    , [2,3], 0],
+
+         [None]]
+
+cases = [case for case in cases if case[0] in [0,1]]
+#cases = [case for case in cases if case[0] in [11,12,13]]
+print('Case numbers = %s'%[case[0] for case in cases])
 
 """ Start looping on the different cases, bands, modes """
 
 for case in cases:
     atm_screens = case[1] if np.any(case[1]) else [None]*nframes
     ncpa_screens = case[2] if np.any(case[2]) else [None]*nframes
-    petal_pistons = case[3] if np.any(case[3]) else [None]*nframes
+    piston_screens = case[3] if np.any(case[3]) else [None]*nframes
     misaligns = case[4] if np.any(case[4]) else [None]*nframes
     zernikes = case[5] if np.any(case[5]) else [None]*nframes
     conf['zern_inds'] = case[6]
     conf['N_mis_segments'] = case[7]
-
+    
     for band in conf['bands']:
         conf['band'] = band
         conf['lam'] = band_specs[band]['lam']
@@ -148,7 +210,8 @@ for case in cases:
                         band, mode, conf['cpucount']))
                 p = mpro.Pool(conf['cpucount'])
                 func = partial(propagate, wf_start, conf, False)
-                psfs = np.array(p.starmap(func, zip(atm_screens, ncpa_screens, petal_pistons, misaligns, zernikes)))
+                psfs = np.array(p.starmap(func, zip(atm_screens, ncpa_screens, \
+                        piston_screens, misaligns, zernikes)))
                 p.close()
                 p.join()
             else:
@@ -156,11 +219,11 @@ for case in cases:
                         %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
                         band, mode, 1))
                 psfs = np.zeros((nframes, conf['ndet'], conf['ndet']))
-                for i, (atm_screen, ncpa_screen, petal_piston, misalign, \
+                for i, (atm_screen, ncpa_screen, piston_screen, misalign, \
                         zernike) in enumerate(zip(atm_screens, ncpa_screens, \
-                        petal_pistons, misaligns, zernikes)):
+                        piston_screens, misaligns, zernikes)):
                     psf, LS_amp, apo_amp = propagate(wf_start, conf, True, \
-                            atm_screen, ncpa_screen, petal_piston, misalign, zernike)
+                            atm_screen, ncpa_screen, piston_screen, misalign, zernike)
                     psfs[i,:,:] = psf
             
             # if only one frame, make dim = 2

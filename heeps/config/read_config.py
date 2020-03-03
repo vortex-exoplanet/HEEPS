@@ -36,9 +36,9 @@ os.makedirs(conf['temp_dir'], exist_ok=True)
 # =============================================================================
 #           Define parameters for Telescope
 # =============================================================================
-conf['lam'] = 5e-6                         # wavelength in meters
-conf['diam'] = 37                          # diameter of the telescope in meters
-conf['R_obstr'] = 0.3                      # secondary obstruction in percentage
+conf['lam'] = 3.8e-6                         # wavelength in meters
+conf['diam'] = 37#36.905                          # diameter of the telescope in meters
+conf['R_obstr'] = 0.3#11.213/36.905                      # secondary obstruction in percentage
 conf['spiders_width'] = 0.60               # width of spiders in meters
 conf['spiders_angle'] = [0, 60, 120]       # angles of spiders
 conf['N_mis_segments'] = 0                 # number of missing segments
@@ -46,7 +46,7 @@ conf['gridsize'] = 1024                    # (integer) grid size of the simulati
 conf['pscale'] = 5.21                      # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
 conf['focal'] = 658.6                      # focal distance in meters
 # SCAO team currently uses circular pupil with secondary obstruction
-conf['pupil_file'] = 'ELT_2048_37m_11m_5mas_nospiders_cut.fits' # input pupil
+conf['pupil_file'] = 'ELT_allglass_253.fits' # input pupil
 # downloading input files from Google Drive
 conf['gdriveID'] = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-'
 if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
@@ -64,7 +64,7 @@ conf['zern_inds'] = [2,3]       # zernike indices
 conf['npetals'] = 6             # number of petals in the pupil
 
 #conf['atm_screen'] = None       # atmosphere SCAO phase screens
-conf['atm_screen_file'] = 'cube_atm_100screens_Feb2018_RandomWind.fits'
+conf['atm_screen_file'] = 'cube_COMPASS_Oct2018_RandomWind_100screens.fits'
 
 #conf['ncpa_screen'] = None      # quasi-static NCPAs
 conf['ncpa_screen_file'] = 'NCPA_IMG_LMPP1-SCAO_PYR.fits' # IMG LM @ 3.7 um
@@ -97,6 +97,6 @@ conf['CLC_diam'] = 4                            # CLC occulter diam in lam/D
 # =============================================================================
 #           Detector plane
 # =============================================================================
-conf['ndet'] = 512                              # final image size on detector
+conf['ndet'] = 256                              # final image size on detector
 
 collections.OrderedDict(sorted(conf.items()))
