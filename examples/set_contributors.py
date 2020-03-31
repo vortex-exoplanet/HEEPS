@@ -35,7 +35,11 @@ HTF4 = fits.getdata(os.path.join(conf['input_dir'], \
         'time_series_HTF_0.01-1Hz_12000x1rms_seed=224788.fits'))
 
 # create ncpa cubes
-#ncpa_STA = np.array([ncpa_HSF]*nframes)
+# * NCPA cubes *
+#   - STA : Static
+#   - QLSF: quasi-static low spatial frequencies
+#   - QHFS: quasi-static high spatial frequencies
+#   - DYN : dynamic, ie high temporal frequencies
 ncpa_STA = np.array([ncpa_HSF]*12000)
 ncpa_QLSF = np.array([x*ncpa_LSF for x in LTF1])
 ncpa_QHSF = np.array([x*ncpa_HSF for x in LTF2])

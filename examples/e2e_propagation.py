@@ -47,16 +47,16 @@ logging = True
 output_dir = '/mnt/disk4tb/METIS/heeps_analysis/output_files_gox/20200330/'
 
 # create directory if it does not exists
-if not(os.path.isdir(conf['output_dir'])):
-    print('Creating output directory %s'.format(conf['output_dir']))
-    os.mkdir(conf['output_dir'])
+if not(os.path.isdir(output_dir)):
+    print('Creating output directory %s'.format(output_dir))
+    os.mkdir(output_dir)
 
 if logging:
     print('Copying script file to output directory')
     today = datetime.now()
     time_tag = today.strftime('%Y%m%d_%H%M%S')
     copyfile(__file__,
-             conf['output_dir'] + time_tag + '_' +\
+             output_dir + time_tag + '_' +\
              os.path.basename(__file__))
 
 #----------------------------------#
