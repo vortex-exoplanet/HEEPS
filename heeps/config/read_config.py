@@ -37,16 +37,16 @@ os.makedirs(conf['temp_dir'], exist_ok=True)
 #           Define parameters for Telescope
 # =============================================================================
 conf['lam'] = 3.8e-6                         # wavelength in meters
-conf['diam'] = 37#36.905                          # diameter of the telescope in meters
-conf['R_obstr'] = 0.3#11.213/36.905                      # secondary obstruction in percentage
-conf['spiders_width'] = 0.60               # width of spiders in meters
+conf['diam'] = 36.3508                          # diameter of the telescope in meters
+conf['R_obstr'] = 0.313#11.213/36.905                      # secondary obstruction in percentage
+conf['spiders_width'] = 0.50               # width of spiders in meters
 conf['spiders_angle'] = [0, 60, 120]       # angles of spiders
 conf['N_mis_segments'] = 0                 # number of missing segments
 conf['gridsize'] = 1024                    # (integer) grid size of the simulation array
-conf['pscale'] = 5.21                      # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
+conf['pscale'] = 5.47                      # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
 conf['focal'] = 658.6                      # focal distance in meters
 # SCAO team currently uses circular pupil with secondary obstruction
-conf['pupil_file'] = 'ELT_allglass_253.fits' # input pupil
+conf['pupil_file'] = 'ELT_binary_pupil_9566.fits' # input pupil
 # downloading input files from Google Drive
 conf['gdriveID'] = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-'
 if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
