@@ -8,7 +8,7 @@ import os.path
 def adi(path_offaxis='output_files', path_onaxis='output_files', 
         path_output='output_files', prefix='', scao_name='compass', 
         cube_duration=3600, cube_samp=300, adi_cube_duration=3600, 
-        adi_cube_samp=0, adi_cube_avg=0, lat=-24.63, dec=-2.47, band='L', 
+        adi_cube_samp=0, adi_cube_avg=0, lat=-24.59, dec=-5, band='L', 
         mag=5, mode='CVC', psc_simu=5.21, psc_inst=5.21, rim=19, add_bckg=True, 
         tagname='', calc_trans=False, plot_cc=False, verbose=True):
     """ 
@@ -38,7 +38,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         adi_cube_avg (int):
             ADI cube averaging in ms. If 0 (default), no averaging.
         lat (float):
-            Telescope latitude in deg (Paranal -24.63)
+            Telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
         dec (float):
             Star declination in deg (e.g. 51 Eri -2.47)
         band (str):
@@ -93,13 +93,13 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     # total flux of the non-coronagraphic PSF
     psf_ELT = fits.getdata(os.path.join(path_offaxis, \
                 loadname%('offaxis', 'PSF', 'ELT')))
-    if psf_ELT.ndim == 3: # if cube, take the first frame
+    if psf_ELT.ndim == 3: # if cube
         psf_ELT = psf_ELT[0,:,:]
     ELT_flux = np.sum(psf_ELT)
     # normalized off-axis PSF
     psf_OFF = fits.getdata(os.path.join(path_offaxis, \
                 loadname%('offaxis', 'PSF', mode)))
-    if psf_OFF.ndim == 3: # if cube, take the first frame
+    if psf_OFF.ndim == 3: # if cube
         psf_OFF = psf_OFF[0,:,:]
     psf_OFF /= ELT_flux
     
