@@ -19,7 +19,7 @@ def pupil(conf, pupil_file=None, margin=0):
     wf = proper.prop_begin(diam, lam, gridsize, beam_ratio)
     
     # store the beam ratio and the pupil size in conf
-    # pupil size must be odd for PROPER
+    # pupil size must be odd (PROPER sets the center up-right next to the grid center)
     def round_to_odd(x):
         x1 = x + 0.5
         n = int(x1)
@@ -46,7 +46,7 @@ def pupil(conf, pupil_file=None, margin=0):
     else:
         # load pupil, resize, and pad with zeros to match PROPER gridsize
         pupil = fits.getdata(os.path.join(conf['input_dir'], pupil_file[conf['N_mis_segments']]))
-        pupil = impro.resize_img(pupil, npupil)
+        pupil = impro.resize_img(np.float32(pupil), npupil)
         pupil = impro.pad_img(pupil, gridsize)
         # multiply the loaded pupil
         proper.prop_multiply(wf, pupil)
