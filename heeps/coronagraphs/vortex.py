@@ -38,8 +38,8 @@ def vortex(wfo, conf):
             # vortex phase ramp is oversampled for a better discretization
             ramp_oversamp = 11.
             nramp = int(gridsize*ramp_oversamp)
-            start = -nramp/2 - int(ramp_oversamp)/2
-            end   =  nramp/2 - int(ramp_oversamp)/2
+            start = -nramp/2 - int(ramp_oversamp)/2 + 0.5
+            end   =  nramp/2 - int(ramp_oversamp)/2 + 0.5
             Vp = np.arange(start, end, 1.)
             # Pancharatnam Phase = arg<Vref,Vp> (horizontal input polarization)
             Vref = np.ones(Vp.shape)

@@ -16,7 +16,7 @@ def detector(wfo, conf):
         (wfo, sampling) = proper.prop_end(wfo, NOABS = False)
     else: 
         print('Error: final image is bigger than initial grid size')
-    start = int(gridsize/2 - ndet/2)
+    start = int(gridsize/2 - ndet/2) + 1
     end = int(gridsize/2 + ndet/2)
     psf = wfo[start:end, start:end]
     out_dir = str('./output_files/')
