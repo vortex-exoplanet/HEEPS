@@ -9,7 +9,7 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         path_output='output_files', prefix='', scao_name='compass', 
         cube_duration=3600, cube_samp=300, adi_cube_duration=3600, 
         adi_cube_samp=0, adi_cube_avg=0, lat=-24.59, dec=-5, band='L', 
-        mag=5, mode='CVC', psc_simu=5.21, psc_inst=5.21, rim=19, add_bckg=True, 
+        mag=5, mode='CVC', pscale=5.47, rim=19, add_bckg=True, 
         tagname='', calc_trans=False, plot_cc=False, verbose=True):
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -47,10 +47,8 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
             Star magnitude at band
         mode (str):
             HCI mode: ELT, VC, RAVC, APP, CL4, CL5,...
-        psc_inst (float):
-            Instrument pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
-        psc_simu (float):
-            Simulation pixel scale in mas/pix. If 0 (default), same as psc_inst.
+        pscale (float):
+            Pixel scale in mas/pix (e.g. METIS LM=5.47, NQ=6.79)
         rim (int):
             Psf image radius in pixels
         add_bckg (bool)
@@ -125,16 +123,6 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
     psf_ON /= ELT_flux
     ncube = psf_ON.shape[0]
     
-    """ VIP: resample psfs to match the instrument pixelscale """
-    psc_simu = psc_simu if psc_simu > 0 else psc_inst
-    psf_ON = vip_hci.preproc.cube_px_resampling(psf_ON, psc_simu/psc_inst, \
-            verbose=verbose)
-    psf_OFF = vip_hci.preproc.frame_px_resampling(psf_OFF, psc_simu/psc_inst, \
-            verbose=verbose)
-    # clip negative values due to resampling
-    psf_ON = psf_ON.clip(min=0)
-    psf_OFF = psf_OFF.clip(min=0)
-    
     """ calculate detector integration time (DIT) """
     DIT = adi_cube_duration/ncube
     
@@ -208,9 +196,9 @@ def adi(path_offaxis='output_files', path_onaxis='output_files',
         out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
         fits.writeto(os.path.join(path_output, 'psf_' + savename + '.fits'), \
                 psf_pp, overwrite=True)
-    # contrast curve after post-processing
+    # contrast curve after post-processing (pscale in arcsec)
     cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
-            fwhm, psc_inst/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
+            fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
             debug=False, plot=False, verbose=verbose)
     hdu = fits.PrimaryHDU(cc_pp)
     hdu.writeto(os.path.join(path_output, 'cc_' + savename + '.fits'), overwrite=True)
