@@ -4,7 +4,7 @@ import numpy as np
 from heeps.coronagraphs import circular_apodization
 
 
-def apodization(wf, conf, margin=50, RAVC=False, RAVC_amp_file=None, RAVC_phase_file=None):
+def apodization(wf, conf, margin=0, RAVC=False, RAVC_amp_file=None, RAVC_phase_file=None):
     
     if RAVC is False:
         return wf, None, None
@@ -54,9 +54,9 @@ def apodization(wf, conf, margin=50, RAVC=False, RAVC_amp_file=None, RAVC_phase_
         proper.prop_multiply(wf, apodizer)
         
         # get the apodizer amplitude and phase for output
-        apo_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)\
-                if get_amp is True else None
-        apo_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)\
-                if get_phase is True else None
-        
-        return wf, apo_amp, apo_phase
+        if conf['full_output'] is True:
+            apo_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)
+            apo_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)
+            return wf, apo_amp, apo_phase
+        else:
+            return wf, None, None

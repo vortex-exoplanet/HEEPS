@@ -12,8 +12,6 @@ def pupil(conf, pupil_file=None, margin=0):
     diam = conf['diam']
     gridsize = conf['gridsize']
     beam_ratio = conf['pscale']/(lam/diam)*u.mas.to('rad') # lam/D per pix
-    get_amp = conf['get_amp']
-    get_phase = conf['get_phase']
     
     # begin PROPER
     wf = proper.prop_begin(diam, lam, gridsize, beam_ratio)
@@ -29,7 +27,6 @@ def pupil(conf, pupil_file=None, margin=0):
     conf['beam_ratio'] = beam_ratio
     npupil = round_to_odd(gridsize*beam_ratio)
     conf['npupil'] = npupil
-    print('npupil = %s'%npupil)
     
     # select a pupil file, amongst various missing segments configurations
     pupil_file = {
@@ -61,9 +58,9 @@ def pupil(conf, pupil_file=None, margin=0):
     wf.wfarr /= np.amax(wf._wfarr) # max(amplitude)=1
     
     # get the pupil amplitude and phase for output
-    pup_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)\
-            if get_amp is True else None
-    pup_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)\
-            if get_phase is True else None
-    
-    return wf, pup_amp, pup_phase
+    if conf['full_output'] is True:
+        pup_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)
+        pup_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)
+        return wf, pup_amp, pup_phase
+    else:
+        return wf, None, None

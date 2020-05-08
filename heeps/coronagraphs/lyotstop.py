@@ -4,14 +4,12 @@ import proper
 from astropy.io import fits
 import os.path
 
-def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
+def lyotstop(wf, conf, RAVC=None, APP=None, margin=0):
     """Add a Lyot stop, or an APP."""
     
     # load useful parameters
     npupil = conf['npupil']
     gridsize = conf['gridsize']
-    get_amp = conf['get_amp']
-    get_phase = conf['get_phase']
     
     # get LS misalignments
 #    LS_misalign = np.int64(np.array(conf['LS_misalign'])*npupil)
@@ -68,9 +66,9 @@ def lyotstop(wf, conf, RAVC=None, APP=None, margin=50):
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
     
     # get the LS amplitude and phase for output
-    LS_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)\
-            if get_amp is True else None
-    LS_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)\
-            if get_phase is True else None
-    
-    return wf, LS_amp, LS_phase
+    if conf['full_output'] is True:
+        LS_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)
+        LS_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)
+        return wf, LS_amp, LS_phase
+    else:
+        return wf, None, None

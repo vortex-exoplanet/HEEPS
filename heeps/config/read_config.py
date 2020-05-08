@@ -17,7 +17,7 @@ conf['prefix'] = ''                         # for saved files: e.g. 'test_'
 
 # required directories for data (e.g. fits files)
 conf['current_dir'] = os.getcwd()           # default
-#conf['current_dir'] = '$HOME/INSTRUMENTS/METIS/heeps_analysis'
+conf['current_dir'] = '$HOME/INSTRUMENTS/METIS/heeps_analysis'
 #conf['current_dir'] = '/mnt/disk4tb/METIS/heeps_analysis'
 conf['input_dir'] = 'input_files'
 conf['output_dir'] = 'output_files'
@@ -46,7 +46,8 @@ conf['gridsize'] = 1024                    # (integer) grid size of the simulati
 conf['pscale'] = 5.47                      # pixel scale in mas/pix (e.g. METIS LM=5.21, NQ=10.78)
 conf['focal'] = 658.6                      # focal distance in meters
 # SCAO team currently uses circular pupil with secondary obstruction
-conf['pupil_file'] = 'ELT_binary_pupil_9566.fits' # input pupil
+#conf['pupil_file'] = 'ELT_binary_pupil_9566.fits' # input pupil
+conf['pupil_file'] = 'ELT_pupil_141.fits' # input pupil
 # downloading input files from Google Drive
 conf['gdriveID'] = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-'
 if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
@@ -57,6 +58,8 @@ if not os.path.isfile(os.path.join(conf['input_dir'], conf['pupil_file'])):
 # =============================================================================
 #           Parameters for Wavefront aberrations
 # =============================================================================
+
+conf['nframes'] = None          # number of frames (None = whole cube)
 #conf['zernike'] = None          # zernike polynomials
 conf['zern_inds'] = [2,3]       # zernike indices
 
@@ -91,8 +94,33 @@ conf['LS_misalign'] = [0,0,0,0,0,0]             # Lyot stop misalignment
 conf['LS_params'] = [0.98, 0.03, 1.1]           # R_out(%), dR_in(%), LS spider width(m)
 conf['APP_phase_file'] = 'app_phase_cut.fits'   # apodizing phase plate files
 conf['APP_amp_file'] = ''
+conf['APP_strehl'] = 0.64                       # APP Strehl ratio
+conf['APP_single_psf'] = 0.48                   # APP single PSF (including 4% leakage term)
 conf['CLC_diam'] = 4                            # CLC occulter diam in lam/D
+conf['trans_all'] = {'ELT': 1.,
+                    'RAVC': 0.3392759549914341,
+                     'CVC': 0.9012406091763115,
+                     'APP': 1.,
+                     'CLC': 0.502257180317745} # CLC occulter diam = 4lam/D
 
+# =============================================================================
+#           Parameters for Observation
+# =============================================================================
+# magnitude 0 star flux [e-/s], from Roy (Jan 21, 2020)
+conf['mag_ref'] = 0
+conf['star_flux_all'] = {'L' : 8.999e+10, #HCI-L long
+                         'M' : 2.452e+10, #CO ref
+                         'N1': 3.684e+10, #GeoSnap N1
+                         'N2': 3.695e+10, #GeoSnap N2
+                        'N1a': 2.979e+10, #Aquarius N1
+                        'N2a': 2.823e+10} #Aquarius N2
+# background flux [e-/s/pix], from Roy (Jan 21, 2020)
+conf['bckg_flux_all'] = {'L' : 8.878e+04, #HCI-L long
+                         'M' : 6.714e+05, #CO ref
+                         'N1': 4.725e+07, #GeoSnap N1
+                         'N2': 1.122e+08, #GeoSnap N2
+                        'N1a': 9.630e+07, #Aquarius N1
+                        'N2a': 2.142e+08} #Aquarius N2
 
 # =============================================================================
 #           Detector plane
