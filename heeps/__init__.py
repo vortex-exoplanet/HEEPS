@@ -3,11 +3,7 @@ from __future__ import (absolute_import)
 __version__ = "0.1.0"
 
 from . import config
-#from . import aberrations
-#from . import contrast
-#from . import config
-#from . import coronagraphs
-#from . import detector
-#from . import fits
-#from . import pupil
-##from .metis_hci import metis_hci
+from . import wavefront
+from . import pupil
+from . import optics
+from . import contrast

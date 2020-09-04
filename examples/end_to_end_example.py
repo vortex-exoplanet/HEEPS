@@ -1,64 +1,46 @@
 #!/usr/bin/env python3
 
-# =============================================================================
-#       Example file for creating a coronagraphic/non-coronagraphic METIS PSF
-# =============================================================================
+# ============================= #
+# End-to-end simulation example #
+# ============================= #
 
-# Required libraries
 import heeps
-from heeps.config import conf
-import os.path
-import numpy as np
-import matplotlib.pyplot as plt
-from astropy.io import fits 
 
-"""
-Default simulation configuration defined in "read_config.py" can be 
-overridden here by updating the dictionary
-"""
-conf['lam'] = 3.8e-6
-conf['band'] = 'L'
-conf['mode'] = 'CVC'
-conf['prefix'] = 'test_'
-conf['VC_charge'] = 2   # vortex charge is modified here
-conf['onaxis'] = True   # True = on-axis, False = off-axis
-conf['tip_tilt'] = [0, 0]
-conf['petal_piston'] = [0,0,0,0,0,0]
-conf['static_ncpa'] = False
-conf['polish_error'] = False
+# 1. Create a config dictionary with your simulation parameters. 
+#    Undefined parameters get default values from calling read_config
+conf = dict(
+    dir_current = '$HOME/Desktop',
+    bands = ['L'],
+    modes = ['RAVC','CVC'],
+    onaxis = True,
+    cpu_count = None
+)
+conf = heeps.config.read_config(verbose=True, **conf)
 
-# loading one single atmosphere phase screen
-atm_screen = fits.getdata(os.path.join(conf['input_dir'], conf['atm_screen_file']))[0]
+for conf['band'] in conf['bands']:
+    for conf['mode'] in conf['modes']:
+    
+        # 2. (optional) Update config parameters. ATTENTION, the following parameters 
+        # will be updated to match the selected spectral band and HCI mode:
+        #   lam, pscale, flux_star, flux_bckg, ls_dRspi, ls_dRint, npupil, ndet,
+        #   ravc_t, ravc_r
+        conf = heeps.config.update_config(verbose=True, **conf) 
 
-# =============================================================================
-# End to end simulation example, showing propagation through each plane; 
-#   1. Pupil creation 
-#   2. Addition of wavefront aberrations
-#   3. Coronagraph system
-#   4. Detector plane
-# =============================================================================
+        # 3. Load wavefront errors
+        phase_screens, pointing_errs, apo_drifts = heeps.wavefront.load_errors(verbose=True, **conf)
 
-#   1. ELT Pupil Plane
-wfo, _, _ = heeps.pupil.pupil(conf)
+        # 4. Load entrance pupil, and create 'wavefront' object
+        wf, pup = heeps.pupil.pupil(verbose=True, **conf)
 
-#   2. Wavefront aberrations
-heeps.aberrations.wavefront_aberrations(wfo, atm_screen=atm_screen, **conf)
+        # 5. Propagate cube of psfs
+        psfs = heeps.wavefront.propagate_cube(wf, conf, phase_screens=phase_screens, \
+            savefits=True)
 
-#   3. Coronagraph selection -- e.g. RAVC, CVC, APP, CLC --
-#    "Three coronagraphic planes: apodizer, focal plane mask & Lyot-stop"
-heeps.coronagraphs.metis_modes(wfo, conf)
+print('Simulation finished.')
 
-#   4. Detector plane
-psf = heeps.detector.detector(wfo, conf)
+#########
 
-
-""" Figures """
-on_off = {True:'onaxis', False:'offaxis'}[conf['onaxis']]
-PSF_filename = '%s%s_PSF_%s_%s'%(conf['prefix'], on_off, conf['band'], conf['mode'])
-plt.figure(1)
-#plt.imshow(psf**0.05, origin='lower')
-plt.imshow(np.log10(psf/1482.22), origin='lower') # 1482.22 is peak in ELT mode
-plt.colorbar()
-plt.show(block=False)
-plt.savefig(os.path.join(conf['output_dir'], PSF_filename + '.png'), \
-        dpi=300, transparent=True)
+if False:
+    import matplotlib.pyplot as plt
+    plt.imshow(pup)
+    
