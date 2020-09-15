@@ -8,7 +8,7 @@ from astropy.io import fits
 import os.path
 
 def propagate_cube(wf, conf, phase_screens=None, misaligns=None, zernikes=None, \
-        case='', savefits=False, verboses=False):
+        case='', savefits=False, verboses=False, onaxis=True):
 
     nframes = conf['nframes']
     nstep = conf['nstep']
@@ -44,10 +44,9 @@ def propagate_cube(wf, conf, phase_screens=None, misaligns=None, zernikes=None, 
     print('')
     
     if savefits is True:
-        conf['prefix'] = '%s_'%case
-        on_off = {True:'onaxis', False:'offaxis'}[conf['onaxis']]
-        filename = '%s%s'%(conf['prefix'], on_off)+'_%s_'+'%s_%s'%(conf['band'], conf['mode'])
-        fits.writeto(os.path.join(conf['dir_output'], filename%'PSF') \
-                + '.fits', np.float32(psfs), overwrite=True)
+        prefix = '' if case == '' else '%s_'%case
+        on_off = {True:'onaxis', False:'offaxis'}[onaxis]
+        fits.writeto(os.path.join(conf['dir_output'], '%s%s_PSF_%s_%s.fits'\
+            %(prefix, on_off, conf['band'], conf['mode'])), np.float32(psfs), overwrite=True)
     
     return psfs

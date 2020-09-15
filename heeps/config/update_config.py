@@ -20,13 +20,12 @@ def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L'
     
     if verbose is True:
         print('Update config: mode=%s, band=%s'%(mode, band))
-    # load mode specs
-    for key, val in mode_specs.get(mode).items():
-        conf[key] = val
-    # load band specs
-    for key, val in band_specs.get(band).items():
-        conf[key] = val
+    # update mode and band specs
+    conf.update(mode_specs.get(mode))
+    conf.update(band_specs.get(band))
     # calculate pupil size: must be odd for PROPER
+    lam = conf.get('lam', lam)
+    pscale = conf.get('pscale', pscale)
     lam_npupil = pupil_img_size*ngrid*pscale*u.mas.to('rad')
     npupil = round2odd(lam_npupil/lam)
     # recalculate wavelength based on npupil
@@ -56,7 +55,7 @@ def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L'
     )
     # vortex parameters
     if mode in ['RAVC', 'CVC']:
-        # load vortex calibration files
+        # load vortex back-propagation fitsfiles
         beam_ratio = npupil/ngrid*(diam_ext/pupil_img_size)
         calib = '%s_%s_%3.4f'%(vc_charge, ngrid, beam_ratio)
         if vortex_calib != calib:

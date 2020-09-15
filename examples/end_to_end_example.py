@@ -10,12 +10,11 @@ import heeps
 #    Undefined parameters get default values from calling read_config
 conf = dict(
     dir_current = '$HOME/Desktop',
-    bands = ['L'],
-    modes = ['RAVC','CVC'],
-    onaxis = True,
+    bands = ['L','M','N1','N2'],
+    modes = ['CVC'],
     cpu_count = None
 )
-conf = heeps.config.read_config(verbose=True, **conf)
+conf = heeps.config.read_config(**conf)
 
 for conf['band'] in conf['bands']:
     for conf['mode'] in conf['modes']:
@@ -34,7 +33,7 @@ for conf['band'] in conf['bands']:
 
         # 5. Propagate one frame of offaxis psf
         heeps.wavefront.propagate_one(wf, conf, phase_screen=phase_screens[0], \
-            savefits=True, onaxis=True)
+            savefits=True, onaxis=False)
 
         # 6. Propagate cube of onaxis psfs
         psfs = heeps.wavefront.propagate_cube(wf, conf, phase_screens=phase_screens, \
