@@ -36,7 +36,7 @@ def read_config(verbose=False, **update_conf):
     diam_int = 11.213,                  # central obscuration in m
     spi_width = 0.5,                    # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
-    file_pupil = 'ELT_pupil_1385.fits', # entrance pupil file
+    file_pupil = 'pupils/ELT_pupil_1385.fits',# entrance pupil file
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
@@ -84,7 +84,7 @@ def read_config(verbose=False, **update_conf):
     clc_diam = 4,                       # CLC occulter diam in lam/D
     file_ravc_phase = '',               # ring apodizer files (optional)
     file_ravc_amp = '',
-    file_app_phase = 'app_phase_cut.fits',# apodizing phase plate files
+    file_app_phase = 'APP/app_phase_cut.fits',# apodizing phase plate files
     file_app_amp = '',
     app_strehl = 0.64,                   # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
@@ -137,14 +137,14 @@ def read_config(verbose=False, **update_conf):
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
 
     add_scao = False,                   # SCAO residuals cube
-    file_scao = 'cube_COMPASS_Oct2018_RandomWind_100screens.fits',
+    file_scao = 'SCAO/cube_COMPASS_Oct2018_RandomWind_100screens.fits',
     
     add_ncpa = False,                   # NCPA phase screen
-    file_ncpa = 'NCPA_IMG_LMPP1-SCAO_PYR.fits', # IMG LM @ 3.7 um
+    file_ncpa = 'NCPA/NCPA_IMG_LMPP1-SCAO_PYR.fits', # IMG LM @ 3.7 um
     #file_ncpa_screen = 'NCPA_IMG_NQPP1-SCAO_DET.fits', # IMG NQ @ 10 um
 
     add_petal_piston = False,           # petal piston (island effect)
-    file_petals = 'petal%s_253.fits',   # one petal
+    file_petals = 'petals/petal%s_253.fits',# one petal
     rms_phase_sta = 35.9,               # static (nm)
     rms_phase_qlsf = 20,                # quasistatic low spatial freq (nm)
     rms_phase_qhsf = 20,                # quasistatic high spatial freq (nm)

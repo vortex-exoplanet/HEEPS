@@ -22,7 +22,7 @@ def vortex_init(conf, calib, verbose=False):
     
     if os.path.isfile(my_file):
         if verbose is True:
-            print("   loading vortex fits files")
+            print("   loading vortex back-propagation fitsfiles")
         # read the pre-vortex field
         conf['psf_num'] = readfield(tmp_dir, 'zz_psf_%s'%calib)
         # read the theoretical vortex field
@@ -32,7 +32,7 @@ def vortex_init(conf, calib, verbose=False):
 
     else:
         if verbose is True:
-            print("   creating/writing vortex fits files")
+            print("   creating/writing vortex back-propagation fitsfiles")
         # load parameters
         lam = conf['lam']
         ngrid = conf['ngrid']
