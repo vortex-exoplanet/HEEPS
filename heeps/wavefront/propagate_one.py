@@ -3,10 +3,17 @@ from heeps.util.img_processing import resize_img, pad_img
 from copy import deepcopy
 import numpy as np
 import proper
+from astropy.io import fits
+import os.path
 
-def propagate_one(wf, conf, phase_screen=None, misalign=None, zernike=None, verbose=False):
+def propagate_one(wf, conf, phase_screen=None, misalign=None, zernike=None, 
+        savefits=False, onaxis=True, verbose=False):
             
-    """ Create a function to propagate one single wavefront """
+    """ 
+    Propagate one single wavefront.
+    An off-axis PSF can be obtained by switching onaxis to False,
+    thereby decentering the focal plane mask (if any).
+    """
 
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)
@@ -33,11 +40,18 @@ def propagate_one(wf, conf, phase_screen=None, misalign=None, zernike=None, verb
 
     # pupil-plane apodization
     wf1, apo_amp, apo_phase = apodizer(wf1, get_amp=True, verbose=verbose, **conf)
-    # focal-plane mask
-    wf1 = fp_mask(wf1, conf, verbose=verbose)
+    # focal-plane mask, only in 'on-axis' configuration
+    if onaxis == True:
+        wf1 = fp_mask(wf1, conf, verbose=verbose)
     # Lyot-stop or APP
     wf1, ls_amp, ls_phase = lyot_stop(wf1, get_amp=True, verbose=verbose, **conf)
     # detector
     psf = detector(wf1, conf, verbose=verbose)
+
+    # save psf as fits file
+    if savefits == True:
+        on_off = {True: 'onaxis', False: 'offaxis'}
+        fits.writeto(os.path.join(conf['dir_output'], '%s_PSF_%s_%s.fits'\
+            %(on_off[onaxis], conf['band'], conf['mode'])), np.float32(psf), overwrite=True)
 
     return psf

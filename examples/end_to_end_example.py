@@ -30,17 +30,14 @@ for conf['band'] in conf['bands']:
         phase_screens, pointing_errs, apo_drifts = heeps.wavefront.load_errors(verbose=True, **conf)
 
         # 4. Load entrance pupil, and create 'wavefront' object
-        wf, pup = heeps.pupil.pupil(verbose=True, **conf)
+        wf = heeps.pupil.pupil(verbose=True, savefits=True, **conf)
 
-        # 5. Propagate cube of psfs
+        # 5. Propagate one frame of offaxis psf
+        heeps.wavefront.propagate_one(wf, conf, phase_screen=phase_screens[0], \
+            savefits=True, onaxis=True)
+
+        # 6. Propagate cube of onaxis psfs
         psfs = heeps.wavefront.propagate_cube(wf, conf, phase_screens=phase_screens, \
             savefits=True)
 
 print('Simulation finished.')
-
-#########
-
-if False:
-    import matplotlib.pyplot as plt
-    plt.imshow(pup)
-    

@@ -9,7 +9,7 @@ from astropy.io import fits
 def pupil(file_pupil='', lam=3.81e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
         diam_ext=36.9, diam_int=11.2, spi_width=0.5, spi_angles=[0,60,120], 
         npetals=6, seg_width=1.45, seg_gap=0.004, seg_rms=0, seg_ny=[], 
-        seg_missing=[], select_petal=None, verbose=False, **conf):
+        seg_missing=[], select_petal=None, savefits=False, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -115,5 +115,10 @@ def pupil(file_pupil='', lam=3.81e-6, ngrid=1024, npupil=285, pupil_img_size=40,
     if verbose is True:
         print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
             %(round(diam_ext, 2), npupil, ngrid))
+
+    # save pupil as fits file
+    if savefits == True:
+        fits.writeto(os.path.join(conf['dir_output'], 'pupil_%s_%s.fits'\
+            %(conf['band'], conf['mode'])), np.float32(pup), overwrite=True)
     
-    return wf, pup
+    return wf

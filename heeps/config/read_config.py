@@ -61,8 +61,6 @@ def read_config(verbose=False, **update_conf):
     #    3. mode = 'APP'  for Apodizing Phase Plate
     #    4. mode = 'CLC'  for Classical Lyot Coronagraph
     #    5. mode = 'ELT'  for no coronagraph (only telescope)
-    # An off-axis PSF can be obtained by switching onaxis'] to False,
-    # thereby decentering the focal plane mask (if any).
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
     band = 'L',                         # spectral band
@@ -78,7 +76,6 @@ def read_config(verbose=False, **update_conf):
     ls_dRint = 0.05,                    # LS Rint oversize (% diam ext)
     ls_dRspi = 0.04,                    # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
-    onaxis = True,                      # True for mask centered
     vc_charge = 2,                      # vortex topological charge
     ravc_calc = True,                   # calculate RA params (Mawet2013)
     ravc_t = 0.76,                      # default RA trans (calc=False)
