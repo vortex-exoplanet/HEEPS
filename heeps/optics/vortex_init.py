@@ -6,9 +6,8 @@ import numpy as np
 import proper
 from copy import deepcopy
 
-def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024, 
-        npupil=285, pupil_img_size=40, diam_ext=37, beam_ratio=0.26, focal=660, 
-        vc_charge=2, verbose=False, **conf):
+def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024, 
+        beam_ratio=0.26, focal=660, vc_charge=2, verbose=False, **conf):
 
     '''
     
@@ -35,7 +34,7 @@ def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024,
         filename = os.path.join(dir_temp, 'calib_vvc_%s.fits'%calib)    
         if os.path.isfile(filename):
             if verbose is True:
-                print("   loading vortex back-propagation params")
+                print('   loading vortex back-propagation params')
             data = fits.getdata(os.path.join(dir_temp, filename))
             # read the pre-vortex field
             psf_num = data[0] + 1j*data[1]
@@ -49,7 +48,6 @@ def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024,
             if verbose is True:
                 print("   writing vortex back-propagation params")
             # create circular pupil
-            beam_ratio = npupil/ngrid*diam_ext/pupil_img_size
             wf_tmp = proper.prop_begin(diam_ext, lam, ngrid, beam_ratio)
             proper.prop_circular_aperture(wf_tmp, 1, NORM=True)
             # propagate to vortex
@@ -87,7 +85,7 @@ def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024,
             perf_num = deepcopy(wf_tmp.wfarr)
             # write all fields 
             data = np.dstack((psf_num.real, psf_num.imag, vvc.real, vvc.imag,\
-                perf_num.real, perf_num.imag))
+                perf_num.real, perf_num.imag)).T
             fits.writeto(os.path.join(dir_temp, filename), np.float32(data), overwrite=True)
 
         # shift the phase ramp
@@ -95,5 +93,9 @@ def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024,
         # add vortex back-propagation parameters at the end of conf
         conf = {k: v for k, v in sorted(conf.items())}
         conf.update(vortex_calib=calib, psf_num=psf_num, vvc=vvc, perf_num=perf_num)
+
+        if verbose is True:
+            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f\n'%\
+                (vc_charge, ngrid, beam_ratio))
 
         return conf

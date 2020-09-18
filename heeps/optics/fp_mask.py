@@ -6,34 +6,30 @@ from heeps.util.img_processing import resize_img, pad_img
 from astropy.io import fits
 import proper
 
-def fp_mask(wf, conf, verbose=False):
+def fp_mask(wf, mode='RAVC', focal=660, verbose=False, **conf):
 
     # case 1: vortex coronagraphs
-    if conf['mode'] in ['CVC', 'RAVC'] and conf['vc_charge'] != 0:
+    if mode in ['CVC', 'RAVC']:
         if verbose is True:
             print('Apply Vortex phase mask')                        
-        # load vortex calibration files
-        beam_ratio = conf['npupil']/conf['ngrid']*(conf['diam_ext']/conf['pupil_img_size'])
-        calib = '%s_%s_%3.4f'%(conf['vc_charge'], conf['ngrid'], beam_ratio)
-        if conf.get('vortex_calib') != calib:
-            conf = vortex_init(conf, calib=calib, verbose=verbose)
+        # update conf
+        conf.update(focal=focal)
+        # load vortex calibration files: 
+        #   conf['psf_num'], conf['vvc'], conf['perf_num']
+        conf = vortex_init(verbose=verbose, **conf)
         # propagate to vortex
-        lens(wf, conf['focal'])
+        lens(wf, focal)
         # apply vortex
         scale_psf = wf._wfarr[0,0]/conf['psf_num'][0,0]
         wf_corr = (conf['psf_num']*conf['vvc'] - conf['perf_num'])*scale_psf
         wf._wfarr = wf._wfarr*conf['vvc'] - wf_corr
         # propagate to lyot stop
-        lens(wf, conf['focal'])
-        if verbose is True:
-            print('   charge=%s, ngrid=%s, beam_ratio=%3.4f'%\
-                (conf['vc_charge'], conf['ngrid'], beam_ratio))
-            print('')
+        lens(wf, focal)
 
     # TODO: cleanup CLC
     
     # case 2: classical Lyot
-    elif conf['mode'] in ['CLC']:
+    elif mode in ['CLC']:
         if verbose is True:
             print('Apply Classical Lyot mask\n')        
         f_lens = conf['focal']

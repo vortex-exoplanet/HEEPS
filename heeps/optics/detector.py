@@ -1,15 +1,12 @@
 import proper
 from heeps.optics.lens import lens
 
-def detector(wf, conf, verbose=False):
-    f_lens = conf['focal']
-    ndet = conf['ndet']
-    ngrid = conf['ngrid']
+def detector(wf, focal=660, ngrid=1024, ndet=365, verbose=False, **conf):
     
     assert(ngrid >= ndet), 'Error: final image is bigger than initial grid size'
 
     # propagate to detector
-    lens(wf, f_lens)
+    lens(wf, focal)
     # get intensity (A^2)
     (psf, _) = proper.prop_end(wf, NOABS = False)
     # crop to detector size
