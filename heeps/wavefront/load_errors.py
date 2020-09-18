@@ -31,7 +31,7 @@ def load_errors(nframes=20, nstep=1, add_scao=False, file_scao='',
     if add_scao is True:
         assert(os.path.isfile(file_scao) and os.path.splitext(file_scao)[1] == '.fits'), \
             "'file_scao' must be a valid fits file."
-        scao_screens = fits.getdata(file_scao)[:nframes][::nstep]
+        scao_screens = fits.getdata(file_scao)[:nframes][::nstep]*1e-6
     else:
         scao_screens = [None]*ncube
 
