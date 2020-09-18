@@ -6,82 +6,94 @@ import numpy as np
 import proper
 from copy import deepcopy
 
-def readfield(path, filename):
-    data_r = fits.getdata(os.path.join(path, '%s_r.fits'%filename))
-    data_i = fits.getdata(os.path.join(path, '%s_i.fits'%filename))
-    return(data_r + 1j*data_i)
+def vortex_init(vortex_calib='', dir_temp='', lam=3.8, ngrid=1024, 
+        npupil=285, pupil_img_size=40, diam_ext=37, beam_ratio=0.26, focal=660, 
+        vc_charge=2, verbose=False, **conf):
 
-def writefield(path, filename, field):
-    fits.writeto(os.path.join(path, '%s_r.fits'%filename), field.real, header=None, overwrite=True)
-    fits.writeto(os.path.join(path, '%s_i.fits'%filename), field.imag, header=None, overwrite=True)
-
-def vortex_init(conf, calib, verbose=False):
-
-    tmp_dir = conf['dir_temp']
-    my_file = os.path.join(tmp_dir, 'zz_perf_%s_r.fits'%calib)
+    '''
     
-    if os.path.isfile(my_file):
-        if verbose is True:
-            print("   loading vortex back-propagation fitsfiles")
-        # read the pre-vortex field
-        conf['psf_num'] = readfield(tmp_dir, 'zz_psf_%s'%calib)
-        # read the theoretical vortex field
-        conf['vvc'] = readfield(tmp_dir,'zz_vvc_%s'%calib) 
-        # read the perfect-result vortex field
-        conf['perf_num'] = readfield(tmp_dir,'zz_perf_%s'%calib)
+    Creates/writes vortex back-propagation fitsfiles, or loads them if files 
+    already exist.
+    The following parameters will be added to conf: 
+        vortex_calib, psf_num, perf_num, vvc
+    
+    Returns: conf (updated and sorted)
 
+    '''
+
+    # update conf with local variables (remove unnecessary)
+    conf.update(locals())
+    [conf.pop(key) for key in ['conf', 'verbose'] if key in conf]
+
+    # check if back-propagation params already loaded for this calib
+    calib = '%s_%s_%3.4f'%(vc_charge, ngrid, beam_ratio)
+    if vortex_calib == calib:
+        return conf
+        
     else:
-        if verbose is True:
-            print("   creating/writing vortex back-propagation fitsfiles")
-        # load parameters
-        lam = conf['lam']
-        ngrid = conf['ngrid']
-        beam_ratio = conf['npupil']/conf['ngrid']*(conf['diam_ext']/conf['pupil_img_size'])
-        diam = conf['diam_ext']
-        f_lens = conf['focal']
-        charge = conf['vc_charge']
-        # create circular pupil
-        wf_tmp = proper.prop_begin(diam, lam, ngrid, beam_ratio)
-        proper.prop_circular_aperture(wf_tmp, 1, NORM=True)
-#        proper.prop_define_entrance(wf_tmp)
-        # propagate to vortex
-        lens(wf_tmp, f_lens)
-        # write the pre-vortex field
-        conf['psf_num'] = deepcopy(wf_tmp.wfarr)
-        writefield(tmp_dir,'zz_psf_%s'%calib, conf['psf_num'])
-        # vortex phase ramp is oversampled for a better discretization
-        ramp_oversamp = 11.
-        nramp = int(ngrid*ramp_oversamp)
-        start = -nramp/2 - int(ramp_oversamp)/2 + 0.5
-        end   =  nramp/2 - int(ramp_oversamp)/2 + 0.5
-        Vp = np.arange(start, end, 1.)
-        # Pancharatnam Phase = arg<Vref,Vp> (horizontal input polarization)
-        Vref = np.ones(Vp.shape)
-        prod = np.outer(Vref, Vp)
-        phiPan = np.angle(prod + 1j*prod.T)
-        # vortex phase ramp exp(ilphi)
-        ofst = 0
-        ramp_sign = 1
-        vvc_tmp = np.exp(1j*(ramp_sign*charge*phiPan + ofst))
-        vvc = np.array(impro.resize_img(vvc_tmp.real, ngrid), dtype=complex)
-        vvc.imag = impro.resize_img(vvc_tmp.imag, ngrid)
-        phase_ramp = np.angle(vvc)
-        # write the theoretical vortex field
-        vvc_complex = np.array(np.zeros((ngrid, ngrid)), dtype=complex)
-        vvc_complex.imag = phase_ramp
-        conf['vvc'] = np.exp(vvc_complex)
-        writefield(tmp_dir,'zz_vvc_%s'%calib, conf['vvc'])
-        # apply vortex
-        proper.prop_multiply(wf_tmp, conf['vvc'])
-        # null the amplitude inside the Lyot Stop, and back propagate
-        lens(wf_tmp, f_lens)
-        proper.prop_circular_obscuration(wf_tmp, 1., NORM=True)
-        lens(wf_tmp, -f_lens)
-        # write the perfect-result vortex field
-        conf['perf_num'] = deepcopy(wf_tmp.wfarr)
-        writefield(tmp_dir,'zz_perf_%s'%calib, conf['perf_num'])
+        # check for existing file
+        filename = os.path.join(dir_temp, 'calib_vvc_%s.fits'%calib)    
+        if os.path.isfile(filename):
+            if verbose is True:
+                print("   loading vortex back-propagation params")
+            data = fits.getdata(os.path.join(dir_temp, filename))
+            # read the pre-vortex field
+            psf_num = data[0] + 1j*data[1]
+            # read the theoretical vortex field
+            vvc = data[2] + 1j*data[3]
+            # read the perfect-result vortex field
+            perf_num = data[4] + 1j*data[5]
 
-    # shift the phase ramp
-    conf['vvc'] = proper.prop_shift_center(conf['vvc'])
+        # create files
+        else:
+            if verbose is True:
+                print("   writing vortex back-propagation params")
+            # create circular pupil
+            beam_ratio = npupil/ngrid*diam_ext/pupil_img_size
+            wf_tmp = proper.prop_begin(diam_ext, lam, ngrid, beam_ratio)
+            proper.prop_circular_aperture(wf_tmp, 1, NORM=True)
+            # propagate to vortex
+            lens(wf_tmp, focal)
+            # pre-vortex field
+            psf_num = deepcopy(wf_tmp.wfarr)
+            # vortex phase ramp is oversampled for a better discretization
+            ramp_oversamp = 11.
+            nramp = int(ngrid*ramp_oversamp)
+            start = -nramp/2 - int(ramp_oversamp)/2 + 0.5
+            end   =  nramp/2 - int(ramp_oversamp)/2 + 0.5
+            Vp = np.arange(start, end, 1.)
+            # Pancharatnam Phase = arg<Vref,Vp> (horizontal input polarization)
+            Vref = np.ones(Vp.shape)
+            prod = np.outer(Vref, Vp)
+            phiPan = np.angle(prod + 1j*prod.T)
+            # vortex phase ramp exp(ilphi)
+            ofst = 0
+            ramp_sign = 1
+            vvc_tmp = np.exp(1j*(ramp_sign*vc_charge*phiPan + ofst))
+            vvc = np.array(impro.resize_img(vvc_tmp.real, ngrid), dtype=complex)
+            vvc.imag = impro.resize_img(vvc_tmp.imag, ngrid)
+            phase_ramp = np.angle(vvc)
+            # theoretical vortex field
+            vvc_complex = np.array(np.zeros((ngrid, ngrid)), dtype=complex)
+            vvc_complex.imag = phase_ramp
+            vvc = np.exp(vvc_complex)
+            # apply vortex
+            proper.prop_multiply(wf_tmp, vvc)
+            # null the amplitude inside the Lyot Stop, and back propagate
+            lens(wf_tmp, focal)
+            proper.prop_circular_obscuration(wf_tmp, 1., NORM=True)
+            lens(wf_tmp, -focal)
+            # perfect-result vortex field
+            perf_num = deepcopy(wf_tmp.wfarr)
+            # write all fields 
+            data = np.dstack((psf_num.real, psf_num.imag, vvc.real, vvc.imag,\
+                perf_num.real, perf_num.imag))
+            fits.writeto(os.path.join(dir_temp, filename), np.float32(data), overwrite=True)
 
-    return conf
+        # shift the phase ramp
+        vvc = proper.prop_shift_center(vvc)
+        # add vortex back-propagation parameters at the end of conf
+        conf = {k: v for k, v in sorted(conf.items())}
+        conf.update(vortex_calib=calib, psf_num=psf_num, vvc=vvc, perf_num=perf_num)
+
+        return conf
