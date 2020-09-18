@@ -1,6 +1,5 @@
 from heeps.util.download_from_gdrive import extract_zip
 import astropy.units as u
-import collections
 import os
 import numpy as np
 import proper
@@ -9,7 +8,7 @@ proper.print_it = False
 
 def read_config(verbose=False, **update_conf):
 
-    conf = collections.OrderedDict(
+    conf = dict(
 
     # =============================================================================
     #           Console and file management 
@@ -195,7 +194,7 @@ def read_config(verbose=False, **update_conf):
         import matplotlib; matplotlib.use('agg')
 
     # sort alphabetically
-    conf = collections.OrderedDict(sorted(conf.items()))
+    conf = {k: v for k, v in sorted(conf.items())}
     
     if verbose is True:
         print('\nRead config: mode=%s, band=%s'%(conf['mode'], conf['band']))
