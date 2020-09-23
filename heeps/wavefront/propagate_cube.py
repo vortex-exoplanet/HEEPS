@@ -1,4 +1,5 @@
 from .propagate_one import propagate_one
+from heeps.util.notify import notify
 import multiprocessing as mpro
 from functools import partial
 from sys import platform
@@ -7,8 +8,10 @@ import time
 from astropy.io import fits 
 import os.path
 
-def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None, \
-        case='', nframes=20, nstep=1, ndet=365, cpu_count=1, savefits=False, verbose=False, onaxis=True, **conf):
+def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None,
+        dir_output='output_files', case='', band='L', mode='RAVC', nframes=20, 
+        nstep=1, ndet=365, cpu_count=1, savefits=False, send_to=None, 
+        verbose=False, onaxis=True, **conf):
 
     # update conf
     conf.update(ndet=ndet)
@@ -25,7 +28,7 @@ def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None, \
         if cpu_count == None:
             cpu_count = mpro.cpu_count() - 1
         if verbose is True:
-            print('   %s: e2e simulation starts, using %s cores.'\
+            print('%s: e2e simulation starts, using %s cores'\
                 %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), cpu_count))
         p = mpro.Pool(cpu_count)
         func = partial(propagate_one, wf, **conf)
@@ -33,24 +36,29 @@ def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None, \
         p.close()
         p.join()
     else:
-        print('      %s: e2e simulation starts, using 1 core.'\
+        if verbose is True:
+            print('%s: e2e simulation starts, using 1 core'\
                 %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
-        psfs = np.zeros((nframes, ndet, ndet))
+        psfs = np.zeros((nwf, ndet, ndet))
         for i, (phase_screen, tiptilt, misalign) \
                 in enumerate(zip(phase_screens, tiptilts, misaligns)):
             psf = propagate_one(wf, conf, phase_screen, tiptilt, misalign)
             psfs[i,:,:] = psf                
-    # if only one frame, make dim = 2
-    if nframes == 1:
+    if verbose is True:
+        print('%s: finished, elapsed %.3f seconds\n'\
+            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), time.time() - t0))
+
+    # if only one wavefront, make dim = 2
+    if nwf == 1:
         psfs = psfs[0]
-    # print elapsed time
-    print('      elapsed %.3f seconds.'%(time.time() - t0))   
-    print('')
-    
+
+    # save cube of PSFs to fits file, and notify by email
     if savefits is True:
         prefix = '' if case == '' else '%s_'%case
         on_off = {True:'onaxis', False:'offaxis'}[onaxis]
-        fits.writeto(os.path.join(conf['dir_output'], '%s%s_PSF_%s_%s.fits'\
-            %(prefix, on_off, conf['band'], conf['mode'])), np.float32(psfs), overwrite=True)
+        filename = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'\
+            %(prefix, on_off, band, mode))
+        fits.writeto(filename, np.float32(psfs), overwrite=True)
+        notify('%s  created.'%filename, send_to)
     
     return psfs

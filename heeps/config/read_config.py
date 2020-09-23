@@ -14,9 +14,7 @@ def read_config(verbose=False, **update_conf):
     #           Console and file management 
     # =============================================================================
     cpu_count = 1,                      # 1 = single core; None = max-1 cores
-    send_to = None,                     # email for sim end notification
-    send_subject = 'HEEPS noreply',
-    send_message = 'Simulation finished OK.',
+    send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
     gdrive_id = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-', # Google Drive ID
