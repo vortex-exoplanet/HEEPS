@@ -42,7 +42,7 @@ def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None,
         psfs = np.zeros((nwf, ndet, ndet))
         for i, (phase_screen, tiptilt, misalign) \
                 in enumerate(zip(phase_screens, tiptilts, misaligns)):
-            psf = propagate_one(wf, conf, phase_screen, tiptilt, misalign)
+            psf = propagate_one(wf, phase_screen, tiptilt, misalign, **conf)
             psfs[i,:,:] = psf                
     if verbose is True:
         print('%s: finished, elapsed %.3f seconds\n'\
