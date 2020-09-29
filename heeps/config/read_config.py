@@ -67,6 +67,8 @@ def read_config(verbose=False, **update_conf):
     npupil = 285,                       # number of pixels of the pupil
     ndet = 365,                         # size of the detector plane array
     hfov = 1,                           # (optional) half FOV in arcsec (updates ndet)
+    mag = 5,                            # star magnitude at selected band
+    mag_ref = 0,                        # reference magnitude for star and background fluxes
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
     flux_bckg = 8.878e+04,              # [e-/s/pix]
     ls_dRext = 0.03,                    # LS Rext undersize (% diam ext)
@@ -161,7 +163,16 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     
     # update conf dictionary
-    conf.update(**update_conf)
+    conf.update(**update_conf)    
+    if verbose is True:
+        print('Read config: mode=%s, band=%s'%(conf['mode'], conf['band']))
+        print('\u203e'*12)
+        print('   npupil=%s, pscale=%s mas, lam=%3.4E m'\
+            %(conf['npupil'], conf['pscale'], conf['lam']))
+        hfov = conf['ndet']/2*conf['pscale']/1e3
+        hfov_lamD = hfov*u.arcsec.to('rad')/(conf['lam']/conf['diam_ext'])
+        print('   ndet=%s, hfov=%s arcsec (%s lam/D)\n'%(conf['ndet'], \
+            round(hfov,2), round(hfov_lamD,2)))
     
     # create directories
     conf['dir_current'] = os.path.normpath(os.path.expandvars(conf['dir_current']))
@@ -184,7 +195,7 @@ def read_config(verbose=False, **update_conf):
     
     # downloading input files from Google Drive
     if not os.path.isfile(conf['file_scao']):
-        print("Downloading input files from Google Drive to '%s'."%conf['dir_input'])
+        print("Downloading input files from Google Drive to \n'%s'\n"%conf['dir_input'])
         extract_zip(conf['gdrive_id'], conf['dir_input'])
     
     # disable matplotlib display to run on a headless server
@@ -193,15 +204,5 @@ def read_config(verbose=False, **update_conf):
 
     # sort alphabetically
     conf = {k: v for k, v in sorted(conf.items())}
-    
-    if verbose is True:
-        print('\nRead config: mode=%s, band=%s'%(conf['mode'], conf['band']))
-        print('   npupil=%s, pscale=%s mas, lam=%3.4E m'\
-            %(conf['npupil'], conf['pscale'], conf['lam']))
-        hfov = conf['ndet']/2*conf['pscale']/1e3
-        hfov_lamD = hfov*u.arcsec.to('rad')/(conf['lam']/conf['diam_ext'])
-        print('   ndet=%s, hfov=%s arcsec (%s lam/D)'%(conf['ndet'], \
-            round(hfov,2), round(hfov_lamD,2)))
-        print('')
 
     return conf

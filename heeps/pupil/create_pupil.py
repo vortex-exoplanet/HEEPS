@@ -6,36 +6,39 @@ import os.path
 from astropy.io import fits 
 
 
-def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=36.9, 
-        diam_int=11.2, spi_width=0.5, spi_angles=[0,60,120], seg_width=1.45, 
-        seg_gap=0.004, seg_rms=0, seg_ny=[], seg_missing=[], seed=123456, **conf):
+def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, 
+        diam_int=11, spi_width=0.5, spi_angles=[0,60,120], seg_width=0, 
+        seg_gap=0, seg_rms=0, seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,
+        30,31,30,31,30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
+        seg_missing=[], seed=123456, **conf):
     
     ''' Create a pupil.
     
-    nhr: int
-        high resolution grid
-    npupil: int
-        number of pixels of the pupil
-    pupil_img_size: float
-        pupil image (for PROPER) in m
-    diam_ext: float
-        outer circular aperture in m
-    diam_int: float
-        central obscuration in m
-    spi_width: float
-        spider width in m
-    spi_angles: list of float
-        spider angles in deg
-    seg_width: float
-        segment width in m
-    seg_gap: float
-        gap between segments in m
-    seg_rms: float
-        rms of the reflectivity of all segments
-    seg_ny: list of int
-        number of hexagonal segments per column (from left to right)
-    seg_missing: list of tupples
-        coordinates of missing segments
+    Args:
+        nhr: int
+            high resolution grid
+        npupil: int
+            number of pixels of the pupil
+        pupil_img_size: float
+            pupil image (for PROPER) in m
+        diam_ext: float
+            outer circular aperture in m
+        diam_int: float
+            central obscuration in m
+        spi_width: float
+            spider width in m
+        spi_angles: list of float
+            spider angles in deg
+        seg_width: float
+            segment width in m
+        seg_gap: float
+            gap between segments in m
+        seg_rms: float
+            rms of the reflectivity of all segments
+        seg_ny: list of int
+            number of hexagonal segments per column (from left to right)
+        seg_missing: list of tupples
+            coordinates of missing segments
     
     '''
 

@@ -1,10 +1,9 @@
 from heeps.optics import apodizer, fp_mask, lyot_stop, detector
 from heeps.util.img_processing import resize_img, pad_img
+from heeps.util.save2fits import save2fits
 from copy import deepcopy
 import numpy as np
 import proper
-from astropy.io import fits
-import os.path
 
 def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None, 
         npupil=285, ngrid=1024, savefits=False, onaxis=True, verbose=False, **conf):
@@ -45,8 +44,7 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None,
 
     # save psf as fits file
     if savefits == True:
-        on_off = {True: 'onaxis', False: 'offaxis'}
-        fits.writeto(os.path.join(conf['dir_output'], '%s_PSF_%s_%s.fits'\
-            %(on_off[onaxis], conf['band'], conf['mode'])), np.float32(psf), overwrite=True)
+        name = '%s_PSF'%{True: 'onaxis', False: 'offaxis'}[onaxis]
+        save2fits(psf, name, **conf)
 
     return psf

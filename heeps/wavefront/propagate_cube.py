@@ -1,12 +1,11 @@
 from .propagate_one import propagate_one
+from heeps.util.save2fits import save2fits
 from heeps.util.notify import notify
 import multiprocessing as mpro
 from functools import partial
 from sys import platform
 import numpy as np
 import time
-from astropy.io import fits 
-import os.path
 
 def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None,
         dir_output='output_files', case='', band='L', mode='RAVC', nframes=20, 
@@ -53,12 +52,10 @@ def propagate_cube(wf, phase_screens=None, tiptilts=None, misaligns=None,
         psfs = psfs[0]
 
     # save cube of PSFs to fits file, and notify by email
-    if savefits is True:
+    if savefits == True:
         prefix = '' if case == '' else '%s_'%case
-        on_off = {True:'onaxis', False:'offaxis'}[onaxis]
-        filename = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'\
-            %(prefix, on_off, band, mode))
-        fits.writeto(filename, np.float32(psfs), overwrite=True)
+        name = '%s%s_PSF'%(prefix, {True: 'onaxis', False: 'offaxis'}[onaxis])
+        filename = save2fits(psfs, name, **conf)
         notify('%s  created.'%filename, send_to)
-    
+
     return psfs

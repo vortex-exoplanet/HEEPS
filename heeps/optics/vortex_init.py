@@ -95,7 +95,7 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
         conf.update(vortex_calib=calib, psf_num=psf_num, vvc=vvc, perf_num=perf_num)
 
         if verbose is True:
-            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f\n'%\
+            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f'%\
                 (vc_charge, ngrid, beam_ratio))
 
         return conf

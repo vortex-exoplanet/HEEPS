@@ -6,7 +6,7 @@ import numpy as np
 
 def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L':{}}, 
         lam=3.8e-6, pupil_img_size=40, diam_ext=37, diam_int=11, 
-        ngrid=1024, pscale=5, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, 
+        ngrid=1024, pscale=5.47, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, 
         vc_charge=2, vortex_calib='', verbose=False, **conf):
     
     '''
@@ -62,8 +62,7 @@ def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L'
             print('   ravc_calc=%s, ravc_t=%3.4f, ravc_r=%3.4f'\
                 %(ravc_calc, ravc_t, ravc_r))
         print('   npupil=%s, pscale=%s mas, lam=%3.4E m'%(npupil, pscale, lam))
-        print('   ndet=%s, hfov=%s arcsec (%s lam/D)'%(ndet, round(hfov,2), \
+        print('   ndet=%s, hfov=%s arcsec (%s lam/D)\n'%(ndet, round(hfov,2), \
             round(hfov_lamD,2)))
-        print('')
 
     return conf
