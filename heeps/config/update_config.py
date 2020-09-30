@@ -1,13 +1,14 @@
 from heeps.optics import vortex_init
 from heeps.util.round2odd import round2odd
+from heeps.util.save2pkl import save2pkl
 import collections
 import astropy.units as u
 import numpy as np
 
-def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L':{}}, 
+def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC':{}}, 
         lam=3.8e-6, pupil_img_size=40, diam_ext=37, diam_int=11, 
         ngrid=1024, pscale=5.47, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, 
-        vc_charge=2, vortex_calib='', verbose=False, **conf):
+        vc_charge=2, vortex_calib='', saveconf=False, verbose=False, **conf):
     
     '''
     
@@ -21,11 +22,11 @@ def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L'
     '''
     
     if verbose is True:
-        print('Update config: mode=%s, band=%s'%(mode, band))
+        print('Update config: band=%s, mode=%s'%(band, mode))
         print('\u203e'*14)
-    # update mode and band specs
-    conf.update(mode_specs.get(mode))
+    # update band and mode specs
     conf.update(band_specs.get(band))
+    conf.update(mode_specs.get(mode))
     # calculate pupil size: must be odd for PROPER
     lam = conf.get('lam', lam)
     pscale = conf.get('pscale', pscale)
@@ -49,10 +50,12 @@ def update_config(mode='RAVC', mode_specs={'RAVC':{}}, band='L', band_specs={'L'
         ravc_r = r_obstr/np.sqrt(1 - ravc_t)
     # update conf with local variables (remove unnecessary)
     conf.update(locals())
-    [conf.pop(key) for key in ['conf', 'verbose'] if key in conf]
+    [conf.pop(key) for key in ['conf', 'saveconf', 'verbose'] if key in conf]
     # sort alphabetically
     conf = {k: v for k, v in sorted(conf.items())}
-    
+    # save conf as pickle file
+    if saveconf is True:
+        save2pkl(conf, 'conf', **conf)
     # load vortex back-propagation fitsfiles
     if mode in ['RAVC', 'CVC']:
         conf = vortex_init(verbose=verbose, **conf)

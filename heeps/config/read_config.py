@@ -87,6 +87,7 @@ def read_config(verbose=False, **update_conf):
     file_app_amp = '',
     app_strehl = 0.64,                   # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
+    student_distrib = True,              # use Student's distribution instead of Gaussian
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],
     band_specs = {  
@@ -165,7 +166,7 @@ def read_config(verbose=False, **update_conf):
     # update conf dictionary
     conf.update(**update_conf)    
     if verbose is True:
-        print('Read config: mode=%s, band=%s'%(conf['mode'], conf['band']))
+        print('Read config: band=%s, mode=%s'%(conf['band'], conf['mode']))
         print('\u203e'*12)
         print('   npupil=%s, pscale=%s mas, lam=%3.4E m'\
             %(conf['npupil'], conf['pscale'], conf['lam']))
