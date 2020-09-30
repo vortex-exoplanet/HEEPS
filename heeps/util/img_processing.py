@@ -16,6 +16,9 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
         new_size = (new_size, new_size)
     else:
         assert len(new_size) is 2, requirement
+    assert  img.ndim in [2, 3], 'image must be a frame (2D) or a cube (3D)'
+    if img.ndim == 3:
+        new_size = (len(img), *new_size)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
         img = resize(img, new_size, preserve_range=preserve_range, \
