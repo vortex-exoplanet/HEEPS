@@ -5,8 +5,9 @@ from astropy.io import fits
 import os.path
 
 def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05, 
-        ls_dRspi=0.04, spi_width=0.5, spi_angles=[0,60,120], pupil_img_size=39.9988, diam_ext=36.905, diam_int=11.213, ls_misalign=None, dir_input='', file_app_phase='', 
-        file_app_amp='', ngrid=1024, npupil=285, margin=50, get_amp=False, 
+        ls_dRspi=0.04, spi_width=0.5, spi_angles=[0,60,120], diam_ext=37, 
+        diam_int=11, ls_misalign=None, file_app_phase='', file_app_amp='', 
+        ngrid=1024, npupil=285, margin=50, get_amp=False, 
         get_phase=False, verbose=False, **conf):
 
     """Add a Lyot stop, or an APP."""
@@ -40,13 +41,10 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
     elif mode in ['APP']:
         if verbose is True:
             print('Load APP from files\n')
-        # get amplitude and phase files
-        APP_amp_file = os.path.join(dir_input, file_app_amp)
-        APP_phase_file = os.path.join(dir_input, file_app_phase)
         # get amplitude and phase data
-        APP_amp = fits.getdata(APP_amp_file) if os.path.isfile(APP_amp_file) \
+        APP_amp = fits.getdata(file_app_amp) if os.path.isfile(file_app_amp) \
                 else np.ones((npupil, npupil))
-        APP_phase = fits.getdata(APP_phase_file) if os.path.isfile(APP_phase_file) \
+        APP_phase = fits.getdata(file_app_phase) if os.path.isfile(file_app_phase) \
                 else np.zeros((npupil, npupil))
         # resize to npupil
         APP_amp = impro.resize_img(APP_amp, npupil)

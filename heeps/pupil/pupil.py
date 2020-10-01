@@ -117,16 +117,13 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
         petal = ((ti>=pet_start) * (ti<=pet_end)).astype(int)
         petal = resize_img(petal, ngrid)
         proper.prop_multiply(wf, petal)
-    
-    # define the entrance wavefront
-    #proper.prop_define_entrance(wf)
-
-    if verbose is True:
-        print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
-            %(round(diam_ext, 2), npupil, ngrid))
 
     # save pupil as fits file
     if savefits == True:
         save2fits(pup, 'pupil', **conf)
+
+    if verbose is True:
+        print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
+            %(round(diam_ext, 2), npupil, ngrid))
     
     return wf

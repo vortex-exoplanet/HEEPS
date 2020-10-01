@@ -1,8 +1,9 @@
 import os.path
 from astropy.io import fits
 import astropy.units as u
+import numpy as np
 
-def load_errors(nframes=20, nstep=1, add_scao=False, file_scao='', 
+def load_errors(nframes=20, nstep=1, npupil=285, add_scao=False, file_scao='', 
         add_ncpa=False, file_ncpa='', add_petal_piston=False, file_petal_piston='',
         add_pointing_err=False, add_apo_drift=False, verbose=False, **conf):
     
@@ -31,7 +32,7 @@ def load_errors(nframes=20, nstep=1, add_scao=False, file_scao='',
     if add_scao is True:
         assert(os.path.isfile(file_scao) and os.path.splitext(file_scao)[1] == '.fits'), \
             "'file_scao' must be a valid fits file."
-        scao_screens = fits.getdata(file_scao)[:nframes][::nstep]*1e-6
+        scao_screens = fits.getdata(file_scao)[:nframes][::nstep]*1e-6# in microns
     else:
         scao_screens = [None]*ncube
 
@@ -39,7 +40,7 @@ def load_errors(nframes=20, nstep=1, add_scao=False, file_scao='',
     if add_ncpa is True:
         assert(os.path.isfile(file_ncpa) and os.path.splitext(file_ncpa)[1] == '.fits'), \
             "'file_ncpa' must be a valid fits file."
-        ncpa_screens = fits.getdata(file_ncpa)[:nframes][::nstep]
+        ncpa_screens = fits.getdata(file_ncpa)[:nframes][::nstep]*1e-9# in nm
     else:
         ncpa_screens = [None]*ncube
 
@@ -56,11 +57,11 @@ def load_errors(nframes=20, nstep=1, add_scao=False, file_scao='',
     # add pointing errors
     # add apodizer drift
     phase_screens = scao_screens
-    pointing_errs = [None]*ncube
-    apo_drifts = [None]*ncube
+    tiptilts = [None]*ncube
+    misaligns = [None]*ncube
 
     if verbose is True:
         print('Load wavefront error cubes of size %s (nframes=%s, nstep=%s)\n'\
             %(ncube, nframes, nstep))
     
-    return phase_screens, pointing_errs, apo_drifts
+    return phase_screens, tiptilts, misaligns

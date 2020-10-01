@@ -3,12 +3,11 @@ import heeps.util.img_processing as impro
 import proper
 import numpy as np
 import os.path
+from astropy.io import fits 
 
-def apodizer(wf, mode='RAVC', ravc_t=0.78, ravc_r=0.6, 
-        pupil_img_size=39.9988, diam_ext=36.9, diam_int=11.2, 
-        ravc_misalign=None, ngrid=1024, npupil=285, file_ravc_amp='', 
-        file_ravc_phase='', margin=50, get_amp=False, get_phase=False, 
-        verbose=False, **conf):
+def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None, 
+        ngrid=1024, npupil=285, file_ravc_amp='', file_ravc_phase='', 
+        margin=50, get_amp=False, get_phase=False, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -19,16 +18,10 @@ def apodizer(wf, mode='RAVC', ravc_t=0.78, ravc_r=0.6,
         PROPER wavefront object
     mode: str
         HCI mode
-    ravc_r: float
-        RA radius
     ravc_t: float
         RA transmittance
-    pupil_img_size: float
-        pupil image in m (for PROPER)
-    diam_ext: float
-        outer circular aperture in m
-    diam_int: float
-        central obscuration in m
+    ravc_r: float
+        RA radius
     ravc_misalign: list of float
         RA misalignment
     ngrid: int
