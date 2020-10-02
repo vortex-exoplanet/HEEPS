@@ -6,7 +6,7 @@ import proper
 import numpy as np
 
 def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None, 
-        ngrid=1024, npupil=285, onaxis=True, savefits=False, verbose=False, 
+        ngrid=1024, npupil=285, tag=None, onaxis=True, savefits=False, verbose=False, 
         **conf):
             
     """ 
@@ -28,6 +28,9 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None,
         proper.prop_add_phase(wf1, phase_screen)
     # apply tip-tilt (Zernike 2,3)
     if tiptilt is not None:
+        # translate the tip/tilt from lambda/D into RMS phase errors
+        # RMS = x/2 = ((lam/D)*(D/2))/2 = lam/4
+        tiptilt = np.array(tiptilt, ndmin=1)*conf['lam']/4
         proper.prop_zernikes(wf1, [2,3], tiptilt)
     # update RAVC misalignment
     conf.update(ravc_misalign=misalign)
@@ -43,7 +46,8 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None,
 
     # save psf as fits file
     if savefits == True:
-        name = '%s_PSF'%{True: 'onaxis', False: 'offaxis'}[onaxis]
+        tag = '' if tag is None else '%s_'%tag
+        name = '%s%s_PSF'%(tag, {True: 'onaxis', False: 'offaxis'}[onaxis])
         save2fits(psf, name, **conf)
 
     return psf

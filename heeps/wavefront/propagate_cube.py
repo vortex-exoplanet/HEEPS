@@ -8,7 +8,7 @@ import numpy as np
 import time
 
 def propagate_cube(wf, phase_screens, tiptilts, misaligns,
-        cpu_count=1, send_to=None, onaxis=True, savefits=False, 
+        cpu_count=1, send_to=None, tag=None, onaxis=True, savefits=False, 
         verbose=False, **conf):
 
     # run simulation
@@ -43,7 +43,8 @@ def propagate_cube(wf, phase_screens, tiptilts, misaligns,
 
     # save cube of PSFs to fits file, and notify by email
     if savefits == True:
-        name = '%s_PSF'%{True: 'onaxis', False: 'offaxis'}[onaxis]
+        tag = '' if tag is None else '%s_'%tag
+        name = '%s%s_PSF'%(tag, {True: 'onaxis', False: 'offaxis'}[onaxis])
         filename = save2fits(psfs, name, **conf)
         notify('saved to %s'%filename, send_to)
 
