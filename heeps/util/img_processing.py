@@ -21,8 +21,8 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
         new_size = (len(img), *new_size)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
-        img = resize(img, new_size, preserve_range=preserve_range, \
-                mode=mode, anti_aliasing=anti_aliasing)
+        img = np.float32(resize(np.float32(img), new_size, \
+            preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing))
     
     return img
 
