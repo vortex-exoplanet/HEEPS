@@ -75,8 +75,8 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
     # if no pupil file, create a pupil
     else:
         if verbose is True:
-            print("Create pupil: spi_width=%s m, seg_width=%s m, seg_rms=%s"\
-                %(spi_width, seg_width, seg_rms))
+            print("Create pupil: spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_rms=%s"\
+                %(spi_width, seg_width, seg_gap, seg_rms))
         conf.update(npupil=npupil,
                     pupil_img_size=pupil_img_size, 
                     diam_ext=diam_ext, 
