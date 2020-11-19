@@ -91,8 +91,8 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
         pup = create_pupil(**conf)
 
     # normalize the entrance pupil intensity (total flux = 1)
-    pup /= np.sum(pup)
-    pup = np.sqrt(pup)
+    I_pup = pup**2
+    pup = np.sqrt(I_pup/np.sum(I_pup))
     # pad with zeros and add to wavefront
     proper.prop_multiply(wf, pad_img(pup, ngrid))
         
