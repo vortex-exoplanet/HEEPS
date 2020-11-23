@@ -19,11 +19,12 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
     assert  img.ndim in [2, 3], 'image must be a frame (2D) or a cube (3D)'
     if img.ndim == 3:
         new_size = (len(img), *new_size)
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
-        img = np.float32(resize(np.float32(img), new_size, \
-            preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing))
-    
+    if new_size != img.shape:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
+            img = np.float32(resize(np.float32(img), new_size, \
+                preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing))
+
     return img
 
 def pad_img(img, padded_size, pad_value=0):
