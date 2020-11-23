@@ -5,6 +5,32 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from skimage.transform import resize
 import warnings
+import multiprocessing as mpro
+from functools import partial
+from sys import platform
+
+def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
+        anti_aliasing=True, cpu_count=1, verbose=False):
+    
+    if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
+        if cpu_count == None:
+            cpu_count = mpro.cpu_count() - 1
+        if verbose is True:
+            print('using %s cores'%(cpu_count))
+        p = mpro.Pool(cpu_count)
+        func = partial(resize_img, preserve_range=preserve_range, \
+            mode=mode, anti_aliasing=anti_aliasing)
+        params = zip(cube, [new_size]*len(cube))
+        new_cube = np.float32(p.starmap(func, params))
+        p.close()
+        p.join()
+    else:
+        if verbose is True:
+            print('using 1 core')
+        new_cube = resize_img(cube, new_size, preserve_range=preserve_range, \
+            mode=mode, anti_aliasing=anti_aliasing)
+    
+    return new_cube
 
 def resize_img(img, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True):
