@@ -51,7 +51,7 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
         proper.prop_circular_obscuration(wf_tmp, diam_int/diam_ext, NORM=True)
     if spi_width > 0:
         for angle in spi_angles:
-            proper.prop_rectangular_obscuration(wf_tmp, spi_width/nhr_size, 2, \
+            proper.prop_rectangular_obscuration(wf_tmp, 2*spi_width/nhr_size, 2, \
                 ROTATION=angle, NORM=True)
     pup = proper.prop_get_amplitude(wf_tmp)
     # crop the pupil to odd size (nhr-1), and resize to npupil
