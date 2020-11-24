@@ -1,4 +1,5 @@
 from .create_pupil import create_pupil
+from .polar_coord import ri_ti
 from heeps.util.img_processing import resize_img, pad_img
 from heeps.util.save2fits import save2fits
 import proper
@@ -11,7 +12,7 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
         diam_int=11, spi_width=0.5, spi_angles=[0,60,120], npetals=6, seg_width=0, 
         seg_gap=0, seg_rms=0, seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,
         30,31,30,31,30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10],
-        seg_missing=[], select_petal=None, savefits=False, verbose=False, **conf):
+        seg_missing=[], select_petal=None, norm_I=True, savefits=False, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -90,12 +91,6 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
                     seg_rms=seg_rms)
         pup = create_pupil(**conf)
 
-    # normalize the entrance pupil intensity (total flux = 1)
-    I_pup = pup**2
-    pup = np.sqrt(I_pup/np.sum(I_pup))
-    # pad with zeros and add to wavefront
-    proper.prop_multiply(wf, pad_img(pup, ngrid))
-        
     # select one petal (optional)
     if select_petal in range(npetals) and npetals > 1:
         if verbose is True:
@@ -104,6 +99,8 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
         pet_angle = 2*np.pi/npetals
         pet_start = pet_angle/2 + (select_petal - 1)*pet_angle
         pet_end = pet_start + pet_angle
+        # grid angles
+        ri, ti = ri_ti(npupil)
         # petal angles must be 0-2pi
         ti %= (2*np.pi)
         pet_start %= (2*np.pi)
@@ -115,12 +112,18 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
             ti = (ti + np.pi)%(2*np.pi) - np.pi
         # create petal and add to grid
         petal = ((ti>=pet_start) * (ti<=pet_end)).astype(int)
-        petal = resize_img(petal, ngrid)
-        proper.prop_multiply(wf, petal)
+        pup *= petal
 
+    # normalize the entrance pupil intensity (total flux = 1)
+    if norm_I is True:
+        I_pup = pup**2
+        pup = np.sqrt(I_pup/np.sum(I_pup))
     # save pupil as fits file
     if savefits == True:
         save2fits(pup, 'pupil', **conf)
+    
+    # pad with zeros and add to wavefront
+    proper.prop_multiply(wf, pad_img(pup, ngrid))
 
     if verbose is True:
         print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
