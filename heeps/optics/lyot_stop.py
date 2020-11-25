@@ -13,7 +13,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
     """Add a Lyot stop, or an APP."""
     
     # case 1: Lyot stop
-    if mode in ['CVC', 'RAVC']:
+    if mode in ['CVC', 'RAVC', 'CLC']:
         # LS parameters
         r_obstr = ravc_r if mode in ['RAVC'] else diam_int/diam_ext
         ls_int = r_obstr + ls_dRint
@@ -29,7 +29,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
             proper.prop_circular_obscuration(wf, ls_int, dx_amp, dy_amp, NORM=True)
         if spi_width > 0:
             for angle in spi_angles:
-                proper.prop_rectangular_obscuration(wf, ls_spi, 2, \
+                proper.prop_rectangular_obscuration(wf, 2*ls_spi, 2, \
                         dx_amp, dy_amp, ROTATION=angle, NORM=True)
         if verbose is True:
             print('Create Lyot stop')
