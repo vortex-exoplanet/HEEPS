@@ -29,11 +29,11 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     focal = 658.6,                      # focal distance in m
     pupil_img_size = 39.9988,           # pupil image in m (for PROPER)
-    diam_ext = 36.905,                  # outer circular aperture in m
-    diam_int = 11.213,                  # central obscuration in m
+    diam_ext = 38.542,                  # outer circular aperture in m
+    diam_int = 10.952,                  # central obscuration in m
     spi_width = 0.5,                    # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
-    file_pupil = 'pupils/ELT_pupil_1385.fits',# entrance pupil file
+    file_pupil = 'pupils/ELT_fullM1.fits',# entrance pupil file
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
@@ -71,14 +71,15 @@ def read_config(verbose=False, **update_conf):
     mag_ref = 0,                        # reference magnitude for star and background fluxes
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
     flux_bckg = 8.878e+04,              # [e-/s/pix]
-    ls_dRext = 0.03,                    # LS Rext undersize (% diam ext)
-    ls_dRint = 0.05,                    # LS Rint oversize (% diam ext)
-    ls_dRspi = 0.04,                    # LS spider oversize (% diam ext)
+    add_bckg = False,                   # true means background flux and photon noise are added 
+    ls_dRext = 0.0282,                  # LS Rext undersize (% diam ext)
+    ls_dRint = 0.0282,                  # LS Rint oversize (% diam ext)
+    ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
     vc_charge = 2,                      # vortex topological charge
     ravc_calc = True,                   # calculate RA params (Mawet2013)
-    ravc_t = 0.76,                      # default RA trans (calc=False)
-    ravc_r = 0.62,                      # default RA radius (calc=False)
+    ravc_t = 0.79,                      # default RA trans (calc=False)
+    ravc_r = 0.59,                      # default RA radius (calc=False)
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 4,                       # CLC occulter diam in lam/D
     file_ravc_phase = '',               # ring apodizer files (optional)
@@ -95,37 +96,37 @@ def read_config(verbose=False, **update_conf):
             'pscale': 5.47,
             'flux_star': 8.999e+10,                 # HCI-L long
             'flux_bckg': 8.878e+04,
-            'ls_dRspi': 0.04},
+            'ls_dRspi': 0.037},
         'M': {'lam': 4.8e-6,
             'pscale': 5.47,
             'flux_star': 2.452e+10,                 # CO ref
             'flux_bckg': 6.714e+05,
-            'ls_dRspi': 0.04},
+            'ls_dRspi': 0.037},
         'N1': {'lam': 8.65e-6,
             'pscale': 6.79,
             'flux_star': 3.684e+10,                 # GeoSnap N1
             'flux_bckg': 4.725e+07,
-            'ls_dRspi': 0.05},
+            'ls_dRspi': 0.037},
         'N2': {'lam': 11.25e-6, 
             'pscale': 6.79,
             'flux_star': 3.695e+10,                 # GeoSnap N2
             'flux_bckg': 1.122e+08,
-            'ls_dRspi': 0.05},
+            'ls_dRspi': 0.037},
         'N1a': {'lam': 8.65e-6, 
             'pscale': 10.78,
             'flux_star': 2.979e+10,                 # Aquarius N1
             'flux_bckg': 9.630e+07,
-            'ls_dRspi': 0.05},
+            'ls_dRspi': 0.037},
         'N2a': {'lam': 11.25e-6, 
             'pscale': 10.78,
             'flux_star': 2.823e+10,                 # Aquarius N2
             'flux_bckg': 2.142e+08,
-            'ls_dRspi': 0.05}
+            'ls_dRspi': 0.037}
         },
     # Multiple HCI modes
     modes = ['RAVC', 'CVC', 'CLC', 'APP', 'ELT'],
     mode_specs = {
-        'RAVC': {'ls_dRint': 0.03},
+        'RAVC': {'ls_dRint': 0.0282},
         'CVC': {'ls_dRint': 0.05},
         'CLC': {'ls_dRint': 0.10}
         },
@@ -133,7 +134,7 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     #           Parameters for wavefront
     # ============================================================================
-    nframes = 20,                       # number of frames to crop the input data
+    nframes = 10,                       # number of frames to crop the input data
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
 
     add_scao = False,                   # SCAO residuals cube
@@ -150,7 +151,8 @@ def read_config(verbose=False, **update_conf):
     rms_phase_qhsf = 20,                # quasistatic high spatial freq (nm)
     rms_phase_dyn = 40,                 # dynamic (nm)
 
-    add_pointing_err = False,           # pointing errors
+    add_point_err = False,           # pointing errors
+    file_point_err = 'pointing/point_ALL.fits',
     rms_point_qsta = 0.4,               # quasistatic (mas)
     rms_point_dyn = 2,                  # dynamic (mas)
 
@@ -189,13 +191,15 @@ def read_config(verbose=False, **update_conf):
     conf['file_scao'] = os.path.join(conf['dir_input'], conf['file_scao'])
     conf['file_ncpa'] = os.path.join(conf['dir_input'], conf['file_ncpa'])
     conf['file_petals'] = os.path.join(conf['dir_input'], conf['file_petals'])
+    conf['file_point_err'] = os.path.join(conf['dir_input'], conf['file_point_err'])
     conf['file_ravc_phase'] = os.path.join(conf['dir_input'], conf['file_ravc_phase'])
     conf['file_ravc_amp'] = os.path.join(conf['dir_input'], conf['file_ravc_amp'])
     conf['file_app_phase'] = os.path.join(conf['dir_input'], conf['file_app_phase'])
     conf['file_app_amp'] = os.path.join(conf['dir_input'], conf['file_app_amp'])
     
     # downloading input files from Google Drive
-    if not os.path.isfile(conf['file_scao']):
+    verif_file = 'SCAO/cube_COMPASS_Oct2018_RandomWind_100screens.fits'
+    if not os.path.isfile(os.path.join(conf['dir_input'], verif_file)):
         print("Downloading input files from Google Drive to \n'%s'\n"%conf['dir_input'])
         extract_zip(conf['gdrive_id'], conf['dir_input'])
     
