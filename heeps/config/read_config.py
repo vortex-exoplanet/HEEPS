@@ -72,6 +72,9 @@ def read_config(verbose=False, **update_conf):
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
     flux_bckg = 8.878e+04,              # [e-/s/pix]
     add_bckg = False,                   # true means background flux and photon noise are added 
+    cube_duration = 3600,               # cube duration in seconds
+    lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
+    dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
     ls_dRext = 0.0282,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.0282,                  # LS Rint oversize (% diam ext)
     ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
@@ -82,10 +85,7 @@ def read_config(verbose=False, **update_conf):
     ravc_r = 0.59,                      # default RA radius (calc=False)
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 4,                       # CLC occulter diam in lam/D
-    file_ravc_phase = '',               # ring apodizer files (optional)
-    file_ravc_amp = '',
-    file_app_phase = 'APP/app_phase_cut.fits',# apodizing phase plate files
-    file_app_amp = '',
+    file_app_phase = 'apodizers/app_phase_cut.fits',# apodizing phase plate files
     app_strehl = 0.64,                   # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
     student_distrib = True,              # use Student's distribution instead of Gaussian
@@ -137,27 +137,23 @@ def read_config(verbose=False, **update_conf):
     nframes = 10,                       # number of frames to crop the input data
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
 
-    add_scao = False,                   # SCAO residuals cube
-    file_scao = 'SCAO/cube_COMPASS_Oct2018_RandomWind_100screens.fits',
-    
-    add_ncpa = False,                   # NCPA phase screen
-    file_ncpa = 'NCPA/NCPA_IMG_LMPP1-SCAO_PYR.fits', # IMG LM @ 3.7 um
-    #file_ncpa_screen = 'NCPA_IMG_NQPP1-SCAO_DET.fits', # IMG NQ @ 10 um
+    add_phase = True,                  # phase screens (e.g. SCAO residuals)
+    file_phase = 'WFerrors/COMPASS_201810_RandomWind_100screens_0piston_meters.fits',
+    add_amplitude = False,              # amplitude screens
+    file_amplitude = '',
 
-    add_petal_piston = False,           # petal piston (island effect)
-    file_petals = 'petals/petal%s_253.fits',# one petal
     rms_phase_sta = 35.9,               # static (nm)
     rms_phase_qlsf = 20,                # quasistatic low spatial freq (nm)
     rms_phase_qhsf = 20,                # quasistatic high spatial freq (nm)
     rms_phase_dyn = 40,                 # dynamic (nm)
 
-    add_point_err = False,           # pointing errors
-    file_point_err = 'pointing/point_ALL.fits',
+    add_point_err = False,              # pointing errors
+    file_point_err = 'WFerrors/point_ALL.fits',
     rms_point_qsta = 0.4,               # quasistatic (mas)
     rms_point_dyn = 2,                  # dynamic (mas)
 
     add_apo_drift = False,              # apodizer drift
-    ptv_drift = 0.01                    # (%)
+    ptv_drift = 0.02                    # (%)
 
     )                                   # end of default conf dict
  
@@ -187,18 +183,12 @@ def read_config(verbose=False, **update_conf):
     os.makedirs(conf['dir_temp'], exist_ok=True)
     
     # create paths to fits files
-    conf['file_pupil'] = os.path.join(conf['dir_input'], conf['file_pupil'])
-    conf['file_scao'] = os.path.join(conf['dir_input'], conf['file_scao'])
-    conf['file_ncpa'] = os.path.join(conf['dir_input'], conf['file_ncpa'])
-    conf['file_petals'] = os.path.join(conf['dir_input'], conf['file_petals'])
-    conf['file_point_err'] = os.path.join(conf['dir_input'], conf['file_point_err'])
-    conf['file_ravc_phase'] = os.path.join(conf['dir_input'], conf['file_ravc_phase'])
-    conf['file_ravc_amp'] = os.path.join(conf['dir_input'], conf['file_ravc_amp'])
-    conf['file_app_phase'] = os.path.join(conf['dir_input'], conf['file_app_phase'])
-    conf['file_app_amp'] = os.path.join(conf['dir_input'], conf['file_app_amp'])
+    for filename in ['file_pupil', 'file_phase', 'file_amplitude', \
+        'file_point_err', 'file_app_phase']:
+        conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive
-    verif_file = 'SCAO/cube_COMPASS_Oct2018_RandomWind_100screens.fits'
+    verif_file = 'WFerrors/cube_COMPASS_Oct2018_RandomWind_100screens.fits'
     if not os.path.isfile(os.path.join(conf['dir_input'], verif_file)):
         print("Downloading input files from Google Drive to \n'%s'\n"%conf['dir_input'])
         extract_zip(conf['gdrive_id'], conf['dir_input'])

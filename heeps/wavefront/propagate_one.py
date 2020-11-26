@@ -28,14 +28,18 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=None,
         proper.prop_add_phase(wf1, phase_screen)
     # apply tip-tilt (Zernike 2,3)
     if tiptilt is not None:
-        # translate the tip/tilt from lambda/D into RMS phase errors
-        # RMS = x/2 = ((lam/D)*(D/2))/2 = lam/4
-        tiptilt = np.array(tiptilt, ndmin=1)*conf['lam']/4
+        # # translate the tip/tilt from lambda/D into RMS phase errors
+        # # RMS = x/2 = ((lam/D)*(D/2))/2 = lam/4
+        # tiptilt = np.array(tiptilt, ndmin=1)*conf['lam']/4
+
+        # translate the tip/tilt from mas into RMS phase errors
+        import astropy.units as u
+        tiptilt = np.array(tiptilt, ndmin=1)*u.mas.to('rad')*conf['diam_ext']/4
         proper.prop_zernikes(wf1, [2,3], tiptilt)
     # update RAVC misalignment
     conf.update(ravc_misalign=misalign)
     # pupil-plane apodization
-    wf1, apo_amp, apo_phase = apodizer(wf1, get_amp=True, verbose=verbose, **conf)
+    wf1 = apodizer(wf1, get_amp=True, verbose=verbose, **conf)
     # focal-plane mask, only in 'on-axis' configuration
     if onaxis == True:
         wf1 = fp_mask(wf1, verbose=verbose, **conf)

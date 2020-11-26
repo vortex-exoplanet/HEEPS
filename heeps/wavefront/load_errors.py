@@ -3,9 +3,9 @@ from astropy.io import fits
 import astropy.units as u
 import numpy as np
 
-def load_errors(nframes=20, nstep=1, npupil=285, add_scao=False, file_scao='', 
-        add_ncpa=False, file_ncpa='', add_petal_piston=False, file_petal_piston='',
-        add_pointing_err=False, add_apo_drift=False, verbose=False, **conf):
+def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, file_phase='', 
+        add_point_err=False, file_point_err='', add_apo_drift=False, verbose=False, 
+        ptv_drift=0.02, **conf):
     
     ''' Load wavefront errors.
     
@@ -29,36 +29,24 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_scao=False, file_scao='',
     ncube = int((nframes/nstep) + 0.5)
 
     # load SCAO residuals
-    if add_scao is True:
-        assert(os.path.isfile(file_scao) and os.path.splitext(file_scao)[1] == '.fits'), \
-            "'file_scao' must be a valid fits file."
-        scao_screens = fits.getdata(file_scao)[:nframes][::nstep]*1e-6# in microns
+    if add_phase is True:
+        assert(os.path.isfile(file_phase) and os.path.splitext(file_phase)[1] == '.fits'), \
+            "'file_phase' must be a valid fits file."
+        phase_screens = fits.getdata(file_phase)[:nframes][::nstep] # in meters
     else:
-        scao_screens = [None]*ncube
+        phase_screens = [None]*ncube
 
-    # load NCPA
-    if add_ncpa is True:
-        assert(os.path.isfile(file_ncpa) and os.path.splitext(file_ncpa)[1] == '.fits'), \
-            "'file_ncpa' must be a valid fits file."
-        ncpa_screens = fits.getdata(file_ncpa)[:nframes][::nstep]*1e-9# in nm
+    # load pointing errors
+    if add_point_err is True:
+        tiptilts = fits.getdata(file_point_err)[:nframes][::nstep]
     else:
-        ncpa_screens = [None]*ncube
+        tiptilts = [None]*ncube
 
-    # load petal piston
-    if add_petal_piston is True:
-        assert(os.path.isfile(file_petal_piston) and os.path.splitext(file_petal_piston)[1] == '.fits'), \
-            "'file_petal_piston' must be a valid fits file."
-        petal_piston_screens = fits.getdata(file_petal_piston)[:nframes][::nstep]
-    else:
-        petal_piston_screens = [None]*ncube
-    
-    # TODO: 
-    # combine phase screens
-    # add pointing errors
     # add apodizer drift
-    phase_screens = scao_screens
-    tiptilts = [None]*ncube
-    misaligns = [None]*ncube
+    if add_apo_drift is True:
+        misaligns = np.array([[x,0,0,0,0,0] for x in np.linspace(-ptv_drift/2, ptv_drift/2, 12000)])[:nframes][::nstep]
+    else:
+        misaligns = [None]*ncube
 
     if verbose is True:
         print('Load wavefront error cubes of size %s (nframes=%s, nstep=%s)\n'\

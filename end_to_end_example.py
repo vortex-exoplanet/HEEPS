@@ -11,7 +11,6 @@ import heeps
 conf = dict(
     band = 'L',
     mode = 'RAVC',
-    add_scao = True,
     cpu_count = 10,
 )
 conf = heeps.config.read_config(verbose=True, **conf)
@@ -40,7 +39,7 @@ psfs = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens, \
 sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
 
 # 8. Create a figure 
-if False:
+if True:
     %pylab
     %matplotlib inline
     figure(figsize(12,4))
