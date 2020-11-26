@@ -1,7 +1,7 @@
 import heeps.util.img_processing as impro
 import astropy.convolution as astroconv
 import numpy as np
-
+import warnings
 
 def conv_kernel(Npup, cpp, HR=2**11):
     
@@ -19,10 +19,12 @@ def conv_kernel(Npup, cpp, HR=2**11):
     
     return kernel
 
-def spatial(allSF, kernel, new_size=None):
+def spatial(allSF, kernel, new_size=None, norm=False, verbose=False):
     
     # low spatial frequencies
-    LSF = astroconv.convolve(allSF, kernel, boundary='extend')
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore") # NANs
+        LSF = astroconv.convolve(allSF, kernel, boundary='extend')
     LSF[allSF!=allSF] = np.nan
     # high spatial frequencies
     HSF = allSF - LSF
@@ -35,13 +37,13 @@ def spatial(allSF, kernel, new_size=None):
         HSF = impro.resize_img(HSF, new_size)
     
     # print rms
-    if False:
+    if verbose is True:
         print('rms(all SF) = %3.2f'%(np.nanstd(allSF)))
         print('rms(LSF) = %3.2f'%(np.nanstd(LSF)))
         print('rms(HSF) = %3.2f'%(np.nanstd(HSF)))
     
     # normalize
-    if False:
+    if norm is True:
         allSF /= np.nanstd(allSF)
         LSF /= np.nanstd(LSF)
         HSF /= np.nanstd(HSF)
