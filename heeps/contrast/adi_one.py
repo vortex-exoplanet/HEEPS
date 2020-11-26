@@ -5,7 +5,7 @@ from astropy.io import fits
 import os.path
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
-        flux_star=9e10, flux_bckg=9e4, add_bckg=True, pscale=5.47, 
+        flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
         cube_duration=3600, lat=-24.59, dec=-5, rim=19, app_strehl=0.64, 
         app_single_psf=0.48, student_distrib=True, seed=123456, savepsf=False, 
         savefits=False, verbose=False, **conf):
@@ -136,16 +136,18 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     distrib = 'sensitivity_student' if student_distrib == True else 'sensitivity_gaussian'
     sen = cc_pp.loc[:,distrib].values
 
+    # filename for fitsfiles
+    if add_bckg is True:
+        name = 'adi_bckg%s_mag%s'%(int(add_bckg), mag)
+    else:
+        name = 'adi_bckg%s'%int(add_bckg)
     # save contrast curves as fits file
     if savefits == True:
-        name = 'cc_adi_bckg%s_mag%s'%(int(add_bckg), mag)
-        save2fits(np.array([sep,sen]), name, dir_output=dir_output, band=band, mode=mode)
-
+        save2fits(np.array([sep,sen]), 'cc_%s'%name, dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
         out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
-        name = 'psf_adi_bckg%s_mag%s'%(int(add_bckg), mag)
-        save2fits(psf_pp, name, dir_output=dir_output, band=band, mode=mode)
+        save2fits(psf_pp, 'psf_%s'%name, dir_output=dir_output, band=band, mode=mode)
 
     return sep, sen
     
