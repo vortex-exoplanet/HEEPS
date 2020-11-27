@@ -43,6 +43,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
     '''
 
     # create a high res pupil with PROPER of even size (nhr)
+    nhr = max(nhr, npupil)
+    nhr += nhr % 2
     nhr_size = pupil_img_size*nhr/(nhr-1)
     wf_tmp = proper.prop_begin(nhr_size, 1, nhr, diam_ext/nhr_size)
     if diam_ext > 0:
