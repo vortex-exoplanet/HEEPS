@@ -127,6 +127,6 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
 
     if verbose is True:
         print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
-            %(round(diam_ext, 2), npupil, ngrid))
+            %(round(diam_ext, 3), npupil, ngrid))
     
     return wf

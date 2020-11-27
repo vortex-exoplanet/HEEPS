@@ -7,7 +7,7 @@ from astropy.io import fits
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None, 
         ngrid=1024, npupil=285, file_ravc_amp='', file_ravc_phase='', 
-        margin=50, get_amp=False, get_phase=False, verbose=False, **conf):
+        verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -59,26 +59,16 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
             dx_amp, dy_amp, dz_amp = ravc_misalign[0:3]
             dx_phase, dy_phase, dz_phase = ravc_misalign[3:6]
             # create apodizer
-            apo = circular_apodization(wf, ravc_r, 1., ravc_t, xc=dx_amp, \
+            ring = circular_apodization(wf, ravc_r, 1., ravc_t, xc=dx_amp, \
                 yc=dy_amp, NORM=True)
-            apo = proper.prop_shift_center(apo)
             if verbose is True:
                 print('Create ring apodizer')
-                print('   ravc_t=%3.4f, ravc_r=%3.4f'\
-                    %(ravc_t, ravc_r))
-                print('   ravc_misalign=%s'%ravc_misalign)
+                print('   ravc_t=%s, ravc_r=%s'\
+                    %(round(ravc_t, 4), round(ravc_r, 4)))
+                print('   ravc_misalign=%s'%np.around(ravc_misalign, 4))
                 print('')
 
         # multiply the loaded apodizer
-        proper.prop_multiply(wf, apo)
+        proper.prop_multiply(wf, ring)
         
-        # get the apodizer amplitude and phase for output
-        apo_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil,\
-                margin) if get_amp is True else None
-        apo_phase = impro.crop_img(proper.prop_get_phase(wf), npupil,\
-                margin) if get_phase is True else None
-        
-        return wf, apo_amp, apo_phase
-
-    else: # no ring apodizer
-        return wf, None, None
+    return wf

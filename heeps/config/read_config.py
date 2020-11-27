@@ -29,11 +29,12 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     focal = 658.6,                      # focal distance in m
     pupil_img_size = 39.9988,           # pupil image in m (for PROPER)
-    diam_ext = 38.542,                  # outer circular aperture in m
-    diam_int = 10.952,                  # central obscuration in m
+    diam_nominal = 38.542,              # nominal diameter for LS oversizing
+    diam_ext = 37.812,                  # effective outer circular aperture in m
+    diam_int = 10.952,                  # effective central obscuration in m
+    file_pupil = 'pupils/ELT_fullM1.fits',# entrance pupil file
     spi_width = 0.5,                    # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
-    file_pupil = 'pupils/ELT_fullM1.fits',# entrance pupil file
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
@@ -138,7 +139,7 @@ def read_config(verbose=False, **update_conf):
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
 
     add_phase = True,                  # phase screens (e.g. SCAO residuals)
-    file_phase = 'WFerrors/COMPASS_201810_RandomWind_100screens_0piston_meters.fits',
+    file_phase = 'WFerrors/COMPASS_201810_RandomWind_100screens_meters.fits',
     add_amplitude = False,              # amplitude screens
     file_amplitude = '',
 

@@ -13,14 +13,10 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, file_phase='',
         number of frames to crop the input data
     nstep: int
         take 1 frame every nstep (cubesize = nframes/nstep)
-    add_scao: bool
-        true if adding SCAO residuals
-    file_scao: str
-        path to SCAO residuals fits file
-    add_ncpa: bool
-        true if adding NCPA (including petal piston)
-    file_ncpa: str
-        path to NCPA fits file
+    add_phase: bool
+        true if adding phase screens
+    file_phase: str
+        path to phase screens fits file
     add_pointing: bool
         true if adding pointing errors
     
@@ -28,7 +24,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, file_phase='',
     # size of cubes/arrays
     ncube = int((nframes/nstep) + 0.5)
 
-    # load SCAO residuals
+    # load phase screens
     if add_phase is True:
         assert(os.path.isfile(file_phase) and os.path.splitext(file_phase)[1] == '.fits'), \
             "'file_phase' must be a valid fits file."

@@ -6,7 +6,7 @@ import os.path
 
 def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05, 
         ls_dRspi=0.04, spi_width=0.5, spi_angles=[0,60,120], diam_ext=37, 
-        diam_int=11, ls_misalign=None, file_app_phase='', file_app_amp='', 
+        diam_int=11, diam_nominal=37, ls_misalign=None, file_app_phase='', file_app_amp='', 
         ngrid=1024, npupil=285, margin=50, get_amp=False, 
         get_phase=False, verbose=False, **conf):
 
@@ -14,11 +14,13 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
     
     # case 1: Lyot stop
     if mode in ['CVC', 'RAVC', 'CLC']:
+        # scale nominal values to pupil external diameter
+        scaling = diam_nominal/diam_ext
         # LS parameters
         r_obstr = ravc_r if mode in ['RAVC'] else diam_int/diam_ext
-        ls_int = r_obstr + ls_dRint
-        ls_ext = 1 - ls_dRext
-        ls_spi = spi_width/diam_ext + ls_dRspi
+        ls_int = r_obstr + ls_dRint*scaling
+        ls_ext = 1 - ls_dRext*scaling
+        ls_spi = spi_width/diam_ext + ls_dRspi*scaling
         # LS misalignments
         ls_misalign = [0,0,0,0,0,0] if ls_misalign is None else list(ls_misalign)
         dx_amp, dy_amp, dz_amp = ls_misalign[0:3]
@@ -33,8 +35,8 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
                         dx_amp, dy_amp, ROTATION=angle, NORM=True)
         if verbose is True:
             print('Create Lyot stop')
-            print('   ls_int=%3.4f, ls_ext=%3.4f, ls_spi=%3.4f'\
-                %(ls_int, ls_ext, ls_spi))
+            print('   ls_int=%s, ls_ext=%s, ls_spi=%s'\
+                %(round(ls_int, 4), round(ls_ext, 4), round(ls_spi, 4)))
             print('')
 
     # case 2: APP
