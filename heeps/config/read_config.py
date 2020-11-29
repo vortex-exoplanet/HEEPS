@@ -30,9 +30,9 @@ def read_config(verbose=False, **update_conf):
     focal = 658.6,                      # focal distance in m
     pupil_img_size = 39.9988,           # pupil image in m (for PROPER)
     diam_nominal = 38.542,              # nominal diameter for LS oversizing
-    diam_ext = 37.812,                  # effective outer circular aperture in m
-    diam_int = 10.952,                  # effective central obscuration in m
-    file_pupil = 'pupils/ELT_fullM1.fits',# entrance pupil file
+    diam_ext = 36.905,                  # effective outer circular aperture in m
+    diam_int = 11.213,                  # effective central obscuration in m
+    file_pupil = 'pupils/ELT_allglass.fits',# entrance pupil file
     spi_width = 0.5,                    # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
     # if no valid pupil file, pupil will be created with the following params:
@@ -67,7 +67,7 @@ def read_config(verbose=False, **update_conf):
     ngrid = 1024,                       # number of pixels of the wavefront array
     npupil = 285,                       # number of pixels of the pupil
     ndet = 365,                         # size of the detector plane array
-    hfov = 1,                           # (optional) half FOV in arcsec (updates ndet)
+    hfov = 1.1,                           # (optional) half FOV in arcsec (updates ndet)
     mag = 5,                            # star magnitude at selected band
     mag_ref = 0,                        # reference magnitude for star and background fluxes
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
@@ -189,7 +189,7 @@ def read_config(verbose=False, **update_conf):
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive
-    verif_file = 'WFerrors/cube_COMPASS_Oct2018_RandomWind_100screens.fits'
+    verif_file = 'WFerrors/COMPASS_201810_RandomWind_100screens_meters.fits'
     if not os.path.isfile(os.path.join(conf['dir_input'], verif_file)):
         print("Downloading input files from Google Drive to \n'%s'\n"%conf['dir_input'])
         extract_zip(conf['gdrive_id'], conf['dir_input'])

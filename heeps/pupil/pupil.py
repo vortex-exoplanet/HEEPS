@@ -1,5 +1,5 @@
 from .create_pupil import create_pupil
-from .polar_coord import ri_ti
+from .create_petal import create_petal
 from heeps.util.img_processing import resize_img, pad_img
 from heeps.util.save2fits import save2fits
 import proper
@@ -95,23 +95,7 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
     if select_petal in range(npetals) and npetals > 1:
         if verbose is True:
             print("   select_petal=%s"%select_petal)
-        # petal start and end angles
-        pet_angle = 2*np.pi/npetals
-        pet_start = pet_angle/2 + (select_petal - 1)*pet_angle
-        pet_end = pet_start + pet_angle
-        # grid angles
-        ri, ti = ri_ti(npupil)
-        # petal angles must be 0-2pi
-        ti %= (2*np.pi)
-        pet_start %= (2*np.pi)
-        pet_end %= (2*np.pi)
-        # check if petal crosses 0 angle
-        if pet_end - pet_start < 0:
-            pet_start = (pet_start + np.pi)%(2*np.pi) - np.pi
-            pet_end = (pet_end + np.pi)%(2*np.pi) - np.pi
-            ti = (ti + np.pi)%(2*np.pi) - np.pi
-        # create petal and add to grid
-        petal = ((ti>=pet_start) * (ti<=pet_end)).astype(int)
+        petal = create_petal(select_petal, npetal, npupil)
         pup *= petal
 
     # normalize the entrance pupil intensity (total flux = 1)

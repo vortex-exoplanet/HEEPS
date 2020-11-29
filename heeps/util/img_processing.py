@@ -41,7 +41,7 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
     if type(new_size) is int:
         new_size = (new_size, new_size)
     else:
-        assert len(new_size) is 2, requirement
+        assert len(new_size) == 2, requirement
     assert  img.ndim in [2, 3], 'image must be a frame (2D) or a cube (3D)'
     if img.ndim == 3:
         new_size = (len(img), *new_size)
@@ -61,7 +61,7 @@ def pad_img(img, padded_size, pad_value=0):
     if type(padded_size) is int:
         (x1, y1) = (padded_size, padded_size)
     else:
-        assert len(padded_size) is 2, requirement
+        assert len(padded_size) == 2, requirement
         (x1, y1) = padded_size
     (x2, y2) = img.shape
     # determine padding region
@@ -84,7 +84,7 @@ def crop_img(img, new_size, margin=0):
     if type(new_size) is int:
         (x1, y1) = (new_size, new_size)
     else:
-        assert len(new_size) is 2, requirement
+        assert len(new_size) == 2, requirement
         (x1, y1) = new_size
     (x2, y2) = img.shape
     # determine cropping region
@@ -97,10 +97,10 @@ def crop_img(img, new_size, margin=0):
     assert type(margin) in [int, tuple, list], requirement2
     if type(margin) is int:
         (mx1, mx2, my1, my2) = (margin, margin, margin, margin)
-    elif len(margin) is 2:
+    elif len(margin) == 2:
         (mx1, mx2, my1, my2) = (margin[0], margin[0], margin[1], margin[1])
     else:
-        assert len(margin) is 4, requirement2
+        assert len(margin) == 4, requirement2
         (mx1, mx2, my1, my2) = margin
     # crop image
     img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
