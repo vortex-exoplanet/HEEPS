@@ -7,8 +7,7 @@ import os.path
 def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05, 
         ls_dRspi=0.04, spi_width=0.5, spi_angles=[0,60,120], diam_ext=37, 
         diam_int=11, diam_nominal=37, ls_misalign=None, file_app_phase='', file_app_amp='', 
-        ngrid=1024, npupil=285, margin=50, get_amp=False, 
-        get_phase=False, verbose=False, **conf):
+        ngrid=1024, npupil=285, verbose=False, **conf):
 
     """Add a Lyot stop, or an APP."""
     
@@ -57,10 +56,4 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
     
-    # get the LS amplitude and phase for output
-    LS_amp = impro.crop_img(proper.prop_get_amplitude(wf), npupil, margin)\
-            if get_amp is True else None
-    LS_phase = impro.crop_img(proper.prop_get_phase(wf), npupil, margin)\
-            if get_phase is True else None
-    
-    return wf, LS_amp, LS_phase
+    return wf

@@ -1,4 +1,5 @@
 from .propagate_one import propagate_one
+from heeps.optics import apodizer
 from heeps.util.save2fits import save2fits
 from heeps.util.notify import notify
 import multiprocessing as mpro
@@ -10,6 +11,10 @@ import time
 def propagate_cube(wf, phase_screens, tiptilts, misaligns,
         cpu_count=1, send_to=None, tag=None, onaxis=True, savefits=False, 
         verbose=False, **conf):
+
+    # preload apodizer when no drift
+    if np.all(misaligns) == None:
+        wf = apodizer(wf, verbose=False, **conf)
 
     # run simulation
     t0 = time.time()
