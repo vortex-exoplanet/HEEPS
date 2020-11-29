@@ -40,17 +40,17 @@ sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **c
 
 # 8. Create a figure 
 if True:
-    %pylab
-    %matplotlib inline
-    figure(figsize(12,4))
-    grid(True), grid(which='minor', linestyle=':')
-    loglog(), gca().xaxis.set_major_formatter(ScalarFormatter())
-    xlabel('Angular separation $[arcsec]$')
-    ylabel('5-$\sigma$ sensitivity (contrast)')
+    import matplotlib.pyplot as plt
+    from matplotlib.pylab import ScalarFormatter
+    plt.figure(figsize=(12,4))
+    plt.grid(True), plt.grid(which='minor', linestyle=':')
+    plt.loglog(), plt.gca().xaxis.set_major_formatter(ScalarFormatter())
+    plt.xlabel('Angular separation $[arcsec]$')
+    plt.ylabel('5-$\sigma$ sensitivity (contrast)')
     label = '%s-band %s'%(conf['band'], conf['mode'])
-    plot(sep, sen, label=label, marker='d', markevery=0.12, markersize=4)
-    legend()
-    xticks([0.02, 0.1, 0.5, 1])
-    xlim(0.02,1)
-    ylim(1e-6,1e-2)
-    savefig('example_adi.png', dpi=300, transparent=True)
+    plt.plot(sep, sen, label=label, marker='d', markevery=0.12, markersize=4)
+    plt.legend()
+    plt.xticks([0.02, 0.1, 0.5, 1])
+    plt.xlim(0.02,1)
+    plt.ylim(1e-6,1e-2)
+    plt.savefig('example_adi.png', dpi=300, transparent=True)
