@@ -1,4 +1,4 @@
-from heeps.util.polar_coord import ri_ti
+from heeps.util.coord import polar_coord
 import numpy as np
 
 def create_petal(select_petal, npetals, npupil):
@@ -8,7 +8,7 @@ def create_petal(select_petal, npetals, npupil):
     pet_start = pet_angle/2 + (select_petal - 1)*pet_angle
     pet_end = pet_start + pet_angle
     # grid angles
-    ri, ti = ri_ti(npupil)
+    ri, ti = polar_coord(npupil)
     # petal angles must be 0-2pi
     ti %= (2*np.pi)
     pet_start %= (2*np.pi)

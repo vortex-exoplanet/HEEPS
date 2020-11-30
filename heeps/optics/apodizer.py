@@ -6,8 +6,8 @@ import os.path
 from astropy.io import fits 
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None, 
-        ngrid=1024, npupil=285, file_ravc_amp='', file_ravc_phase='', 
-        verbose=False, **conf):
+        ngrid=1024, npupil=285, file_app_phase='', file_app_amp='', 
+        file_ravc_amp='', file_ravc_phase='', verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -28,12 +28,16 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
         number of pixels of the wavefront array
     npupil: int
         number of pixels of the pupil
+    file_app_amp: str
+    file_app_phase: str 
+        apodizing phase plate files
     file_ravc_amp: str
     file_ravc_phase: str 
         ring apodizer files (optional)
-    
+
     '''
 
+    # case 1: Ring Apodizer
     if mode in ['RAVC']:
 
         # load apodizer from files if provided
@@ -70,5 +74,25 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
 
         # multiply the loaded apodizer
         proper.prop_multiply(wf, ring)
+
+
+    # case 2: Apodizing Phase Plate
+    elif mode in ['APP']:
+        if verbose is True:
+            print('Load APP from files\n')
+        # get amplitude and phase data
+        APP_amp = fits.getdata(file_app_amp) if os.path.isfile(file_app_amp) \
+                else np.ones((npupil, npupil))
+        APP_phase = fits.getdata(file_app_phase) if os.path.isfile(file_app_phase) \
+                else np.zeros((npupil, npupil))
+        # resize to npupil
+        APP_amp = impro.resize_img(APP_amp, npupil)
+        APP_phase = impro.resize_img(APP_phase, npupil)
+        # pad with zeros to match PROPER ngrid
+        APP_amp = impro.pad_img(APP_amp, ngrid, 1)
+        APP_phase = impro.pad_img(APP_phase, ngrid, 0)
         
+        # multiply the loaded APP
+        proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
+            
     return wf

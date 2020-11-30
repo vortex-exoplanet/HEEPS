@@ -76,14 +76,15 @@ def read_config(verbose=False, **update_conf):
     cube_duration = 3600,               # cube duration in seconds
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
+    file_lyot_stop = '',                # lyot stop file
     ls_dRext = 0.0282,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.0282,                  # LS Rint oversize (% diam ext)
     ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
     vc_charge = 2,                      # vortex topological charge
     ravc_calc = True,                   # calculate RA params (Mawet2013)
-    ravc_t = 0.79,                      # default RA trans (calc=False)
-    ravc_r = 0.59,                      # default RA radius (calc=False)
+    ravc_t = 0.7903,                    # fullM1 RA trans wrt allglass (calc=False)
+    ravc_r = 0.6033,                    # fullM1 RA radius wrt allglass (calc=False)
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 4,                       # CLC occulter diam in lam/D
     file_app_phase = 'apodizers/app_phase_cut.fits',# apodizing phase plate files
@@ -185,7 +186,7 @@ def read_config(verbose=False, **update_conf):
     
     # create paths to fits files
     for filename in ['file_pupil', 'file_phase', 'file_amplitude', \
-        'file_point_err', 'file_app_phase']:
+        'file_point_err', 'file_app_phase', 'file_lyot_stop']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive

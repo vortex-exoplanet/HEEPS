@@ -37,7 +37,7 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0],
         tiptilt = np.array(tiptilt, ndmin=1)*u.mas.to('rad')*conf['diam_ext']/4
         proper.prop_zernikes(wf1, [2,3], tiptilt)
     
-    # apply RAVC misalignment (pupil-plane apodization)
+    # pupil-plane apodization: if misalign set to None, apodizer already preloaded
     if misalign is not None:
         conf.update(ravc_misalign=misalign)
         wf1 = apodizer(wf1, verbose=verbose, **conf)
@@ -46,7 +46,7 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0],
     if onaxis == True:
         wf1 = fp_mask(wf1, verbose=verbose, **conf)
     
-    # Lyot-stop or APP
+    # Lyot-stop
     wf1 = lyot_stop(wf1, verbose=verbose, **conf)
     
     # detector
