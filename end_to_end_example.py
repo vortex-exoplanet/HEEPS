@@ -22,7 +22,7 @@ conf = heeps.config.read_config(verbose=True, **conf)
 conf = heeps.config.update_config(saveconf=True, verbose=True, **conf) 
 
 # 3. Load wavefront errors
-phase_screens, tiptilts, misaligns = heeps.wavefront.load_errors(verbose=True, **conf)
+phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(verbose=True, **conf)
 
 # 4. Load entrance pupil, and create 'wavefront' object
 wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
@@ -32,8 +32,8 @@ psf = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, verbose=Tru
 
 # 6. Propagate cube of onaxis psfs (i.e. star)
 psfs = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens, \
-    tiptilts=tiptilts, misaligns=misaligns, onaxis=True, savefits=True, \
-    verbose=True, **conf)
+    amp_screens=amp_screens, tiptilts=tiptilts, misaligns=misaligns, onaxis=True, \
+    savefits=True, verbose=True, **conf)
 
 # 7. Produce 5-sigma sensitivity (contrast) curves for each set of PSFs (modes, bands)
 sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)

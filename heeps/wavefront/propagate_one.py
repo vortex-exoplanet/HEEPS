@@ -5,7 +5,7 @@ from copy import deepcopy
 import proper
 import numpy as np
 
-def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
+def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
         ngrid=1024, npupil=285, tag=None, onaxis=True, savefits=False, verbose=False, 
         **conf):
             
@@ -23,10 +23,18 @@ def propagate_one(wf, phase_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0],
 
     # apply phase screen (scao residuals, ncpa, petal piston)
     if phase_screen is not None:
+        assert phase_screen.ndim == 2, "phase_screen dim must be 2."
         phase_screen = np.nan_to_num(phase_screen)
         phase_screen = pad_img(resize_img(phase_screen, npupil), ngrid)
         proper.prop_add_phase(wf1, phase_screen)
-    
+
+    # apply amplitude screen (Talbot effect)
+    if amp_screen is not None:
+        assert amp_screen.ndim == 2, "amp_screen dim must be 2."
+        amp_screen = np.nan_to_num(amp_screen)
+        amp_screen = pad_img(resize_img(amp_screen, npupil), ngrid)
+        proper.prop_multiply(wf1, amp_screen)
+
     # apply tip-tilt (Zernike 2,3)
     if tiptilt is not None:
         # # translate the tip/tilt from lambda/D into RMS phase errors
