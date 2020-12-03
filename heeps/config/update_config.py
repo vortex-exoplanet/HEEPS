@@ -22,8 +22,8 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC'
     '''
     
     if verbose is True:
-        print('Update config: band=%s, mode=%s'%(band, mode))
-        print('\u203e'*14)
+        print('Simulation config: band=%s, mode=%s'%(band, mode))
+        print('\u203e'*18)
     # update band and mode specs
     conf.update(band_specs.get(band))
     conf.update(mode_specs.get(mode))
@@ -65,7 +65,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC'
             print('   ravc_calc=%s, ravc_t=%3.4f, ravc_r=%3.4f'\
                 %(ravc_calc, ravc_t, ravc_r))
         print('   npupil=%s, pscale=%s mas, lam=%3.4E m'%(npupil, pscale, lam))
-        print('   ndet=%s, hfov=%s arcsec (%s lam/D)\n'%(ndet, round(hfov,2), \
+        print('   hfov=%s arcsec (-> ndet=%s, %s lam/D)\n'%(round(hfov,2), ndet, \
             round(hfov_lamD,2)))
 
     return conf

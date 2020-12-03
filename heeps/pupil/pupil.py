@@ -95,7 +95,7 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
     if select_petal in range(npetals) and npetals > 1:
         if verbose is True:
             print("   select_petal=%s"%select_petal)
-        petal = create_petal(select_petal, npetal, npupil)
+        petal = create_petal(select_petal, npetals, npupil)
         pup *= petal
 
     # normalize the entrance pupil intensity (total flux = 1)
@@ -108,9 +108,5 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, pupil_img_size=40, 
     
     # pad with zeros and add to wavefront
     proper.prop_multiply(wf, pad_img(pup, ngrid))
-
-    if verbose is True:
-        print('   diam=%s m, resize to %s pix, zero-pad to %s pix\n'\
-            %(round(diam_ext, 3), npupil, ngrid))
     
     return wf

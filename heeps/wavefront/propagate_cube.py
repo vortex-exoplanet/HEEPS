@@ -13,10 +13,10 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         verbose=False, **conf):
 
     # preload amp screen if only one frame
-    if amp_screens.ndim == 2:
+    if len(amp_screens) == 1:
         import proper
         from heeps.util.img_processing import pad_img, resize_img
-        amp_screens = np.nan_to_num(amp_screens)
+        amp_screens = np.nan_to_num(amp_screens[0])
         amp_screens = pad_img(resize_img(amp_screens, conf['npupil']), conf['ngrid'])
         proper.prop_multiply(wf, amp_screens)
         # then create a cube of None values
@@ -26,13 +26,16 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
     if np.all(misaligns) == None:
         wf = apodizer(wf, verbose=False, **conf)
     
+    if verbose == True:
+        print('Create cube of %s-axis PSFs'%{True:'onaxis',False:'offaxis'}[onaxis])
+
     # run simulation
     t0 = time.time()
     if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
         if cpu_count == None:
             cpu_count = mpro.cpu_count() - 1
         if verbose is True:
-            print('%s: e2e simulation starts, using %s cores'\
+            print('   %s: e2e simulation starts, using %s cores'\
                 %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), cpu_count))
         p = mpro.Pool(cpu_count)
         func = partial(propagate_one, wf, onaxis=onaxis, verbose=False, **conf)
@@ -41,7 +44,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         p.join()
     else:
         if verbose is True:
-            print('%s: e2e simulation starts, using 1 core'\
+            print('   %s: e2e simulation starts, using 1 core'\
                 %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
         for i, (phase_screen, amp_screen, tiptilt, misalign) \
                 in enumerate(zip(phase_screens, amp_screens, tiptilts, misaligns)):
@@ -49,7 +52,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
                 onaxis=onaxis, verbose=False, **conf)
             psfs = psf if i == 0 else np.dstack((psfs.T, psf.T)).T
     if verbose is True:
-        print('%s: finished, elapsed %.3f seconds\n'\
+        print('   %s: finished, elapsed %.3f seconds'\
             %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), time.time() - t0))
 
     # if only one wavefront, make dim = 2

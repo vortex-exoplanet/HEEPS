@@ -15,6 +15,6 @@ def detector(wf, focal=660, ngrid=1024, ndet=365, verbose=False, **conf):
     psf = psf[start:end, start:end]
 
     if verbose is True:
-        print("Extract PSF on the detector\n")
+        print("   extract PSF on the detector: ndet=%s"%ndet)
 
     return psf

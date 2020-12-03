@@ -43,7 +43,7 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
         # load apodizer from files if provided
         if os.path.isfile(file_ravc_amp) and os.path.isfile(file_ravc_phase):
             if verbose is True:
-                print('Load ring apodizer from files\n')
+                print('   apply ring apodizer from files')
             # get amplitude and phase data
             RAVC_amp = fits.getdata(file_ravc_amp)
             RAVC_phase = fits.getdata(file_ravc_phase)
@@ -66,11 +66,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
             ring = circular_apodization(wf, ravc_r, 1., ravc_t, xc=dx_amp, \
                 yc=dy_amp, NORM=True)
             if verbose is True:
-                print('Create ring apodizer')
-                print('   ravc_t=%s, ravc_r=%s'\
+                print('   apply ring apodizer: ravc_t=%s, ravc_r=%s'\
                     %(round(ravc_t, 4), round(ravc_r, 4)))
-                print('   ravc_misalign=%s'%np.around(ravc_misalign, 4))
-                print('')
 
         # multiply the loaded apodizer
         proper.prop_multiply(wf, ring)
@@ -79,7 +76,7 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
     # case 2: Apodizing Phase Plate
     elif mode in ['APP']:
         if verbose is True:
-            print('Load APP from files\n')
+            print('   apply APP from files')
         # get amplitude and phase data
         APP_amp = fits.getdata(file_app_amp) if os.path.isfile(file_app_amp) \
                 else np.ones((npupil, npupil))

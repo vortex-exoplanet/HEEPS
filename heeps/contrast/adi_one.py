@@ -3,6 +3,7 @@ import vip_hci
 import numpy as np
 from astropy.io import fits
 import os.path
+import warnings
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
         flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
@@ -126,15 +127,16 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
     # contrast curve after post-processing (pscale in arcsec)
-    cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
-            fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
-            debug=False, plot=False, verbose=verbose)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore") # for AstropyDeprecationWarning
+        cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
+                fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
+                debug=False, plot=False, verbose=verbose)
     # angular separations (in arcsec)
     sep = cc_pp.loc[:,'distance_arcsec'].values
     # sensitivities (Student's or Gaussian distribution)
     distrib = 'sensitivity_student' if student_distrib == True else 'sensitivity_gaussian'
     sen = cc_pp.loc[:,distrib].values
-
     # filename for fitsfiles
     if add_bckg is True:
         name = 'adi_bckg%s_mag%s'%(int(add_bckg), mag)

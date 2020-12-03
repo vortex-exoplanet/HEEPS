@@ -16,7 +16,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
         # load lyot stop from file if provided
         if os.path.isfile(file_lyot_stop):
             if verbose is True:
-                print("Load Lyot stop from '%s'\n"%os.path.basename(file_lyot_stop))
+                print("   apply lyot stop from '%s'"%os.path.basename(file_lyot_stop))
             # get amplitude and phase data
             ls_mask = fits.getdata(file_lyot_stop)
             # resize to npupil
@@ -46,10 +46,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
                     proper.prop_rectangular_obscuration(wf, 2*ls_spi, 2, \
                             dx_amp, dy_amp, ROTATION=angle, NORM=True)
             if verbose is True:
-                print('Create Lyot stop')
-                print('   ls_int=%s, ls_ext=%s, ls_spi=%s'\
+                print('   apply Lyot stop: ls_int=%s, ls_ext=%s, ls_spi=%s'\
                     %(round(ls_int, 4), round(ls_ext, 4), round(ls_spi, 4)))
-                print('')
-
     
     return wf

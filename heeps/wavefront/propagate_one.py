@@ -45,6 +45,9 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
         tiptilt = np.array(tiptilt, ndmin=1)*u.mas.to('rad')*conf['diam_ext']/4
         proper.prop_zernikes(wf1, [2,3], tiptilt)
     
+    if verbose == True:
+        print('Create %s-axis PSF'%{True:'onaxis',False:'offaxis'}[onaxis])
+
     # pupil-plane apodization: if misalign set to None, apodizer already preloaded
     if misalign is not None:
         conf.update(ravc_misalign=misalign)

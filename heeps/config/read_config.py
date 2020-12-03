@@ -13,7 +13,7 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     #           Console and file management 
     # =============================================================================
-    cpu_count = 1,                      # 1 = single core; None = max-1 cores
+    cpu_count = 10,                     # 1 = single core; None = max-1 cores
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
@@ -166,13 +166,13 @@ def read_config(verbose=False, **update_conf):
     # update conf dictionary
     conf.update(**update_conf)    
     if verbose is True:
-        print('Read config: band=%s, mode=%s'%(conf['band'], conf['mode']))
-        print('\u203e'*12)
+        print('Default config: band=%s, mode=%s'%(conf['band'], conf['mode']))
+        print('\u203e'*15)
         print('   npupil=%s, pscale=%s mas, lam=%3.4E m'\
             %(conf['npupil'], conf['pscale'], conf['lam']))
         hfov = conf['ndet']/2*conf['pscale']/1e3
         hfov_lamD = hfov*u.arcsec.to('rad')/(conf['lam']/conf['diam_ext'])
-        print('   ndet=%s, hfov=%s arcsec (%s lam/D)\n'%(conf['ndet'], \
+        print('   ndet=%s (-> hfov=%s arcsec, %s lam/D)\n'%(conf['ndet'], \
             round(hfov,2), round(hfov_lamD,2)))
     
     # create directories
