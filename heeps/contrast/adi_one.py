@@ -89,8 +89,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
         bckg_noise = DIT * flux_bckg * trans
         psf_ON += bckg_noise
         np.random.seed(seed)
-        phot_noise = np.random.normal(0, np.sqrt(psf_ON))
-        psf_ON += phot_noise
+        psf_ON += np.random.normal(0, np.sqrt(psf_ON)) # photon noise
         if verbose is True:
             print('   add_bckg=%s, trans=%3.4f, bckg_noise=%3.2E'\
                 %(add_bckg, trans, bckg_noise))
@@ -146,7 +145,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
         save2fits(np.array([sep,sen]), 'cc_%s'%name, dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
-        out, derot, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
+        _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
         save2fits(psf_pp, 'psf_%s'%name, dir_output=dir_output, band=band, mode=mode)
 
     return sep, sen

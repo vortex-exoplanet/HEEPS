@@ -4,10 +4,11 @@ from heeps.util.save2fits import save2fits
 from copy import deepcopy
 import proper
 import numpy as np
+import astropy.units as u
 
 def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
-        ngrid=1024, npupil=285, tag=None, onaxis=True, savefits=False, verbose=False, 
-        **conf):
+        ngrid=1024, npupil=285, fp_offsets=None, tag=None, onaxis=True, savefits=False, 
+        verbose=False, **conf):
             
     """ 
     Propagate one single wavefront.
@@ -41,7 +42,6 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
         # # RMS = x/2 = ((lam/D)*(D/2))/2 = lam/4
         # tiptilt = np.array(tiptilt, ndmin=1)*conf['lam']/4
         # translate the tip/tilt from mas into RMS phase errors
-        import astropy.units as u
         tiptilt = np.array(tiptilt, ndmin=1)*u.mas.to('rad')*conf['diam_ext']/4
         proper.prop_zernikes(wf1, [2,3], tiptilt)
     
@@ -49,16 +49,25 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     if misalign is not None:
         conf.update(ravc_misalign=misalign)
         wf1 = apodizer(wf1, verbose=verbose, **conf)
+
+    # imaging a point source
+    def point_source(wfo, verbose, conf):
+        if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
+            wfo = fp_mask(wfo, verbose=verbose, **conf)
+        wfo = lyot_stop(wfo, verbose=verbose, **conf)
+        return detector(wfo, verbose=verbose, **conf)
+    if fp_offsets is None:
+        psf = point_source(wf1, verbose, conf)
     
-    # focal-plane mask, only in 'on-axis' configuration
-    if onaxis == True:
-        wf1 = fp_mask(wf1, verbose=verbose, **conf)
-    
-    # Lyot-stop
-    wf1 = lyot_stop(wf1, verbose=verbose, **conf)
-    
-    # detector
-    psf = detector(wf1, verbose=verbose, **conf)
+    # imaging a finite size star
+    else:
+        psf = 0
+        for i,offset in enumerate(fp_offsets):
+            wfo = deepcopy(wf1)
+            proper.prop_zernikes(wfo, np.array([2,3]), \
+                np.array(offset, ndmin=1)*u.mas.to('rad')*conf['diam_ext']/4)
+            psf += point_source(wfo, False, conf)
+        psf /= len(fp_offsets)
 
     # save psf as fits file
     if savefits == True:
