@@ -13,7 +13,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         verbose=False, **conf):
 
     # preload amp screen if only one frame
-    if len(amp_screens) == 1:
+    if len(amp_screens) == 1 and amp_screens != None:
         import proper
         from heeps.util.img_processing import pad_img, resize_img
         amp_screens = np.nan_to_num(amp_screens[0])
@@ -27,7 +27,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         wf = apodizer(wf, verbose=False, **conf)
     
     if verbose == True:
-        print('Create cube of %s-axis PSFs'%{True:'onaxis',False:'offaxis'}[onaxis])
+        print('Create cube of %s-axis PSFs'%{True:'on',False:'off'}[onaxis])
 
     # run simulation
     t0 = time.time()

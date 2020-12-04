@@ -150,7 +150,7 @@ def read_config(verbose=False, **update_conf):
     rms_phase_dyn = 40,                 # dynamic (nm)
 
     add_point_err = False,              # pointing errors
-    file_point_err = 'WFerrors/point_ALL.fits',
+    file_point_err = 'WFerrors/point_all_3600s_300ms.fits',
     rms_point_qsta = 0.4,               # quasistatic (mas)
     rms_point_dyn = 2,                  # dynamic (mas)
 
