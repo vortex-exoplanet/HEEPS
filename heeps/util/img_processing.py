@@ -10,7 +10,7 @@ from functools import partial
 from sys import platform
 
 def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
-        anti_aliasing=True, cpu_count=1, verbose=False):
+        anti_aliasing=True, cpu_count=None, verbose=False):
     
     if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
         if cpu_count == None:

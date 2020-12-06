@@ -1,4 +1,5 @@
 import numpy as np
+import astropy.units as u
 
 def polar_coord(npupil):
     
@@ -17,7 +18,7 @@ def cart_coord(npupil):
     return x, y
 
 def disk_coord(radius, nr=4):
-    
+
     dr = radius/(nr - 0.5)
     x, y = [0], [0] # center
     for r in np.arange(radius/dr)*dr:
@@ -26,5 +27,13 @@ def disk_coord(radius, nr=4):
             z = r*np.exp(1j*t)
             x.append(np.real(z))
             y.append(np.imag(z))
-    
-    return x, y
+
+    return np.array([x, y]).T
+
+def mas2rms(coord, diam):
+    '''
+    translate the tip/tilt to RMS phase errors
+    tilt in mas: RMS = x/2 = (tilt*(D/2))/2 = tilt*diam/4
+    tilt in lam/D -> tilt*diam/4 *(lam/diam) = tilt*lam/4
+    '''
+    return coord*u.mas.to('rad')*(diam/4)

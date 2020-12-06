@@ -13,7 +13,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         verbose=False, **conf):
 
     # preload amp screen if only one frame
-    if len(amp_screens) == 1 and amp_screens != None:
+    if len(amp_screens) == 1 and np.any(amp_screens) != None:
         import proper
         from heeps.util.img_processing import pad_img, resize_img
         amp_screens = np.nan_to_num(amp_screens[0])
