@@ -1,7 +1,10 @@
 import proper
 from heeps.optics.lens import lens
+from astropy.io import fits
+import os
+import numpy as np
 
-def detector(wf, focal=660, ngrid=1024, ndet=365, verbose=False, **conf):
+def detector(wf, focal=660, ngrid=1024, ndet=365, dir_output='output_files', savefits=False, verbose=False, **conf):
     
     assert(ngrid >= ndet), 'Error: final image is bigger than initial grid size'
 
@@ -16,5 +19,11 @@ def detector(wf, focal=660, ngrid=1024, ndet=365, verbose=False, **conf):
 
     if verbose is True:
         print("   extract PSF on the detector: ndet=%s"%ndet)
+
+    # save psf as fits file
+    if savefits == True:
+        os.makedirs(dir_output, exist_ok=True)
+        filename = os.path.join(dir_output, 'PSF_IMG_%s.fits'%conf['band'])
+        fits.writeto(filename, np.float32(psf), overwrite=True)
 
     return psf
