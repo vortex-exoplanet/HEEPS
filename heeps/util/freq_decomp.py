@@ -19,34 +19,37 @@ def conv_kernel(Npup, cpp, HR=2**11):
     
     return kernel
 
-def spatial(allSF, kernel, new_size=None, norm=False, verbose=False):
+def spatial(allSF, kernel, npupil=None, norm=False, verbose=False):
     
-    # low spatial frequencies
+    # mask with nans
+    allSF[allSF==0] = np.nan
+    # get low and high spatial frequencies
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # NANs
         LSF = astroconv.convolve(allSF, kernel, boundary='extend')
-    LSF[allSF!=allSF] = np.nan
-    # high spatial frequencies
-    HSF = allSF - LSF
-    HSF[allSF!=allSF] = np.nan
-    
-    # resize outputs
-    if new_size is not None:
-        allSF = impro.resize_img(allSF, new_size)
-        LSF = impro.resize_img(LSF, new_size)
-        HSF = impro.resize_img(HSF, new_size)
-    
+        HSF = allSF - LSF
     # print rms
     if verbose is True:
         print('rms(all SF) = %3.2f'%(np.nanstd(allSF)))
         print('rms(LSF) = %3.2f'%(np.nanstd(LSF)))
         print('rms(HSF) = %3.2f'%(np.nanstd(HSF)))
-    
     # normalize
     if norm is True:
         allSF /= np.nanstd(allSF)
         LSF /= np.nanstd(LSF)
         HSF /= np.nanstd(HSF)
+        allSF -= np.nanmean(allSF)
+        LSF -= np.nanmean(LSF)
+        HSF -= np.nanmean(HSF)
+    # remove nans
+    allSF = np.nan_to_num(allSF)
+    LSF = np.nan_to_num(LSF)
+    HSF = np.nan_to_num(HSF)
+    # resize outputs
+    if npupil is not None:
+        allSF = impro.resize_img(allSF, npupil)
+        LSF = impro.resize_img(LSF, npupil)
+        HSF = impro.resize_img(HSF, npupil)
     
     return allSF, LSF, HSF
 

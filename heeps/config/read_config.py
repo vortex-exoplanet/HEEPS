@@ -29,7 +29,7 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     focal = 658.6,                      # focal distance in m
     pupil_img_size = 39.9988,           # pupil image in m (for PROPER)
-    diam_nominal = 38.542,              # nominal diameter for LS oversizing
+    diam_nominal = 38.542,              # nominal diameter (for LS oversizing)
     diam_ext = 36.905,                  # effective outer circular aperture in m
     diam_int = 11.213,                  # effective central obscuration in m
     file_pupil = 'pupils/ELT_allglass.fits',# entrance pupil file
