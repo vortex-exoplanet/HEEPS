@@ -54,7 +54,7 @@ def fp_mask(wf, mode='RAVC', focal=660, verbose=False, **conf):
             mask = resize_img(mask, int(ndisk/samp))
             mask = pad_img(mask, conf['ngrid'], 1)
             # write mask
-            fits.writeto(my_file, mask)
+            fits.writeto(my_file, mask, overwrite=True)
         else:
             mask = fits.getdata(my_file)
         

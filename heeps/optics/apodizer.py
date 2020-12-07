@@ -7,7 +7,7 @@ from astropy.io import fits
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None, 
         ngrid=1024, npupil=285, file_app_phase='', file_app_amp='', 
-        file_ravc_amp='', file_ravc_phase='', verbose=False, **conf):
+        file_ravc_amp='', file_ravc_phase='', onaxis=True, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -38,7 +38,7 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
     '''
 
     # case 1: Ring Apodizer
-    if mode in ['RAVC']:
+    if 'RAVC' in mode:
 
         # load apodizer from files if provided
         if os.path.isfile(file_ravc_amp) and os.path.isfile(file_ravc_phase):
@@ -74,19 +74,29 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
 
 
     # case 2: Apodizing Phase Plate
-    elif mode in ['APP']:
-        if verbose is True:
-            print('   apply APP from files')
+    elif 'APP' in mode:
         # get amplitude and phase data
-        APP_amp = fits.getdata(file_app_amp) if os.path.isfile(file_app_amp) \
-                else np.ones((npupil, npupil))
-        APP_phase = fits.getdata(file_app_phase) if os.path.isfile(file_app_phase) \
-                else np.zeros((npupil, npupil))
+        if os.path.isfile(file_app_amp):
+            if verbose is True:
+                print('   apply APP stop (amplitude)')
+            APP_amp = fits.getdata(file_app_amp)
+        else:
+            APP_amp = np.ones((npupil, npupil))
+        if os.path.isfile(file_app_phase) and onaxis == True:
+            if verbose is True:
+                print('   apply APP phase')
+            APP_phase = fits.getdata(file_app_phase)
+        else:
+            APP_phase = np.zeros((npupil, npupil))
         # resize to npupil
         APP_amp = impro.resize_img(APP_amp, npupil)
         APP_phase = impro.resize_img(APP_phase, npupil)
+        # rotate for negative PSF
+        if 'neg' in mode:
+            APP_amp = np.rot90(APP_amp, 2)
+            APP_phase = np.rot90(APP_phase, 2)
         # pad with zeros to match PROPER ngrid
-        APP_amp = impro.pad_img(APP_amp, ngrid, 1)
+        APP_amp = impro.pad_img(APP_amp, ngrid, 0)
         APP_phase = impro.pad_img(APP_phase, ngrid, 0)
         
         # multiply the loaded APP

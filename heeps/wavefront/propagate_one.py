@@ -38,10 +38,11 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     if verbose == True:
         print('Create %s-axis PSF'%{True:'on',False:'off'}[onaxis])
 
-    # pupil-plane apodization: if misalign set to None, apodizer already preloaded
-    if misalign is not None:
+    # pupil-plane apodization: if RA misalign set to None (or APP cube calc),
+    # then apodizer was already preloaded
+    if misalign is not None or ('APP' in conf['mode'] and onaxis == False):
         conf.update(ravc_misalign=misalign)
-        wf1 = apodizer(wf1, verbose=verbose, **conf)
+        wf1 = apodizer(wf1, onaxis=onaxis, verbose=verbose, **conf)
 
     # imaging a point source
     def point_source(wfo, verbose, conf):

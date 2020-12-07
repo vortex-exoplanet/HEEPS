@@ -8,8 +8,8 @@ import warnings
 def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
         flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
         cube_duration=3600, lat=-24.59, dec=-5, rim=19, app_strehl=0.64, 
-        app_single_psf=0.48, student_distrib=True, seed=123456, savepsf=False, 
-        savefits=False, verbose=False, **conf):
+        app_single_psf=0.48, student_distrib=True, seed=123456, tag=None,
+        savepsf=False, savefits=False, verbose=False, **conf):
     
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -72,7 +72,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # calculate transmission
     trans = np.sum(psf_OFF)
     # apply correction for APP PSFs
-    if mode == 'APP':
+    if 'APP' in mode:
         psf_OFF *= app_single_psf*app_strehl
         psf_ON *= app_single_psf
     # detector integration time (DIT)
@@ -142,13 +142,15 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
         name = 'adi_bckg%s_mag%s'%(int(add_bckg), mag)
     else:
         name = 'adi_bckg%s'%int(add_bckg)
+    # tag
+    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
-        save2fits(np.array([sep,sen]), 'cc_%s'%name, dir_output=dir_output, band=band, mode=mode)
+        save2fits(np.array([sep,sen]), 'cc_%s%s'%(name, tag), dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
         _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
-        save2fits(psf_pp, 'psf_%s'%name, dir_output=dir_output, band=band, mode=mode)
+        save2fits(psf_pp, 'psf_%s%s'%(name, tag), dir_output=dir_output, band=band, mode=mode)
 
     return sep, sen
     

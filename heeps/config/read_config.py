@@ -87,7 +87,8 @@ def read_config(verbose=False, **update_conf):
     ravc_r = 0.6033,                    # (calc=False) mean-M1 RA radius wrt allglass
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 4,                       # CLC occulter diam in lam/D
-    file_app_phase = 'apodizers/app_phase_cut.fits',# apodizing phase plate files
+    file_app_amp = 'apodizers/APP_stop_L_285_v2.fits', # apodizing phase plate files
+    file_app_phase = 'apodizers/vAPP_Dshape_Lband_asymmetric.fits',
     app_strehl = 0.64,                   # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
     student_distrib = True,              # use Student's distribution instead of Gaussian
@@ -186,7 +187,7 @@ def read_config(verbose=False, **update_conf):
     
     # create paths to fits files
     for filename in ['file_pupil', 'file_phase', 'file_amp', \
-        'file_point_err', 'file_app_phase', 'file_lyot_stop']:
+        'file_point_err', 'file_app_amp', 'file_app_phase', 'file_lyot_stop']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive

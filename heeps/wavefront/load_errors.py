@@ -67,7 +67,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, 
         tiptilts = np.array([None]*nscreens)
 
     # load apodizer drift
-    if add_apo_drift is True:
+    if add_apo_drift is True and 'RAVC' in conf['mode']:
         misaligns = np.array([[x,0,0,0,0,0] \
             for x in np.linspace(-ptv_drift/2, ptv_drift/2, 12000)])[:nframes][::nstep]
         if verbose is True:

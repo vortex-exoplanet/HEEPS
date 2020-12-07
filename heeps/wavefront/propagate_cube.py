@@ -23,7 +23,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         amp_screens = [None]*int((conf['nframes']/conf['nstep']) + 0.5)
 
     # preload apodizer when no drift
-    if np.all(misaligns) == None:
+    if np.all(misaligns) == None or 'APP' in conf['mode']:
         wf = apodizer(wf, verbose=False, **conf)
     
     if verbose == True:

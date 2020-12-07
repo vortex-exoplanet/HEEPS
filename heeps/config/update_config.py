@@ -25,8 +25,10 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC'
         print('Simulation config: band=%s, mode=%s'%(band, mode))
         print('\u203e'*18)
     # update band and mode specs
-    conf.update(band_specs.get(band))
-    conf.update(mode_specs.get(mode))
+    if np.any(band_specs.get(band)):
+        conf.update(band_specs.get(band))
+    if np.any(mode_specs.get(mode)):
+        conf.update(mode_specs.get(mode))
     # calculate pupil size: must be odd for PROPER
     lam = conf.get('lam', lam)
     pscale = conf.get('pscale', pscale)
