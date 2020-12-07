@@ -22,11 +22,13 @@ def conv_kernel(Npup, cpp, HR=2**11):
 def spatial(allSF, kernel, npupil=None, norm=False, verbose=False):
     
     # mask with nans
-    allSF[allSF==0] = np.nan
+    mask_nan = (allSF==0)
+    allSF[mask_nan] = np.nan
     # get low and high spatial frequencies
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # NANs
         LSF = astroconv.convolve(allSF, kernel, boundary='extend')
+        LSF[mask_nan] = np.nan
         HSF = allSF - LSF
     # print rms
     if verbose is True:
