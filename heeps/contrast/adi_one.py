@@ -1,4 +1,5 @@
 from heeps.util.save2fits import save2fits
+from heeps.util.img_processing import crop_cube
 import vip_hci
 import numpy as np
 from astropy.io import fits
@@ -8,8 +9,8 @@ import warnings
 def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
         flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
         cube_duration=3600, lat=-24.59, dec=-5, rim=19, app_strehl=0.64, 
-        app_single_psf=0.48, student_distrib=True, seed=123456, tag=None,
-        savepsf=False, savefits=False, verbose=False, **conf):
+        app_single_psf=0.48, student_distrib=True, seed=123456, ndet=403,
+        tag=None, savepsf=False, savefits=False, verbose=False, **conf):
     
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -61,7 +62,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # PSF filenames
     loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
     # get normalized on-axis PSFs (star)
-    psf_ON = fits.getdata(loadname%'onaxis')
+    psf_ON = crop_cube(fits.getdata(loadname%'onaxis'), ndet)
     if psf_ON.ndim != 3: # must be a cube (3D)
         psf_ON = np.array(psf_ON, ndmin=3)
     ncube = psf_ON.shape[0]

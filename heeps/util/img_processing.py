@@ -75,7 +75,7 @@ def pad_img(img, padded_size, pad_value=0):
     
     return img
 
-def crop_img(img, new_size, margin=0):
+def crop_img(img, new_size, margin=0, verbose=True):
     ''' Crop an img to a new size. Handles even and odd sizes. 
     Can add an optional margin of length 1, 2 (x,y) or 4 (x1,x2,y1,y2).
     '''
@@ -87,25 +87,50 @@ def crop_img(img, new_size, margin=0):
         assert len(new_size) == 2, requirement
         (x1, y1) = new_size
     (x2, y2) = img.shape
-    # determine cropping region
-    dx = int((x2 - x1)/2)
-    dy = int((y2 - y1)/2)
-    cropx = (dx, dx) if (x2-x1)%2==0 else (dx+1, dx)
-    cropy = (dy, dy) if (y2-y1)%2==0 else (dy+1, dy)
-    # check for margins
-    requirement2 = "margin must be an int or a tuple/list of size 2 or 4."
-    assert type(margin) in [int, tuple, list], requirement2
-    if type(margin) is int:
-        (mx1, mx2, my1, my2) = (margin, margin, margin, margin)
-    elif len(margin) == 2:
-        (mx1, mx2, my1, my2) = (margin[0], margin[0], margin[1], margin[1])
+    if not np.any(np.array([x1,y1]) < np.array([x2,y2])):
+        if verbose == True:
+            print('crop size is larger than img size')
     else:
-        assert len(margin) == 4, requirement2
-        (mx1, mx2, my1, my2) = margin
-    # crop image
-    img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
+        # determine cropping region
+        dx = int((x2 - x1)/2)
+        dy = int((y2 - y1)/2)
+        cropx = (dx, dx) if (x2-x1)%2==0 else (dx+1, dx)
+        cropy = (dy, dy) if (y2-y1)%2==0 else (dy+1, dy)
+        # check for margins
+        requirement2 = "margin must be an int or a tuple/list of size 2 or 4."
+        assert type(margin) in [int, tuple, list], requirement2
+        if type(margin) is int:
+            (mx1, mx2, my1, my2) = (margin, margin, margin, margin)
+        elif len(margin) == 2:
+            (mx1, mx2, my1, my2) = (margin[0], margin[0], margin[1], margin[1])
+        else:
+            assert len(margin) == 4, requirement2
+            (mx1, mx2, my1, my2) = margin
+        # crop image
+        img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
     
     return img
+
+def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
+
+    if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
+        if cpu_count == None:
+            cpu_count = mpro.cpu_count() - 1
+        if verbose is True:
+            print('using %s cores'%(cpu_count))
+        p = mpro.Pool(cpu_count)
+        func = partial(crop_img, margin=margin, verbose=False)
+        params = zip(cube, [new_size]*len(cube))
+        new_cube = np.float32(p.starmap(func, params))
+        p.close()
+        p.join()
+    else:
+        if verbose is True:
+            print('using 1 core')
+        new_cube = crop_img(cube, new_size, margin=margin)
+    
+    return new_cube
+
 
 def twoD_Gaussian(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     ''' Model function. 2D Gaussian.

@@ -36,7 +36,7 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
         proper.prop_zernikes(wf1, [2,3], np.array(tiptilt, ndmin=1))
     
     if verbose == True:
-        print('Create %s-axis PSF'%{True:'on',False:'off'}[onaxis])
+        print('Create single %s-axis PSF'%{True:'on',False:'off'}[onaxis])
 
     # pupil-plane apodization: if RA misalign set to None (or APP cube calc),
     # then apodizer was already preloaded

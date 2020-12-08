@@ -27,7 +27,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         wf = apodizer(wf, verbose=False, **conf)
     
     if verbose == True:
-        print('Create cube of %s-axis PSFs'%{True:'on',False:'off'}[onaxis])
+        print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
 
     # run simulation
     t0 = time.time()
