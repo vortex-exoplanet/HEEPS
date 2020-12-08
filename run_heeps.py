@@ -7,7 +7,7 @@
 import heeps
 import sys
 
-def run_sim(savename='ADI_contrast_curve.png'):
+def run_heeps(savename='ADI_contrast_curve.png'):
 
     # 1. Create a config dictionary with your simulation parameters in read_config
     conf = heeps.config.read_config(verbose=False)
@@ -18,11 +18,11 @@ def run_sim(savename='ADI_contrast_curve.png'):
     #   ravc_t, ravc_r
     conf = heeps.config.update_config(saveconf=True, verbose=True, **conf) 
 
-    # 3. Load wavefront errors
-    phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(verbose=True, **conf)
-
-    # 4. Load entrance pupil, and create 'wavefront' object
+    # 3. Load entrance pupil, and create 'wavefront' object
     wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
+
+    # 4. Load wavefront errors
+    phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(verbose=True, **conf)
 
     # 5. Propagate one frame of offaxis psf (i.e. planet)
     psf = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, verbose=True, **conf)
@@ -55,9 +55,9 @@ def run_sim(savename='ADI_contrast_curve.png'):
 if __name__ == "__main__":
     '''
     Terminal command line example
-    > python run_sim.py test.png
+    > python run_heeps.py test.png
     '''
     if len(sys.argv) > 1:
-        run_sim(sys.argv[1])
+        run_heeps(sys.argv[1])
     else:
-        run_sim()
+        run_heeps()
