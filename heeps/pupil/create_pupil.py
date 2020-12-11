@@ -6,10 +6,10 @@ import os.path
 from astropy.io import fits 
 
 
-def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, 
-        diam_int=11, spi_width=0.5, spi_angles=[0,60,120], seg_width=0, 
-        seg_gap=0, seg_rms=0, seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,
-        30,31,30,31,30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
+def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int=11, 
+        spi_width=0.5, spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
+        seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
+        30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
         seg_missing=[], seed=123456, **conf):
     
     ''' Create a pupil.
@@ -46,14 +46,15 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
     nhr = max(nhr, npupil)
     nhr += nhr % 2
     nhr_size = pupil_img_size*nhr/(nhr-1)
-    wf_tmp = proper.prop_begin(nhr_size, 1, nhr, diam_ext/nhr_size)
+    # create pupil using PROPER tools
+    wf_tmp = proper.prop_begin(nhr_size, 1, nhr, diam_ext/nhr_size) 
     if diam_ext > 0:
         proper.prop_circular_aperture(wf_tmp, 1, NORM=True)
     if diam_int > 0:
         proper.prop_circular_obscuration(wf_tmp, diam_int/diam_ext, NORM=True)
     if spi_width > 0:
         for angle in spi_angles:
-            proper.prop_rectangular_obscuration(wf_tmp, 2*spi_width/nhr_size, 2, \
+            proper.prop_rectangular_obscuration(wf_tmp, 2*spi_width/diam_ext, 2, \
                 ROTATION=angle, NORM=True)
     pup = proper.prop_get_amplitude(wf_tmp)
     # crop the pupil to odd size (nhr-1), and resize to npupil
