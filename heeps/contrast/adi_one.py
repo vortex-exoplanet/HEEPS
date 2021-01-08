@@ -9,8 +9,8 @@ import warnings
 def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
         flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
         cube_duration=3600, lat=-24.59, dec=-5, rim=19, app_strehl=0.64, 
-        app_single_psf=0.48, student_distrib=True, seed=123456, ndet=403,
-        tag=None, savepsf=False, savefits=False, verbose=False, **conf):
+        app_single_psf=0.48, student_distrib=True, seed=123456, nscreens=None, 
+        ndet=None, tag=None, savepsf=False, savefits=False, verbose=False, **conf):
     
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -62,14 +62,18 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # PSF filenames
     loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
     # get normalized on-axis PSFs (star)
-    psf_ON = crop_cube(fits.getdata(loadname%'onaxis'), ndet)
-    if psf_ON.ndim != 3: # must be a cube (3D)
-        psf_ON = np.array(psf_ON, ndmin=3)
+    psf_ON = fits.getdata(loadname%'onaxis')
+    assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
     ncube = psf_ON.shape[0]
+    # cut/crop cube
+    if nscreens != None:
+        psf_ON = psf_ON[:nscreens]
+    if ndet != None:
+        psf_ON = crop_cube(psf_ON, ndet)
     # get normalized off-axis PSF (planet)
     psf_OFF = fits.getdata(loadname%'offaxis')
-    if psf_OFF.ndim == 3: # only one frame
-        psf_OFF = psf_OFF[0,:,:]
+    if psf_OFF.ndim == 3:
+        psf_OFF = psf_OFF[0,:,:] # only first frame
     # calculate transmission
     trans = np.sum(psf_OFF)
     # apply correction for APP PSFs
@@ -85,6 +89,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     if verbose is True:
         print('Load PSFs for ADI')
         print('   mode=%s, band=%s, pscale=%s'%(mode, band, pscale))
+        print('   ncube=%s, ndet=%s'%psf_ON.shape[:2])
         print('   DIT=%3.3f, mag=%s, star_signal=%3.2E'%(DIT, mag, star_signal))
     # add background and photon noise ~ N(0, sqrt(psf))
     if add_bckg is True:            
