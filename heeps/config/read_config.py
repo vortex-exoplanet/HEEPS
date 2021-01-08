@@ -86,7 +86,7 @@ def read_config(verbose=False, **update_conf):
     ravc_t = 0.7903,                    # (calc=False) mean-M1 RA trans
     ravc_r = 0.6033,                    # (calc=False) mean-M1 RA radius wrt allglass
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
-    clc_diam = 4,                       # CLC occulter diam in lam/D
+    clc_diam = 80,                      # CLC occulter diam in mas
     file_app_amp = 'apodizers/APP_stop_L_285_v2.fits', # apodizing phase plate files
     file_app_phase = 'apodizers/vAPP_Dshape_Lband_asymmetric.fits',
     app_strehl = 0.64,                   # APP Strehl ratio

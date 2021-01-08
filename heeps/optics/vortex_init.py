@@ -25,13 +25,13 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
     [conf.pop(key) for key in ['conf', 'verbose'] if key in conf]
 
     # check if back-propagation params already loaded for this calib
-    calib = '%s_%s_%3.4f'%(vc_charge, ngrid, beam_ratio)
+    calib = 'vortex_%s_%s_%3.4f'%(vc_charge, ngrid, beam_ratio)
     if vortex_calib == calib:
         return conf
         
     else:
         # check for existing file
-        filename = os.path.join(dir_temp, 'calib_vvc_%s.fits'%calib)    
+        filename = os.path.join(dir_temp, '%s.fits'%calib)    
         if os.path.isfile(filename):
             if verbose is True:
                 print('   loading vortex back-propagation params')

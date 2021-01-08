@@ -1,5 +1,6 @@
 from .lens import lens
 from .vortex_init import vortex_init
+from .lyotmask_init import lyotmask_init
 import os.path
 import numpy as np
 from heeps.util.img_processing import resize_img, pad_img
@@ -29,39 +30,12 @@ def fp_mask(wf, mode='RAVC', focal=660, verbose=False, **conf):
     elif mode in ['CLC']:
         if verbose is True:
             print('   apply classical lyot mask')
+        # load lyotmask amplitude file
+        conf = lyotmask_init(verbose=verbose, **conf)
         # propagate to lyot mask
-        lens(wf, focal)
-        # create or load the classical Lyot mask
-        calib = str(conf['clc_diam'])+str('_')+str(int(conf['beam_ratio']*100))+str('_')+str(conf['ngrid'])
-        my_file = os.path.join(conf['dir_temp'], 'clc_'+calib+'.fits')
-        if not os.path.isfile(my_file):
-            # calculate exact size of Lyot mask diameter, in pixels
-            Dmask = conf['clc_diam']/conf['beam_ratio']
-            # oversample the Lyot mask (round up)
-            samp = 100
-            ndisk = int(samp*np.ceil(Dmask))
-            ndisk = ndisk if ndisk % 2 else ndisk + 1# must be odd
-            # find center
-            cdisk = int((ndisk - 1)/2)
-            # calculate the distances to center
-            xy = range(-cdisk, cdisk + 1)
-            x,y = np.meshgrid(xy, xy)
-            r = abs(x + 1j*y)
-            # create the Lyot mask
-            mask = np.zeros((ndisk, ndisk))
-            mask[np.where(r > samp*Dmask/2)] = 1
-            # resize to Lyot mask real size, and pad with ones
-            mask = resize_img(mask, int(ndisk/samp))
-            mask = pad_img(mask, conf['ngrid'], 1)
-            # write mask
-            fits.writeto(my_file, mask, overwrite=True)
-        else:
-            mask = fits.getdata(my_file)
-        
+        lens(wf, focal)        
         # apply lyot mask
-        mask = proper.prop_shift_center(mask)
-        wf._wfarr.real *= mask
-        
+        wf._wfarr.real *= conf['lyotmask']
         # propagate to lyot stop
         lens(wf, focal)
 

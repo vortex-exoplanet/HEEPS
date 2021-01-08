@@ -50,7 +50,7 @@ def run_heeps(savename='ADI_contrast_curve.png'):
         plt.xticks([0.02, 0.1, 0.5, 1])
         plt.xlim(0.02,1)
         plt.ylim(1e-6,1e-2)
-        plt.savefig(savename, dpi=300, transparent=True)
+        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, transparent=True)
 
 if __name__ == "__main__":
     '''
