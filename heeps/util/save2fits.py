@@ -7,7 +7,11 @@ def save2fits(data, name, dir_output='output_files', band='L', mode='RAVC', **co
     ''' Save data to a fits file. '''
     
     os.makedirs(dir_output, exist_ok=True)
-    filename = os.path.join(dir_output, '%s_%s_%s.fits'%(name, band, mode))
+    try:
+        filename = '%s.fits'%name%(band, mode)
+    except TypeError:
+        filename = '%s_%s_%s.fits'%(name, band, mode)
+    filename = os.path.join(dir_output, filename)
     fits.writeto(filename, np.float32(data), overwrite=True)
 
     return filename

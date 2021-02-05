@@ -32,7 +32,7 @@ def read_config(verbose=False, **update_conf):
     diam_nominal = 38.542,              # nominal diameter (for LS oversizing)
     diam_ext = 36.905,                  # effective outer circular aperture in m
     diam_int = 11.213,                  # effective central obscuration in m
-    file_pupil = 'pupils/ELT_allglass.fits',# entrance pupil file
+    file_pupil = 'pupil/ELT_allglass.fits',# entrance pupil file
     spi_width = 0.5,                    # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
     # if no valid pupil file, pupil will be created with the following params:
@@ -76,7 +76,7 @@ def read_config(verbose=False, **update_conf):
     cube_duration = 3600,               # cube duration in seconds
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
-    file_lyot_stop = 'pupils/ls_ravc_allglass_285.fits', # lyot stop file
+    file_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file
     ls_dRext = 0.0282,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.0282,                  # LS Rint oversize (% diam ext)
     ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
@@ -87,8 +87,10 @@ def read_config(verbose=False, **update_conf):
     ravc_r = 0.6033,                    # (calc=False) mean-M1 RA radius wrt allglass
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 80,                      # CLC occulter diam in mas
-    file_app_amp = 'apodizers/APP_stop_L_285_v2.fits', # apodizing phase plate files
-    file_app_phase = 'apodizers/vAPP_Dshape_Lband_asymmetric.fits',
+    file_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
+    file_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
+    file_app_amp = 'optics/APP_stop_L_285_v2.fits', # APP amplitude
+    file_app_phase = 'optics/vAPP_Dshape_Lband_asymmetric.fits', # APP phase
     app_strehl = 0.64,                   # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
     student_distrib = True,              # use Student's distribution instead of Gaussian
@@ -141,9 +143,9 @@ def read_config(verbose=False, **update_conf):
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
 
     add_phase = True,                   # phase screens (SCAO residuals, NCPA, petal piston)
-    file_phase = 'WFerrors/COMPASS_201810_RandomWind_100screens_meters.fits',
+    file_phase = 'wavefront/COMPASS_201810_RandomWind_100screens_meters.fits',
     add_amp = False,                    # amplitude screens (Talbot effect)
-    file_amp = 'WFerrors/Talbot_LM_20201120_IMGP_meridian_allglass.fits',
+    file_amp = 'wavefront/Talbot_LM_20201120_IMGP_meridian_allglass.fits',
 
     rms_phase_sta = 35.9,               # static (nm)
     rms_phase_qlsf = 20,                # quasistatic low spatial freq (nm)
@@ -151,7 +153,7 @@ def read_config(verbose=False, **update_conf):
     rms_phase_dyn = 40,                 # dynamic (nm)
 
     add_point_err = False,              # pointing errors
-    file_point_err = 'WFerrors/point_all_3600s_300ms.fits',
+    file_point_err = 'wavefront/point_all_3600s_300ms.fits',
     rms_point_qsta = 0.4,               # quasistatic (mas)
     rms_point_dyn = 2,                  # dynamic (mas)
 
@@ -186,12 +188,13 @@ def read_config(verbose=False, **update_conf):
     os.makedirs(conf['dir_temp'], exist_ok=True)
     
     # create paths to fits files
-    for filename in ['file_pupil', 'file_phase', 'file_amp', \
-        'file_point_err', 'file_app_amp', 'file_app_phase', 'file_lyot_stop']:
+    for filename in ['file_pupil', 'file_phase', 'file_amp', 'file_point_err', \
+            'file_lyot_stop', 'file_vc_trans', 'file_app_trans', \
+            'file_app_amp', 'file_app_phase']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive
-    verif_file = 'WFerrors/COMPASS_201810_RandomWind_100screens_meters.fits'
+    verif_file = 'wavefront/COMPASS_201810_RandomWind_100screens_meters.fits'
     if not os.path.isfile(os.path.join(conf['dir_input'], verif_file)):
         print("Downloading input files from Google Drive to \n'%s'\n"%conf['dir_input'])
         extract_zip(conf['gdrive_id'], conf['dir_input'])

@@ -1,16 +1,16 @@
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
+from .background import background
 import vip_hci
 import numpy as np
 from astropy.io import fits
 import os.path
 import warnings
 
-def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0, 
-        flux_star=9e10, flux_bckg=9e4, add_bckg=False, pscale=5.47, 
-        cube_duration=3600, lat=-24.59, dec=-5, rim=19, app_strehl=0.64, 
-        app_single_psf=0.48, student_distrib=True, seed=123456, nscreens=None, 
-        ndet=None, tag=None, savepsf=False, savefits=False, verbose=False, **conf):
+def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False, 
+        pscale=5.47, cube_duration=3600, mag=5, lat=-24.59, dec=-5, rim=19, 
+        app_strehl=0.64, student_distrib=True, nscreens=None, ndet=None, 
+        tag=None, savepsf=False, savefits=False, verbose=False, **conf):
     
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -64,7 +64,6 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # get normalized on-axis PSFs (star)
     psf_ON = fits.getdata(loadname%'onaxis')
     assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
-    ncube = psf_ON.shape[0]
     # cut/crop cube
     if nscreens != None:
         psf_ON = psf_ON[:nscreens]
@@ -74,32 +73,17 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     psf_OFF = fits.getdata(loadname%'offaxis')
     if psf_OFF.ndim == 3:
         psf_OFF = psf_OFF[0,:,:] # only first frame
-    # calculate transmission
-    trans = np.sum(psf_OFF)
-    # apply correction for APP PSFs
-    if 'APP' in mode:
-        psf_OFF *= app_single_psf*app_strehl
-        psf_ON *= app_single_psf
-    # detector integration time (DIT)
-    DIT = cube_duration/ncube
-    # rescale PSFs to star signal
-    star_signal = DIT * flux_star * 10**(-0.4*(mag - mag_ref))
-    psf_OFF *= star_signal
-    psf_ON *= star_signal
     if verbose is True:
         print('Load PSFs for ADI')
         print('   mode=%s, band=%s, pscale=%s'%(mode, band, pscale))
-        print('   ncube=%s, ndet=%s'%psf_ON.shape[:2])
-        print('   DIT=%3.3f, mag=%s, star_signal=%3.2E'%(DIT, mag, star_signal))
-    # add background and photon noise ~ N(0, sqrt(psf))
-    if add_bckg is True:            
-        bckg_noise = DIT * flux_bckg * trans
-        psf_ON += bckg_noise
-        np.random.seed(seed)
-        psf_ON += np.random.normal(0, np.sqrt(psf_ON)) # photon noise
-        if verbose is True:
-            print('   add_bckg=%s, trans=%3.4f, bckg_noise=%3.2E'\
-                %(add_bckg, trans, bckg_noise))
+        print('   cube_duration=%s, ncube=%s, ndet=%s'%(cube_duration, psf_ON.shape[0], psf_ON.shape[1]))
+    # add background and photon noise: include star flux and HCI mode transmission
+    if add_bckg is True:
+        conf.update(mode=mode, cube_duration=cube_duration, mag=mag)
+        psf_ON, psf_OFF = background(psf_ON, psf_OFF, verbose=True, **conf)
+    # apply APP Strehl
+    if 'APP' in mode:
+        psf_OFF *= app_strehl
 
     """ VIP: aperture photometry of psf_OFF used to scale the contrast """
     # get the center pixel
@@ -122,7 +106,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     # duration -> hour angle conversion
     ha = cube_duration/3600/24*360
     # angles in rad
-    hr = np.deg2rad(np.linspace(-ha/2, ha/2, ncube))
+    hr = np.deg2rad(np.linspace(-ha/2, ha/2, psf_ON.shape[0]))
     dr = np.deg2rad(dec)
     lr = np.deg2rad(lat)
     # parallactic angle in deg
@@ -152,11 +136,11 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', mag=5, mag_ref=0,
     tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
-        save2fits(np.array([sep,sen]), 'cc_%s%s'%(name, tag), dir_output=dir_output, band=band, mode=mode)
+        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag), dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
         _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
-        save2fits(psf_pp, 'psf_%s%s'%(name, tag), dir_output=dir_output, band=band, mode=mode)
+        save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), dir_output=dir_output, band=band, mode=mode)
 
     return sep, sen
     
