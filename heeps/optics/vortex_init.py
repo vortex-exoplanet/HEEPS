@@ -84,8 +84,8 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
             # perfect-result vortex field
             perf_num = deepcopy(wf_tmp.wfarr)
             # write all fields 
-            data = np.dstack((psf_num.real, psf_num.imag, vvc.real, vvc.imag,\
-                perf_num.real, perf_num.imag)).T
+            data = np.dstack((psf_num.real.T, psf_num.imag.T, vvc.real.T, vvc.imag.T,\
+                perf_num.real.T, perf_num.imag.T)).T
             fits.writeto(os.path.join(dir_temp, filename), np.float32(data), overwrite=True)
 
         # shift the phase ramp
