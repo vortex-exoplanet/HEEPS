@@ -67,12 +67,13 @@ def read_config(verbose=False, **update_conf):
     ngrid = 1024,                       # number of pixels of the wavefront array
     npupil = 285,                       # number of pixels of the pupil
     ndet = 365,                         # size of the detector plane array
-    hfov = 1.1,                           # (optional) half FOV in arcsec (updates ndet)
+    hfov = 1.1,                         # (optional) half FOV in arcsec (updates ndet)
+    add_bckg = False,                   # true means background flux and photon noise are added 
     mag = 5,                            # star magnitude at selected band
     mag_ref = 0,                        # reference magnitude for star and background fluxes
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
     flux_bckg = 8.878e+04,              # [e-/s/pix]
-    add_bckg = False,                   # true means background flux and photon noise are added 
+    starphot = 1e11,                    # aperture flux normalization (for VIP)
     cube_duration = 3600,               # cube duration in seconds
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
@@ -82,6 +83,7 @@ def read_config(verbose=False, **update_conf):
     ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
     vc_charge = 2,                      # vortex topological charge
+    vc_zoffset = 0,                     # vortex defocus in m (z axis)
     ravc_calc = True,                   # calculate RA params (Mawet2013)
     ravc_t = 0.7903,                    # (calc=False) mean-M1 RA trans
     ravc_r = 0.6033,                    # (calc=False) mean-M1 RA radius wrt allglass

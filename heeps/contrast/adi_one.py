@@ -9,7 +9,7 @@ import warnings
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False, 
         pscale=5.47, cube_duration=3600, mag=5, lat=-24.59, dec=-5, rim=19, 
-        app_strehl=0.64, student_distrib=True, nscreens=None, ndet=None, 
+        app_strehl=0.64, starphot=None, student_distrib=True, nscreens=None, ndet=None, 
         tag=None, savepsf=False, savefits=False, verbose=False, **conf):
     
     """ 
@@ -99,9 +99,15 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shiftx, shifty)
     psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
     # FWHM aperture photometry of psf_OFF_crop
-    starphot = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim], \
+    ap_flux = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim], \
             fwhm, verbose=False)[0]
-    
+    # normalize to starphot (for VIP)
+    if starphot is None:
+        starphot = ap_flux
+    else:
+        psf_ON *= starphot/ap_flux
+        psf_OFF_crop *= starphot/ap_flux
+
     """ parallactic angles for ADI """
     # duration -> hour angle conversion
     ha = cube_duration/3600/24*360

@@ -1,4 +1,4 @@
-from .lens import lens
+from .lens import lens, lens_offset
 from .vortex_init import vortex_init
 from .lyotmask_init import lyotmask_init
 import os.path
@@ -7,7 +7,7 @@ from heeps.util.img_processing import resize_img, pad_img
 from astropy.io import fits
 import proper
 
-def fp_mask(wf, mode='RAVC', focal=660, verbose=False, **conf):
+def fp_mask(wf, mode='RAVC', focal=660, vc_zoffset=1e-3/2, verbose=False, **conf):
 
     # case 1: vortex coronagraphs
     if mode in ['CVC', 'RAVC']:
@@ -18,13 +18,13 @@ def fp_mask(wf, mode='RAVC', focal=660, verbose=False, **conf):
         # load vortex calibration files: psf_num, vvc, perf_num
         conf = vortex_init(verbose=verbose, **conf)
         # propagate to vortex
-        lens(wf, focal)
+        lens_offset(wf, focal, offset_after=vc_zoffset)
         # apply vortex
         scale_psf = wf._wfarr[0,0]/conf['psf_num'][0,0]
         wf_corr = (conf['psf_num']*conf['vvc'] - conf['perf_num'])*scale_psf
         wf._wfarr = wf._wfarr*conf['vvc'] - wf_corr
         # propagate to lyot stop
-        lens(wf, focal)
+        lens_offset(wf, focal, offset_before=-vc_zoffset)
     
     # case 2: classical Lyot
     elif mode in ['CLC']:
