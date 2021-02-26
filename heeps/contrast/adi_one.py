@@ -7,10 +7,10 @@ from astropy.io import fits
 import os.path
 import warnings
 
-def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False, 
-        pscale=5.47, cube_duration=3600, mag=5, lat=-24.59, dec=-5, rim=19, 
-        app_strehl=0.64, starphot=None, student_distrib=True, nscreens=None, ndet=None, 
-        tag=None, savepsf=False, savefits=False, verbose=False, **conf):
+def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
+        pscale=5.47, cube_duration=3600, mag=5, lat=-24.59, dec=-5, rim=19,
+        app_strehl=0.64, nscreens=None, ndet=None, tag=None, student_distrib=True,
+        savepsf=False, savefits=False, starphot=1e11, verbose=False, **conf):
     
     """ 
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -24,20 +24,14 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             spectral band (e.g. 'L', 'M', 'N1', 'N2')
         mode (str):
             HCI mode: RAVC, CVC, APP, CLC
-        mag (float):
-            star magnitude at selected band
-        mag_ref (float):
-            reference magnitude for star and background fluxes
-        flux_star (float):
-            star flux at reference magnitude
-        flux_bckg (float):
-            background flux at reference magnitude
         add_bckg (bool)
             true means background flux and photon noise are added 
         pscale (float):
             pixel scale in mas/pix (e.g. METIS LM=5.47, NQ=6.79)
         cube_duration (int):
-            cube duration in seconds, default to 3600s (1h).
+            cube duration in seconds, default to 3600s (1h)
+        mag (float):
+            star magnitude at selected band
         lat (float):
             telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
         dec (float):
@@ -46,17 +40,26 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             psf image radius in pixels
         app_strehl (float):
             APP Strehl ratio
-        app_single_psf (float):
-            APP single PSF (4% leakage)
+        nscreens (int):
+            number of screens of PSF cube taken into account, default to None for full cube
+        ndet (int):
+            size of the screens at the detector, default to None for full size
+        tag (str):
+            tag added to the saved filename
         student_distrib (bool):
             true if using a Student's t-distribution sensitivity, else Gaussian
+        savepsf (bool):
+            true if ADI psf is saved in a fits file
+        savefits (bool):
+            true if ADI contrast curve is saved in a fits file
+        starphot (float):
+            normalization factor for aperture photometry with VIP
 
     Return:
         sep (float ndarray):
             angular separation in arcsec
         sen (float ndarray):
             5-sigma sensitivity (contrast)
-
     """
 
     # PSF filenames

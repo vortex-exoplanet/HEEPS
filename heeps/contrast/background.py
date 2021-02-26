@@ -3,7 +3,46 @@ from astropy.io import fits
 
 def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600, 
         mag=5, mag_ref=0, flux_star=9e10, flux_bckg=9e4, app_single_psf=0.48, 
-        seed=123456, file_vc_trans=None, file_app_trans=None, verbose=False, **conf):
+        file_vc_trans=None, file_app_trans=None, seed=123456, verbose=False, **conf):
+
+    """ 
+    This function applies background and photon noise to intup PSFs (off-axis and on-axis), 
+    incuding transmission, star flux, and components transmittance.
+
+    Args:
+        psf_ON (float ndarray):
+            cube of on-axis PSFs
+        psf_OFF (float ndarray):
+            off-axis PSF frame
+        mode (str):
+            HCI mode: RAVC, CVC, APP, CLC            
+        lam (float):
+            wazvelength in m
+        cube_duration (int):
+            ADI sequence duration in s
+        mag (float):
+            star magnitude
+        mag_ref (float):
+            reference magnitude for star and background fluxes
+        flux_star (float):
+            star flux at reference magnitude
+        flux_bckg (float):
+            background flux at reference magnitude
+        app_single_psf (float):
+            APP single PSF (4% leakage)
+        file_vc-trans (str):
+            path to VC transmittance fits file
+        file_app_trans
+            path to APP transmittance fits file
+        seed (int):
+            seed used by numpy.random process
+    
+    Return:
+        psf_ON (float ndarray):
+            cube of on-axis PSFs
+        psf_OFF (float ndarray):
+            off-axis PSF frame
+    """
 
     # calculate offaxis-PSF transmission
     offaxis_trans = np.sum(psf_OFF)
