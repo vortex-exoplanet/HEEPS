@@ -33,7 +33,7 @@ def read_config(verbose=False, **update_conf):
     diam_ext = 36.905,                  # effective outer circular aperture in m
     diam_int = 11.213,                  # effective central obscuration in m
     file_pupil = 'pupil/ELT_allglass.fits',# entrance pupil file
-    spi_width = 0.5,                    # spider width in m
+    spi_width = 0.54,                   # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
