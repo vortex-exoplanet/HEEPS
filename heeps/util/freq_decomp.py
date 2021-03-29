@@ -22,7 +22,7 @@ def conv_kernel(Npup, cpp, HR=2**11):
 def spatial(allSF, kernel, npupil=None, norm=False, verbose=False):
     
     # mask with nans
-    mask_nan = (allSF==0)
+    mask_nan = np.isnan(allSF) + (allSF == 0)
     allSF[mask_nan] = np.nan
     # get low and high spatial frequencies
     with warnings.catch_warnings():
