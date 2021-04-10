@@ -19,7 +19,7 @@ def read_config(verbose=False, **update_conf):
     headless = False,                   # true if running on a headless server
     gdrive_id = '1wj3onWQ9GVW-l8X58JMgAj-9TNqalKb-', # Google Drive ID
     # required directories for data (e.g. fits files)
-    dir_current = os.getcwd(),
+    dir_current = '$HOME/heeps_metis',
     dir_input = 'input_files',
     dir_output = 'output_files',
     dir_temp = 'temp_files',
