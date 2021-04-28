@@ -2,7 +2,7 @@ import proper
 import numpy.fft as fft
 import pyfftw.interfaces.numpy_fft as fftw
 
-def lens_benchmark(wf, focal=660, offset_before=0, offset_after=0, **conf):
+def lens(wf, focal=660, offset_before=0, offset_after=0, **conf):
     
     # propagation before lens
     proper.prop_propagate(wf, focal + offset_before)
@@ -11,7 +11,7 @@ def lens_benchmark(wf, focal=660, offset_before=0, offset_after=0, **conf):
     # propagation after lens
     proper.prop_propagate(wf, focal + offset_after)
 
-def lens(wf, focal=660, lens_method='proper', offset_before=0, offset_after=0, **conf):
+def lens_test(wf, focal=660, lens_method='proper', offset_before=0, offset_after=0, **conf):
     
     # propagation before lens
     proper.prop_propagate(wf, focal + offset_before)
