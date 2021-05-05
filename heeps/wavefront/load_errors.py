@@ -59,7 +59,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, 
         if len(tiptilts) > 1: # cube
             tiptilts = tiptilts[:nframes][::nstep]        
         # convert mas to rms phase error
-        tiptilts = mas2rms(tiptilts, conf['pupil_img_size'])
+        tiptilts = mas2rms(tiptilts, conf['diam_nominal'])
         if verbose is True:
             print("Load pointing errors from '%s'"%os.path.basename(file_point_err))
             print('   nscreens=%s'%(len(tiptilts)))

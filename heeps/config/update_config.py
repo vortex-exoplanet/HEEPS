@@ -49,7 +49,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC'
     if mode in ['RAVC'] and ravc_calc is True:
         r_obstr = diam_int/diam_ext
         ravc_t = 1 - (r_obstr**2 + r_obstr*np.sqrt(r_obstr**2 + 8))/4
-        ravc_r = r_obstr/np.sqrt(1 - ravc_t)
+        ravc_r = r_obstr/np.sqrt(1 - ravc_t) if diam_int > 0 else 0
     # update conf with local variables (remove unnecessary)
     conf.update(locals())
     [conf.pop(key) for key in ['conf', 'saveconf', 'verbose'] if key in conf]

@@ -36,4 +36,4 @@ def mas2rms(coord, diam):
     tilt in mas: RMS = x/2 = (tilt*(D/2))/2 = tilt*diam/4
     tilt in lam/D -> tilt*diam/4 *(lam/diam) = tilt*lam/4
     '''
-    return coord*u.mas.to('rad')*(diam/4)
+    return np.array(coord)*u.mas.to('rad')*diam/4

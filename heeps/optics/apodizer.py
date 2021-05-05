@@ -38,7 +38,7 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
     '''
 
     # case 1: Ring Apodizer
-    if 'RAVC' in mode:
+    if 'RAVC' in mode and ravc_r > 0:
 
         # load apodizer from files if provided
         if os.path.isfile(file_ravc_amp) and os.path.isfile(file_ravc_phase):
