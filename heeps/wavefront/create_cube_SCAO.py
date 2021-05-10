@@ -1,16 +1,14 @@
 from heeps.util.img_processing import crop_img, pad_img, resize_img
+from heeps.util.multiCPU import multiCPU
+from heeps.util.notify import notify
 import os
 import numpy as np
 from astropy.io import fits
-import multiprocessing as mpro
-from functools import partial
-import time
 
 # email when finished
 conf = {}
 conf['send_to'] = 'cdelacroix@uliege.be'
 conf['send_message'] = 'cube calculation finished OK.'
-conf['send_subject'] = 'fenrir noreply'
 
 # useful inputs
 tag = 'Cbasic_20201130'
@@ -52,19 +50,8 @@ def remove_piston(filename):
     data = np.rot90(data) * 1e-6        # rotate, convert to meters
     return data
 
-if cpu_count == None:
-    cpu_count = mpro.cpu_count() - 1
-p = mpro.Pool(cpu_count)
-cube = np.array(p.starmap(partial(remove_piston), zip(filenames)))
-p.close()
-p.join()
-
-# save cube
+# create cube
+cube = multiCPU(remove_piston, posvars=[filenames], case='create cube SCAO', cpu_count=cpu_count)
 print(cube.shape)
 fits.writeto(os.path.join(output_folder, savename), np.float32(cube), overwrite=True)
-
-# send email when simulation finished
-print(time.strftime("%Y-%m-%d %H:%M:%S: " + "%s\n"%conf['send_message'], time.localtime()))
-if conf['send_to'] is not None:
-    os.system('echo "%s" | mail -s "%s" %s'%(conf['send_message'], \
-            conf['send_subject'], conf['send_to']))
+notify(conf['send_message'], conf['send_to'])

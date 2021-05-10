@@ -13,7 +13,7 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     #           Console and file management 
     # =============================================================================
-    cpu_count = 10,                     # 1 = single core; None = max-1 cores
+    cpu_count = None,                   # 1 = single core; None = max cores
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server

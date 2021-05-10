@@ -1,3 +1,4 @@
+from heeps.util.multiCPU import multiCPU
 import numpy as np
 import scipy.optimize as opt
 import scipy.special as spe
@@ -5,31 +6,20 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from skimage.transform import resize
 import warnings
-import multiprocessing as mpro
-from functools import partial
-from sys import platform
 
 def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True, cpu_count=None, verbose=False):
-    
-    if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
-        if cpu_count == None:
-            cpu_count = mpro.cpu_count() - 1
-        if verbose is True:
-            print('using %s cores'%(cpu_count))
-        p = mpro.Pool(cpu_count)
-        func = partial(resize_img, preserve_range=preserve_range, \
-            mode=mode, anti_aliasing=anti_aliasing)
-        params = zip(cube, [new_size]*len(cube))
-        new_cube = np.float32(p.starmap(func, params))
-        p.close()
-        p.join()
-    else:
-        if verbose is True:
-            print('using 1 core')
-        new_cube = resize_img(cube, new_size, preserve_range=preserve_range, \
-            mode=mode, anti_aliasing=anti_aliasing)
-    
+    posvars = [cube, [new_size]*len(cube)]
+    kwargs = dict(preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing)
+    new_cube = multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
+        case='resize cube', cpu_count=cpu_count, verbose=verbose)
+    return new_cube
+
+def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
+    posvars = [cube, [new_size]*len(cube)]
+    kwargs = dict(margin=margin, verbose=False)
+    new_cube = multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
+        case='crop cube', cpu_count=cpu_count, verbose=verbose)
     return new_cube
 
 def resize_img(img, new_size, preserve_range=True, mode='reflect',
@@ -50,7 +40,6 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
             warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
             img = np.float32(resize(np.float32(img), new_size, \
                 preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing))
-
     return img
 
 def pad_img(img, padded_size, pad_value=0):
@@ -72,7 +61,6 @@ def pad_img(img, padded_size, pad_value=0):
     pady = (dy, dy) if (y1-y2)%2==0 else (dy+1, dy)
     # pad image
     img = np.pad(img, [padx, pady], mode='constant', constant_values=pad_value)
-    
     return img
 
 def crop_img(img, new_size, margin=0, verbose=True):
@@ -108,29 +96,7 @@ def crop_img(img, new_size, margin=0, verbose=True):
             (mx1, mx2, my1, my2) = margin
         # crop image
         img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
-    
     return img
-
-def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
-
-    if cpu_count != 1 and platform in ['linux', 'linux2', 'darwin']:
-        if cpu_count == None:
-            cpu_count = mpro.cpu_count() - 1
-        if verbose is True:
-            print('using %s cores'%(cpu_count))
-        p = mpro.Pool(cpu_count)
-        func = partial(crop_img, margin=margin, verbose=False)
-        params = zip(cube, [new_size]*len(cube))
-        new_cube = np.float32(p.starmap(func, params))
-        p.close()
-        p.join()
-    else:
-        if verbose is True:
-            print('using 1 core')
-        new_cube = crop_img(cube, new_size, margin=margin)
-    
-    return new_cube
-
 
 def twoD_Gaussian(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     ''' Model function. 2D Gaussian.

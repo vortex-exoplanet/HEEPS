@@ -1,9 +1,6 @@
+from heeps.util.multiCPU import multiCPU
 import numpy as np
 from astropy.io import fits
-import multiprocessing as mpro
-from functools import partial
-from sys import platform
-import time
 
 
 planes = ['PSF']        # select which plane to merge [PSF, LS]
@@ -59,31 +56,9 @@ for onoff in ['onaxis']:
                 cube1 = np.array(fits.getdata('%s_%s_%s_%s_pos.fits'%(onoff, plane,band,mode)), ndmin=3)
                 # cube2 = negative PSF => will store ADI contrast PSF
                 cube2 = np.array(fits.getdata('%s_%s_%s_%s_neg.fits'%(onoff, plane,band,mode)), ndmin=3)
-                if conf['cpucount'] != 1 and platform in ['linux', 'linux2', 'darwin']:
-                    if conf['cpucount'] == None:
-                        conf['cpucount'] = mpro.cpu_count() - 1
-                    print('%s: %s band, %s mode, using %s cores.'\
-                            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
-                            band, mode, conf['cpucount']))
-                    p = mpro.Pool(conf['cpucount'])
-                    func = partial(build_APP, plane, mode, band, delta, ndet)
-                    (cube1, cube2) = np.array(p.starmap(func, zip(cube1, cube2))).transpose(1, 0, 2, 3)
-                    #cube1 = cubes[:,0,:,:]
-                    #cube2 = cubes[:,1,:,:]
-                    p.close()
-                    p.join()
-
-                # TODO: fix when cpu_count = 1
-                else:
-                    print('%s: %s band, %s mode, using 1 core.'\
-                            %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()), \
-                            band, mode))
-                    cube1 = np.zeros((conf['nframes'], ndet, ndet))
-                    cube2 = np.zeros((conf['nframes'], ndet, ndet))
-                    for i, (pos, neg) in enumerate(zip(cube1, cube2)):
-                        psf_raw, psf_adi = build_APP(plane, mode, band, delta, ndet, pos, neg)
-                        cube1[i,:,:] = psf_raw      
-                        cube2[i,:,:] = psf_adi
+                case = 'create %s band %s cube'%(band, mode)
+                (cube1, cube2) = multiCPU(build_APP, posargs=[plane, mode, band, delta, ndet],\
+                    posvars=[cube1, cube2], nout=2, case=case, cpu_count=conf['cpucount'])
 
                 filename = '%s_%s_%s_%s_%s.fits'%(onoff, plane, band, mode, 'raw')
                 fits.writeto(filename, cube1, overwrite=True)
