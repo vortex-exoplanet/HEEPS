@@ -1,21 +1,21 @@
 import numpy as np
 import astropy.units as u
 
-def polar_coord(npupil):
-    
-    x, y = cart_coord(npupil)
-    r = np.abs(x + 1j*y)
-    t = np.angle(x + 1j*y)
-
-    return r, t
-
 def cart_coord(npupil):
 
     dn = 2/npupil
     pup_range = np.arange(-1, 1, dn) + dn/2
     x, y = np.meshgrid(pup_range, pup_range)
 
-    return x, y
+    return np.float32(x), np.float32(y)
+
+def polar_coord(npupil):
+    
+    x, y = cart_coord(npupil)
+    r = np.abs(x + 1j*y)
+    t = np.angle(x + 1j*y)
+
+    return np.float32(r), np.float32(t)
 
 def disk_coord(radius, nr=4):
 
