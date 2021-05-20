@@ -11,15 +11,21 @@ def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]
     kwargs = dict(preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing)
-    new_cube = multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
-        case='resize cube', cpu_count=cpu_count, verbose=verbose)
+    if cube.ndim < 3:
+        new_cube = resize_img(cube, new_size, **kwargs)
+    else:
+        new_cube = multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
+            case='resize cube', cpu_count=cpu_count, verbose=verbose)
     return new_cube
 
 def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]
     kwargs = dict(margin=margin, verbose=False)
-    new_cube = multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
-        case='crop cube', cpu_count=cpu_count, verbose=verbose)
+    if cube.ndim < 3:
+        new_cube = crop_img(cube, new_size, **kwargs)
+    else:
+        new_cube = multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
+            case='crop cube', cpu_count=cpu_count, verbose=verbose)
     return new_cube
 
 def resize_img(img, new_size, preserve_range=True, mode='reflect',
