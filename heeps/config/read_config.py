@@ -84,8 +84,8 @@ def read_config(verbose=False, **update_conf):
     vc_charge = 2,                      # vortex topological charge
     vc_zoffset = 0,                     # vortex defocus in m (z axis)
     ravc_calc = True,                   # calculate RA params (Mawet2013)
-    ravc_t = 0.7903,                    # (calc=False) mean-M1 RA trans
-    ravc_r = 0.6033,                    # (calc=False) mean-M1 RA radius wrt allglass
+    ravc_t = 0.745,                     # (calc=False) mean-M1 RA trans
+    ravc_r = 0.505,                     # (calc=False) mean-M1 RA radius wrt allglass
     ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
     clc_diam = 80,                      # CLC occulter diam in mas
     file_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
