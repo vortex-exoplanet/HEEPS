@@ -1,3 +1,4 @@
+from heeps.optics.lens import lens
 from heeps.util.img_processing import resize_img, pad_img
 import numpy as np
 import proper
@@ -9,7 +10,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
         diam_int=11, diam_nominal=37, ls_misalign=None, ngrid=1024, npupil=285, 
         file_lyot_stop='', verbose=False, **conf):
 
-    """ Add a Lyot stop for a focal plane mask """
+    """ Add a Lyot stop for a focal plane mask. Propagate to detector. """
     
     if mode in ['CVC', 'RAVC', 'CLC']:
 
@@ -49,4 +50,7 @@ def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05,
                 print('   apply Lyot stop: ls_int=%s, ls_ext=%s, ls_spi=%s'\
                     %(round(ls_int, 4), round(ls_ext, 4), round(ls_spi, 4)))
     
+    # propagate to detector
+    lens(wf, **conf)
+
     return wf

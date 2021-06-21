@@ -1,13 +1,13 @@
-from heeps.optics import apodizer, fp_mask, lyot_stop, detector
-from heeps.util.img_processing import pad_img
+from heeps.optics import fp_mask, lyot_stop, detector
+from heeps.wavefront.add_errors import add_errors
 from heeps.util.save2fits import save2fits
 from copy import deepcopy
 import proper
 import numpy as np
 
 def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
-        ngrid=1024, npupil=285, fp_offsets=None, tag=None, onaxis=True, savefits=False, 
-        verbose=False, **conf):
+        ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_det_chrom_leak=False, fp_offsets=None, 
+        tag=None, onaxis=True, savefits=False, verbose=False, **conf):
             
     """ 
     Propagate one single wavefront.
@@ -22,44 +22,38 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     wf1 = deepcopy(wf)
 
     # apply phase screen (scao residuals, ncpa, petal piston)
-    if phase_screen is not None:
-        assert phase_screen.ndim == 2, "phase_screen dim must be 2."
-        proper.prop_add_phase(wf1, pad_img(phase_screen, ngrid))
-
-    # apply amplitude screen (Talbot effect)
-    if amp_screen is not None:
-        assert amp_screen.ndim == 2, "amp_screen dim must be 2."
-        proper.prop_multiply(wf1, pad_img(amp_screen, ngrid))
-
-    # apply tip-tilt (Zernike 2,3)
-    if tiptilt is not None:
-        proper.prop_zernikes(wf1, [2,3], np.array(tiptilt, ndmin=1))
+    wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen, \
+        tiptilt=tiptilt, misalign=misalign, **conf)
     
     if verbose == True:
         print('Create single %s-axis PSF'%{True:'on',False:'off'}[onaxis])
 
-    # pupil-plane apodization: if RA misalign set to None (or APP cube calc),
-    # then apodizer was already preloaded
-    if misalign is not None or ('APP' in conf['mode'] and onaxis == False):
-        conf.update(ravc_misalign=misalign)
-        wf1 = apodizer(wf1, onaxis=onaxis, verbose=verbose, **conf)
+    # imaging a point source
+    def point_source(wf1, verbose, conf):
+        if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
+            if add_det_chrom_leak is True:
+                cl = deepcopy(wf1)
+                cl._wfarr = np.flip(cl._wfarr) # 2 FFTs
+                cl = lyot_stop(cl, verbose=verbose, **conf)
+            wf1 = fp_mask(wf1, verbose=verbose, **conf)
+            wf1 = lyot_stop(wf1, verbose=verbose, **conf)
+            if add_det_chrom_leak is True:
+                wf1._wfarr += cl._wfarr*np.sqrt(vc_chrom_leak)
+        else:
+            wf1._wfarr = np.flip(wf1._wfarr) # 2 FFTs
+            wf1 = lyot_stop(wf1, verbose=verbose, **conf)
+        return detector(wf1, verbose=verbose, **conf)
 
     # imaging a point source
-    def point_source(wfo, verbose, conf):
-        if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
-            wfo = fp_mask(wfo, verbose=verbose, **conf)
-        wfo = lyot_stop(wfo, verbose=verbose, **conf)
-        return detector(wfo, verbose=verbose, **conf)
     if fp_offsets is None:
         psf = point_source(wf1, verbose, conf)
-    
     # imaging a finite size star
     else:
         psf = 0
-        for i,offset in enumerate(fp_offsets):
-            wfo = deepcopy(wf1)
-            proper.prop_zernikes(wfo, [2,3], np.array(offset, ndmin=1))
-            psf += point_source(wfo, False, conf)
+        for offset in fp_offsets:
+            point = deepcopy(wf1)
+            proper.prop_zernikes(point, [2,3], np.array(offset, ndmin=1))
+            psf += point_source(point, False, conf)
         psf /= len(fp_offsets)
 
     # save psf as fits file

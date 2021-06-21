@@ -1,15 +1,14 @@
 import proper
-from heeps.optics.lens import lens
 from astropy.io import fits
 import os
 import numpy as np
 
 def detector(wf, ngrid=1024, ndet=365, dir_output='output_files', savefits=False, verbose=False, **conf):
     
+    "Extract PSF on the detector."
+
     assert(ngrid >= ndet), 'Error: final image is bigger than initial grid size'
 
-    # propagate to detector
-    lens(wf, **conf)
     # get intensity (A^2)
     (psf, _) = proper.prop_end(wf, NOABS = False)
     # crop to detector size

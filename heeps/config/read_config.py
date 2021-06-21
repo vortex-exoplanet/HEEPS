@@ -83,6 +83,7 @@ def read_config(verbose=False, **update_conf):
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
     vc_charge = 2,                      # vortex topological charge
     vc_zoffset = 0,                     # vortex defocus in m (z axis)
+    vc_chrom_leak = 2e-3,               # vortex chromatic leakage
     ravc_calc = True,                   # calculate RA params (Mawet2013)
     ravc_t = 0.745,                     # (calc=False) mean-M1 RA trans
     ravc_r = 0.505,                     # (calc=False) mean-M1 RA radius wrt allglass
@@ -159,7 +160,10 @@ def read_config(verbose=False, **update_conf):
     rms_point_dyn = 2,                  # dynamic (mas)
 
     add_apo_drift = False,              # apodizer drift
-    ptv_drift = 0.02                    # (%)
+    ptv_drift = 0.02,                   # (%)
+    
+    add_vort_chrom_leak = False,        # add chromatic leakage in the vortex plane
+    add_det_chrom_leak = False,         # add chromatic leakage in the detector plane
 
     )                                   # end of default conf dict
  
