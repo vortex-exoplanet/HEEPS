@@ -5,9 +5,9 @@ from heeps.util.notify import notify
 from heeps.util.multiCPU import multiCPU
 import numpy as np
 
-def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
-        cpu_count=1, send_to=None, tag=None, onaxis=True, savefits=False, 
-        verbose=False, **conf):
+def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_count=1,
+        vc_chrom_leak=2e-3, add_det_chrom_leak=False, add_vort_chrom_leak=False, 
+        send_to=None, tag=None, onaxis=True, savefits=False, verbose=False, **conf):
 
     # preload amp screen if only one frame
     if len(amp_screens) == 1 and np.any(amp_screens) != None:
@@ -25,12 +25,16 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
     
     if verbose == True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
+        if add_det_chrom_leak is True:
+            print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
+        if add_vort_chrom_leak is True:
+            print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # run simulation
     posvars = [phase_screens, amp_screens, tiptilts, misaligns]
     kwargs = dict(onaxis=onaxis, verbose=False, **conf)
     psfs = multiCPU(propagate_one, posargs=[wf], posvars=posvars, kwargs=kwargs, \
-        estimate_time=True, case='e2e simulation', cpu_count=cpu_count)
+        case='e2e simulation', cpu_count=cpu_count)
 
     # if only one wavefront, make dim = 2
     if len(psfs) == 1:
