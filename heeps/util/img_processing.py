@@ -2,31 +2,42 @@ from heeps.util.multiCPU import multiCPU
 import numpy as np
 import scipy.optimize as opt
 import scipy.special as spe
+from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from skimage.transform import resize
 import warnings
+
+def get_piston(cube, verbose=False):
+    if cube.ndim < 3:
+        return np.mean(cube[cube!=0])
+    else:
+        return np.mean(multiCPU(get_piston, posvars=[cube], case='get piston', verbose=verbose))
+
+def get_rms(cube, verbose=False):
+    if cube.ndim < 3:
+        return np.std(cube[cube!=0])
+    else:
+        return np.mean(multiCPU(get_rms, posvars=[cube], case='get rms', verbose=verbose))
 
 def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]
     kwargs = dict(preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing)
     if cube.ndim < 3:
-        new_cube = resize_img(cube, new_size, **kwargs)
+        return resize_img(cube, new_size, **kwargs)
     else:
-        new_cube = multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
+        return multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
             case='resize cube', cpu_count=cpu_count, verbose=verbose)
-    return new_cube
 
 def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]
     kwargs = dict(margin=margin, verbose=False)
     if cube.ndim < 3:
-        new_cube = crop_img(cube, new_size, **kwargs)
+        return crop_img(cube, new_size, **kwargs)
     else:
-        new_cube = multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
+        return multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
             case='crop cube', cpu_count=cpu_count, verbose=verbose)
-    return new_cube
 
 def resize_img(img, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True):
@@ -103,6 +114,66 @@ def crop_img(img, new_size, margin=0, verbose=True):
         # crop image
         img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
     return img
+
+def zoomWithMissingData(data, newSize, method='linear', non_valid_value=np.nan):
+    '''
+    Zoom 2-dimensional or 3D arrays using griddata interpolation.
+    This allows interpolation over unstructured data, e.g. interpolating values
+    inside a pupil but excluding everything outside.
+    See also DM.CustomShapes.
+
+    Note that it can be time consuming, particularly on 3D data
+
+    Parameters
+    ----------
+    data : ndArray
+        2d or 3d array. If 3d array, interpolate by slices of the first dim.
+    newSize : tuple
+        2 value for the new array (or new slices) size.
+    method: str
+        'linear', 'cubic', 'nearest'
+    non_valid_value: float
+        typically, NaN or 0. value in the array that are not valid for the
+        interpolation.
+
+    Returns
+    -------
+    arr : ndarray
+        of dimension (newSize[0], newSize[1]) or
+        (data.shape[0], newSize[0], newSize[1])
+    '''
+    if len(data.shape) == 3:
+        arr = data[0, :, :]
+    else:
+        assert len(data.shape) == 2
+        arr = data
+
+    Nx = arr.shape[0]
+    Ny = arr.shape[1]
+    coordX = (np.arange(Nx) - Nx / 2. + 0.5) / (Nx / 2.)
+    coordY = (np.arange(Ny) - Ny / 2. + 0.5) / (Ny / 2.)
+    Nx = newSize[0]
+    Ny = newSize[1]
+    ncoordX = (np.arange(Nx) - Nx / 2. + 0.5) / (Nx / 2.)
+    ncoordY = (np.arange(Ny) - Ny / 2. + 0.5) / (Ny / 2.)
+
+    x, y = np.meshgrid(coordX, coordY)
+    xnew, ynew = np.meshgrid(ncoordX, ncoordY)
+
+    if len(data.shape) == 2:
+        idx = ~(arr == non_valid_value)
+        znew = griddata((x[idx], y[idx]), arr[idx], (xnew, ynew),
+                        method=method)
+        return znew
+    elif len(data.shape) == 3:
+        narr = np.zeros((data.shape[0], newSize[0], newSize[1]))
+        for i in range(data.shape[0]):
+            arr = data[i, :, :]
+            idx = ~(arr == non_valid_value)
+            znew = griddata((x[idx], y[idx]), arr[idx], (xnew, ynew),
+                            method=method)
+            narr[i, :, :] = znew
+        return narr
 
 def twoD_Gaussian(xy, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     ''' Model function. 2D Gaussian.
