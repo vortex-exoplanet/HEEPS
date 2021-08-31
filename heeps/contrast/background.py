@@ -3,7 +3,7 @@ from astropy.io import fits
 
 def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600, 
         mag=5, mag_ref=0, flux_star=9e10, flux_bckg=9e4, app_single_psf=0.48, 
-        file_vc_trans=None, file_app_trans=None, seed=123456, verbose=False, **conf):
+        f_vc_trans=None, f_app_trans=None, seed=123456, verbose=False, **conf):
 
     """ 
     This function applies background and photon noise to intup PSFs (off-axis and on-axis), 
@@ -30,9 +30,9 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600,
             background flux at reference magnitude
         app_single_psf (float):
             APP single PSF (4% leakage)
-        file_vc-trans (str):
+        f_vc_trans (str):
             path to VC transmittance fits file
-        file_app_trans
+        f_app_trans
             path to APP transmittance fits file
         seed (int):
             seed used by numpy.random process
@@ -49,9 +49,9 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600,
     # apply mask transmittance
     data = None
     if 'VC' in mode:
-        data = fits.getdata(file_vc_trans)
+        data = fits.getdata(f_vc_trans)
     elif 'APP' in mode:
-        data = fits.getdata(file_app_trans)
+        data = fits.getdata(f_app_trans)
     if data is not None:
         mask_trans = np.interp(lam*1e6, data[0], data[1])
         psf_OFF *= mask_trans

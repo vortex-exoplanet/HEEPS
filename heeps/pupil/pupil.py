@@ -8,7 +8,7 @@ import os.path
 from astropy.io import fits 
 
 
-def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
+def pupil(f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
         pupil_img_size=40, diam_ext=37, diam_int=11, spi_width=0.5, 
         spi_angles=[0,60,120], npetals=6, seg_width=0, seg_gap=0, seg_rms=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
@@ -28,7 +28,7 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
             spectral band (e.g. 'L', 'M', 'N1', 'N2')
         mode (str):
             HCI mode: RAVC, CVC, APP, CLC
-        file_pupil: str
+        f_pupil: str
             path to a pupil fits file
         lam: float
             wavelength in m
@@ -68,11 +68,11 @@ def pupil(file_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
     wf = proper.prop_begin(pupil_img_size, lam, ngrid, beam_ratio)
 
     # load pupil file
-    if os.path.isfile(file_pupil):
+    if os.path.isfile(f_pupil):
         if verbose is True:
-            print("Load pupil from '%s'"%os.path.basename(file_pupil))
+            print("Load pupil from '%s'"%os.path.basename(f_pupil))
         #conf.update()
-        pup = fits.getdata(file_pupil).astype(np.float32)
+        pup = fits.getdata(f_pupil).astype(np.float32)
         # resize to npupil
         pup = resize_img(pup, npupil)
     # if no pupil file, create a pupil

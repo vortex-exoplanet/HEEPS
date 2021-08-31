@@ -6,8 +6,8 @@ import os.path
 from astropy.io import fits 
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None, 
-        ngrid=1024, npupil=285, file_app_phase='', file_app_amp='', 
-        file_ravc_amp='', file_ravc_phase='', onaxis=True, verbose=False, **conf):
+        ngrid=1024, npupil=285, f_app_phase='', f_app_amp='', 
+        f_ravc_amp='', f_ravc_phase='', onaxis=True, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -28,11 +28,11 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
         number of pixels of the wavefront array
     npupil: int
         number of pixels of the pupil
-    file_app_amp: str
-    file_app_phase: str 
+    f_app_amp: str
+    f_app_phase: str 
         apodizing phase plate files
-    file_ravc_amp: str
-    file_ravc_phase: str 
+    f_ravc_amp: str
+    f_ravc_phase: str 
         ring apodizer files (optional)
 
     '''
@@ -41,12 +41,12 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
     if 'RAVC' in mode and ravc_r > 0:
 
         # load apodizer from files if provided
-        if os.path.isfile(file_ravc_amp) and os.path.isfile(file_ravc_phase):
+        if os.path.isfile(f_ravc_amp) and os.path.isfile(f_ravc_phase):
             if verbose is True:
                 print('   apply ring apodizer from files')
             # get amplitude and phase data
-            RAVC_amp = fits.getdata(file_ravc_amp)
-            RAVC_phase = fits.getdata(file_ravc_phase)
+            RAVC_amp = fits.getdata(f_ravc_amp)
+            RAVC_phase = fits.getdata(f_ravc_phase)
             # resize to npupil
             RAVC_amp = impro.resize_img(RAVC_amp, npupil)
             RAVC_phase = impro.resize_img(RAVC_phase, npupil)
@@ -76,16 +76,16 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
     # case 2: Apodizing Phase Plate
     elif 'APP' in mode:
         # get amplitude and phase data
-        if os.path.isfile(file_app_amp):
+        if os.path.isfile(f_app_amp):
             if verbose is True:
                 print('   apply APP stop (amplitude)')
-            APP_amp = fits.getdata(file_app_amp)
+            APP_amp = fits.getdata(f_app_amp)
         else:
             APP_amp = np.ones((npupil, npupil))
-        if os.path.isfile(file_app_phase) and onaxis == True:
+        if os.path.isfile(f_app_phase) and onaxis == True:
             if verbose is True:
                 print('   apply APP phase')
-            APP_phase = fits.getdata(file_app_phase)
+            APP_phase = fits.getdata(f_app_phase)
         else:
             APP_phase = np.zeros((npupil, npupil))
         # resize to npupil

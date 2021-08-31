@@ -8,18 +8,18 @@ import os.path
 def lyot_stop(wf, mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05, 
         ls_dRspi=0.04, spi_width=0.5, spi_angles=[0,60,120], diam_ext=37, 
         diam_int=11, diam_nominal=37, ls_misalign=None, ngrid=1024, npupil=285, 
-        file_lyot_stop='', verbose=False, **conf):
+        f_lyot_stop='', verbose=False, **conf):
 
     """ Add a Lyot stop for a focal plane mask. Propagate to detector. """
     
     if mode in ['CVC', 'RAVC', 'CLC']:
 
         # load lyot stop from file if provided
-        if os.path.isfile(file_lyot_stop):
+        if os.path.isfile(f_lyot_stop):
             if verbose is True:
-                print("   apply lyot stop from '%s'"%os.path.basename(file_lyot_stop))
+                print("   apply lyot stop from '%s'"%os.path.basename(f_lyot_stop))
             # get amplitude and phase data
-            ls_mask = fits.getdata(file_lyot_stop)
+            ls_mask = fits.getdata(f_lyot_stop)
             # resize to npupil
             ls_mask = resize_img(ls_mask, npupil)
             # pad with zeros and add to wavefront
