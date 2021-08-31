@@ -6,7 +6,7 @@ import numpy as np
 
 def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, f_phase='', 
         f_amp='', add_point_err=False, f_point_err='', add_apo_drift=False, verbose=False, 
-        ptv_drift=0.02, **conf):
+        apo_drift=0.02, **conf):
     
     ''' Load wavefront errors.
     
@@ -69,9 +69,9 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, 
     # load apodizer drift
     if add_apo_drift is True and 'RAVC' in conf['mode']:
         misaligns = np.array([[x,0,0,0,0,0] \
-            for x in np.linspace(-ptv_drift/2, ptv_drift/2, 12000)])[:nframes][::nstep]
+            for x in np.linspace(-apo_drift/2, apo_drift/2, 12000)])[:nframes][::nstep]
         if verbose is True:
-            print('Load apodizer drit=%s ptv'%ptv_drift)
+            print('Load apodizer drit=%s %% ptv'%apo_drift)
     else:
         misaligns = np.array([None]*nscreens)
 

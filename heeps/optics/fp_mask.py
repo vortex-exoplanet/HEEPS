@@ -5,7 +5,7 @@ import numpy as np
 import proper
 
 def fp_mask(wf, mode='RAVC', vc_zoffset=0, vc_chrom_leak=2e-3, 
-        add_vort_chrom_leak=False, verbose=False, **conf):
+        add_cl_vort=False, verbose=False, **conf):
 
     # case 1: vortex coronagraphs
     if mode in ['CVC', 'RAVC']:
@@ -16,7 +16,7 @@ def fp_mask(wf, mode='RAVC', vc_zoffset=0, vc_chrom_leak=2e-3,
         # propagate to vortex
         lens(wf, offset_after=vc_zoffset, **conf)
         # load chromatic leakage
-        if add_vort_chrom_leak is True:
+        if add_cl_vort is True:
             if verbose is True:
                 print('   add chromatic leakage at the vortex plane')
             wf_cl = wf._wfarr*np.sqrt(vc_chrom_leak)

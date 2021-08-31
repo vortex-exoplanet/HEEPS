@@ -84,6 +84,8 @@ def read_config(verbose=False, **update_conf):
     vc_charge = 2,                      # vortex topological charge
     vc_zoffset = 0,                     # vortex defocus in m (z axis)
     vc_chrom_leak = 2e-3,               # vortex chromatic leakage
+    add_cl_vort = False,                # add chromatic leakage at the vortex plane
+    add_cl_det = False,                 # add chromatic leakage at the detector plane
     ravc_calc = True,                   # calculate RA params (Mawet2013)
     ravc_t = 0.745,                     # (calc=False) mean-M1 RA trans
     ravc_r = 0.505,                     # (calc=False) mean-M1 RA radius wrt allglass
@@ -148,23 +150,19 @@ def read_config(verbose=False, **update_conf):
     f_phase = 'wavefront/COMPASS_201810_RandomWind_100screens_meters.fits',
     add_amp = False,                    # amplitude screens (Talbot effect)
     f_amp = 'wavefront/Talbot_LM_20201120_IMGP_meridian_allglass.fits',
-
-    rms_phase_sta = 35.9,               # static (nm)
-    rms_phase_qlsf = 20,                # quasistatic low spatial freq (nm)
-    rms_phase_qhsf = 20,                # quasistatic high spatial freq (nm)
-    rms_phase_dyn = 40,                 # dynamic (nm)
+    ncpa_sta = 35.9,                    # static (nm rms)
+    ncpa_qlsf = 20,                     # quasistatic low spatial freq (nm rms)
+    ncpa_qhsf = 20,                     # quasistatic high spatial freq (nm rms)
+    ncpa_dyn = 40,                      # dynamic (nm rms)
 
     add_point_err = False,              # pointing errors
     f_point_err = 'wavefront/point_all_3600s_300ms.fits',
-    rms_point_qsta = 0.4,               # quasistatic (mas)
-    rms_point_dyn = 2,                  # dynamic (mas)
+    point_qsta = 0.4,                   # quasistatic (mas rms)
+    point_dyn = 2,                      # dynamic (mas rms)
 
     add_apo_drift = False,              # apodizer drift
-    ptv_drift = 0.02,                   # (%)
+    apo_drift = 0.02,                   # (% ptv)
     
-    add_vort_chrom_leak = False,        # add chromatic leakage in the vortex plane
-    add_det_chrom_leak = False,         # add chromatic leakage in the detector plane
-
     )                                   # end of default conf dict
  
     # =============================================================================
@@ -193,9 +191,8 @@ def read_config(verbose=False, **update_conf):
     os.makedirs(conf['dir_temp'], exist_ok=True)
     
     # create paths to fits files
-    for filename in ['f_pupil', 'f_phase', 'f_amp', 'f_point_err', \
-            'f_lyot_stop', 'f_vc_trans', 'f_app_trans', \
-            'f_app_amp', 'f_app_phase']:
+    for filename in ['f_pupil', 'f_phase', 'f_amp', 'f_point_err', 'f_lyot_stop', \
+            'f_vc_trans', 'f_app_trans', 'f_app_amp', 'f_app_phase']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive

@@ -6,7 +6,7 @@ from heeps.util.multiCPU import multiCPU
 import numpy as np
 
 def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_count=1,
-        vc_chrom_leak=2e-3, add_det_chrom_leak=False, add_vort_chrom_leak=False, 
+        vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, 
         send_to=None, tag=None, onaxis=True, savefits=False, verbose=False, **conf):
 
     # preload amp screen if only one frame
@@ -25,9 +25,9 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_coun
     
     if verbose == True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
-        if add_det_chrom_leak is True:
+        if add_cl_det is True:
             print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
-        if add_vort_chrom_leak is True:
+        if add_cl_vort is True:
             print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # run simulation

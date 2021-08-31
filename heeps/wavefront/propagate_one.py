@@ -6,7 +6,7 @@ import proper
 import numpy as np
 
 def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
-        ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_det_chrom_leak=False, fp_offsets=None, 
+        ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, fp_offsets=None, 
         tag=None, onaxis=True, savefits=False, verbose=False, **conf):
             
     """ 
@@ -31,13 +31,13 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     # imaging a point source
     def point_source(wf1, verbose, conf):
         if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
-            if add_det_chrom_leak is True:
+            if add_cl_det is True:
                 cl = deepcopy(wf1)
                 cl._wfarr = np.flip(cl._wfarr) # 2 FFTs
                 cl = lyot_stop(cl, verbose=verbose, **conf)
             wf1 = fp_mask(wf1, verbose=verbose, **conf)
             wf1 = lyot_stop(wf1, verbose=verbose, **conf)
-            if add_det_chrom_leak is True:
+            if add_cl_det is True:
                 wf1._wfarr += cl._wfarr*np.sqrt(vc_chrom_leak)
         else:
             wf1._wfarr = np.flip(wf1._wfarr) # 2 FFTs
