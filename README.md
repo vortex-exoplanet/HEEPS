@@ -1,5 +1,6 @@
-# HEEPS: High-contrast End-to-End Performance Simulator
-
+# HEEPS
+## The HCI End-to-End Performance Simulator
+```python
 					    )               (      (     
 					 ( /(               )\ )   )\ )  
 					 )\())  (     (    (()/(  (()/(  
@@ -7,32 +8,31 @@
 					 _((_) ((_)  ((_)  (_))   (_))   
 					| || | | __| | __| | _ \  / __|  
 					| __ | | _|  | _|  |  _/  \__ \  
-					|_||_| |___| |___| |_|    |___/    
+					|_||_| |___| |___| |_|    |___/
+```
+HEEPS is a high-contrast imaging (HCI) simulator, mostly geared towards studying the HCI performance of the ELT/[METIS](https://elt.eso.org/instrument/METIS/) thermal infrared instrument.
 
-
-
-## Overview
-HEEPS is a high-contrast imaging (HCI) simulator, mostly geared towards studying the HCI performance of ELT instrument; "METIS". 
-
-[![N|Solid](https://i2.wp.com/metis.strw.leidenuniv.nl/wp-content/uploads/2017/11/logo_with_text.png?resize=300%2C238)](https://i2.wp.com/metis.strw.leidenuniv.nl/wp-content/uploads/2017/11/logo_with_text.png?resize=300%2C238)
-
-Currently simulator includes three coronagraphs:
-- Classical vortex
-- Ring apodized vortex coronagraph (RAVC)
+Currently, the simulator includes four coronagraphs:
+- Classical Vortex Coronagraph (CVC)
+- Ring Apodized Vortex Coronagraph (RAVC)
 - Apodizing phase plate (APP)
+- Classical Lyot Coronagraph (CLC)
 
-For technical document about the simulator see SPIE paper by Brunella et al: [link](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/9909/1/End-to-end-simulations-of-the-E-ELTMETIS-coronagraphs/10.1117/12.2233444.short)
+## References
+- [Carlomagno et al. 2020](https://www.spiedigitallibrary.org/journals/Journal-of-Astronomical-Telescopes-Instruments-and-Systems/volume-6/issue-3/035005/METIS-high-contrast-imaging-design-and-expected-performance/10.1117/1.JATIS.6.3.035005.full), METIS high-contrast imaging: design and expected performance
+- [Bowens et al. 2021](https://www.aanda.org/articles/aa/full_html/2021/09/aa41109-21/aa41109-21.html), Exoplanets with ELT-METIS: I. Estimating the direct imaging exoplanet yield around stars within 6.5 parsecs
 
-## Getting started with HEEPS
-1. Python 3.6 is required to run HEEPS package, if not already installed, we recommend downloading and installing Anaconda package for Python 3.6, see [link](https://www.anaconda.com/download/#linux). 
-2. The 'PROPER' library can be downloaded from [link](https://drive.google.com/file/d/1CLsUjNI4Vfe8QdZ-qpEhc3DrgZb9H2_5/view?usp=sharing).
-    (i) After downloading the "proper_v3.0d1_python_3.x_30jul18.zip" file, extract it.
-    (ii) Go to the directory and execute "python setup.py install"  in a terminal
-2. The 'VIP' library for ADI processing and generating contrast curves can be installed by executing "pip install vip_hci" in a terminal. Please see the GitHub [page]( https://github.com/vortex-exoplanet/VIP) for more details about the package.
+## Dependencies
+HEEPS requires a [![Python 3.6](https://img.shields.io/badge/Python-3.6-brightgreen.svg)]() (or above) environment with the following libraries installed:   
+```proper``` v3.2.5 --> [download](https://sourceforge.net/projects/proper-library/files/)  
+```vip_hci``` v0.9.11  
+```skimage```  v0.14.2  
+```numpy``` v1.19.4  
+```astropy```  v3.2.3  
+```matplotlib```  v2.2.3  
+```scipy```  v1.1.0  
 
-## Using HEEPS
+You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/check_versions.ipynb)
 
-1. Download all the HEEPS file as a zip and extract it.
-2. A default simulation parameters are described in a file called "read_config.py". These parameters can be modified/overwritten in a script.
-3. See files "example_coronagraph_psf.py" and "ADI_processing.py" to get familiar with the module
-4. See "manual.pdf" for more details about the architecture of the HEEPS package and its various sub-modules.
+## Quick start
+This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/demo.ipynb)
