@@ -8,7 +8,7 @@ import os.path
 import warnings
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
-        pscale=5.47, cube_duration=3600, mag=5, lat=-24.59, dec=-5, rim=19,
+        pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, rim=19,
         app_strehl=0.64, nscreens=None, ndet=None, tag=None, student_distrib=True,
         savepsf=False, savefits=False, starphot=1e11, verbose=False, **conf):
     
@@ -28,8 +28,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             true means background flux and photon noise are added 
         pscale (float):
             pixel scale in mas/pix (e.g. METIS LM=5.47, NQ=6.79)
-        cube_duration (int):
-            cube duration in seconds, default to 3600s (1h)
+        dit (float):
+            detector integration time in s
         mag (float):
             star magnitude at selected band
         lat (float):
@@ -78,11 +78,12 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_OFF = psf_OFF[0,:,:] # only first frame
     if verbose is True:
         print('Load PSFs for ADI')
-        print('   mode=%s, band=%s, pscale=%s'%(mode, band, pscale))
-        print('   cube_duration=%s, ncube=%s, ndet=%s'%(cube_duration, psf_ON.shape[0], psf_ON.shape[1]))
+        print('   mode=%s, band=%s, pscale=%s'%(mode, band))
+        print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
+        print('   pscale=%s mas, dit=%s s'%(pscale, dit))
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
-        conf.update(mode=mode, cube_duration=cube_duration, mag=mag)
+        conf.update(mode=mode, dit=dit, mag=mag)
         psf_ON, psf_OFF = background(psf_ON, psf_OFF, verbose=True, **conf)
     # apply APP Strehl
     if 'APP' in mode:
@@ -112,8 +113,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_OFF_crop *= starphot/ap_flux
 
     """ parallactic angles for ADI """
-    # duration -> hour angle conversion
-    ha = cube_duration/3600/24*360
+    # hour angle to deg conversion
+    ha = 360/24
     # angles in rad
     hr = np.deg2rad(np.linspace(-ha/2, ha/2, psf_ON.shape[0]))
     dr = np.deg2rad(dec)

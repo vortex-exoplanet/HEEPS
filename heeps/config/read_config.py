@@ -73,7 +73,7 @@ def read_config(verbose=False, **update_conf):
     mag_ref = 0,                        # reference magnitude for star and background fluxes
     flux_star = 8.999e+10,              # [e-/s] HCI-L long, mag 0 (Jan 21, 2020)
     flux_bckg = 8.878e+04,              # [e-/s/pix]
-    cube_duration = 3600,               # cube duration in seconds
+    dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
     f_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file

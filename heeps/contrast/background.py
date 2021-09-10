@@ -1,7 +1,7 @@
 import numpy as np
 from astropy.io import fits
 
-def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600, 
+def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, dit=0.3, 
         mag=5, mag_ref=0, flux_star=9e10, flux_bckg=9e4, app_single_psf=0.48, 
         f_vc_trans=None, f_app_trans=None, seed=123456, verbose=False, **conf):
 
@@ -18,8 +18,8 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600,
             HCI mode: RAVC, CVC, APP, CLC            
         lam (float):
             wazvelength in m
-        cube_duration (int):
-            ADI sequence duration in s
+        dit (float):
+            detector integration time in s
         mag (float):
             star magnitude
         mag_ref (float):
@@ -60,14 +60,12 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600,
     if 'APP' in mode:
         psf_OFF *= app_single_psf
         psf_ON *= app_single_psf
-    # detector integration time
-    DIT = cube_duration/psf_ON.shape[0]
     # rescale PSFs to star signal
-    star_signal = DIT * flux_star * 10**(-0.4*(mag - mag_ref))
+    star_signal = dit * flux_star * 10**(-0.4*(mag - mag_ref))
     psf_OFF *= star_signal
     psf_ON *= star_signal
     # add background
-    bckg_noise = DIT * flux_bckg * offaxis_trans * mask_trans
+    bckg_noise = dit * flux_bckg * offaxis_trans * mask_trans
     psf_ON += bckg_noise
     # add photon noise ~ N(0, sqrt(psf))
     np.random.seed(seed)
@@ -75,7 +73,7 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, cube_duration=3600,
 
     if verbose is True:
         print('   offaxis_trans=%3.4f, mask_trans=%3.4f,'%(offaxis_trans, mask_trans))
-        print('   mag=%s, DIT=%3.3f'%(mag, DIT))
+        print('   mag=%s, dit=%3.3f'%(mag, dit))
         print('   star_signal=%3.2E, bckg_noise=%3.2E'%(star_signal, bckg_noise))
 
     return psf_ON, psf_OFF
