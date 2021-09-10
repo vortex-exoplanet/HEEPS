@@ -16,7 +16,8 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     """
 
     # update conf
-    conf.update(ngrid=ngrid, npupil=npupil)
+    conf.update(ngrid=ngrid, npupil=npupil, vc_chrom_leak=vc_chrom_leak, \
+            add_cl_det=add_cl_det, tag=tag, onaxis=onaxis)
     
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)

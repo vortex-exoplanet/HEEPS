@@ -78,7 +78,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_OFF = psf_OFF[0,:,:] # only first frame
     if verbose is True:
         print('Load PSFs for ADI')
-        print('   mode=%s, band=%s, pscale=%s'%(mode, band))
+        print('   mode=%s, band=%s'%(mode, band))
         print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
         print('   pscale=%s mas, dit=%s s'%(pscale, dit))
     # add background and photon noise: include star flux and HCI mode transmission
