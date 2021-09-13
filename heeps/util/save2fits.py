@@ -37,6 +37,6 @@ def save2fits(data, name, dir_output='output_files', band='L', mode='RAVC',
             conf = {k: v for k, v in sorted(conf.items())}
             for key, value in conf.items():
                 if type(value) not in (dict, list, np.ndarray):
-                    hdul[0].header.append((key[:8], value, key))        
+                    hdul[0].header.append((key[:8], str(value)[-50:], key))        
 
     return filename

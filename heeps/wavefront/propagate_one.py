@@ -15,6 +15,9 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     thereby decentering the focal plane mask (if any).
     """
 
+    if verbose == True:
+        print('Create single %s-axis PSF'%{True:'on',False:'off'}[onaxis])
+
     # update conf
     conf.update(ngrid=ngrid, npupil=npupil, vc_chrom_leak=vc_chrom_leak, \
             add_cl_det=add_cl_det, tag=tag, onaxis=onaxis)
@@ -24,11 +27,8 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
 
     # apply phase screen (scao residuals, ncpa, petal piston)
     wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen, \
-        tiptilt=tiptilt, misalign=misalign, **conf)
+        tiptilt=tiptilt, misalign=misalign, verbose=verbose, **conf)
     
-    if verbose == True:
-        print('Create single %s-axis PSF'%{True:'on',False:'off'}[onaxis])
-
     # imaging a point source
     def point_source(wf1, verbose, conf):
         if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
