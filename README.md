@@ -1,14 +1,14 @@
 # HEEPS
 ## The HCI End-to-End Performance Simulator
 ```python
-					    )               (      (     
-					 ( /(               )\ )   )\ )  
-					 )\())  (     (    (()/(  (()/(  
-					((_)\   )\    )\    /(_))  /(_)) 
-					 _((_) ((_)  ((_)  (_))   (_))   
-					| || | | __| | __| | _ \  / __|  
-					| __ | | _|  | _|  |  _/  \__ \  
-					|_||_| |___| |___| |_|    |___/
+				    )               (      (     
+				 ( /(               )\ )   )\ )  
+				 )\())  (     (    (()/(  (()/(  
+				((_)\   )\    )\    /(_))  /(_)) 
+				 _((_) ((_)  ((_)  (_))   (_))   
+				| || | | __| | __| | _ \  / __|  
+				| __ | | _|  | _|  |  _/  \__ \  
+				|_||_| |___| |___| |_|    |___/
 ```
 HEEPS is a high-contrast imaging (HCI) simulator, mostly geared towards studying the HCI performance of the ELT/[METIS](https://elt.eso.org/instrument/METIS/) thermal infrared instrument.
 
@@ -26,12 +26,13 @@ Currently, the simulator includes four coronagraphs:
 HEEPS requires the following environment:  
 [![Python](https://img.shields.io/badge/Python->=3.6-brightgreen.svg)]()  
 [![Proper](https://img.shields.io/badge/Proper-3.2.5-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)  
-[![Vip-hci](https://img.shields.io/badge/Vip_hci-0.9.11-brightgreen.svg)]()
-[![Skimage](https://img.shields.io/badge/Skimage-0.14.2-brightgreen.svg)]()
-[![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()  
+[![Scopesim](https://img.shields.io/badge/Scopesim-0.1.1-brightgreen.svg)]()  
+[![Vip-hci](https://img.shields.io/badge/Vip_hci-0.9.11-brightgreen.svg)]()  
+[![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
+[![Skimage](https://img.shields.io/badge/Skimage-0.14.2-brightgreen.svg)]()  
 [![Numpy](https://img.shields.io/badge/Numpy-1.19.4-brightgreen.svg)]()
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-2.2.3-brightgreen.svg)]()
 [![Scipy](https://img.shields.io/badge/Scipy-1.1.0-brightgreen.svg)]()
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-2.2.3-brightgreen.svg)]()
 
 You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/check_versions.ipynb)
 
