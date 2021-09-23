@@ -23,18 +23,17 @@ Currently, the simulator includes four coronagraphs:
 - [Bowens et al. 2021](https://www.aanda.org/articles/aa/full_html/2021/09/aa41109-21/aa41109-21.html), Exoplanets with ELT-METIS: I. Estimating the direct imaging exoplanet yield around stars within 6.5 parsecs
 
 ## Dependencies
-HEEPS requires the following environment:  
-[![Python](https://img.shields.io/badge/Python->=3.6-brightgreen.svg)]()  
+You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/check_versions.ipynb)  
+
+[![Python](https://img.shields.io/badge/Python-3.7.0-brightgreen.svg)]()  
 [![Proper](https://img.shields.io/badge/Proper-3.2.5-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)  
 [![Scopesim](https://img.shields.io/badge/Scopesim-0.1.1-brightgreen.svg)]()  
-[![Vip-hci](https://img.shields.io/badge/Vip_hci-0.9.11-brightgreen.svg)]()  
+[![Vip-hci](https://img.shields.io/badge/Vip_hci-1.0.0-brightgreen.svg)]()  
 [![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
-[![Skimage](https://img.shields.io/badge/Skimage-0.14.2-brightgreen.svg)]()  
-[![Numpy](https://img.shields.io/badge/Numpy-1.19.4-brightgreen.svg)]()
+[![Skimage](https://img.shields.io/badge/Skimage-0.18.3-brightgreen.svg)]()  
+[![Numpy](https://img.shields.io/badge/Numpy-1.21.2-brightgreen.svg)]()
 [![Scipy](https://img.shields.io/badge/Scipy-1.1.0-brightgreen.svg)]()
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-2.2.3-brightgreen.svg)]()
-
-You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/check_versions.ipynb)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.3.0-brightgreen.svg)]()
 
 ## Quick start
 This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/demo.ipynb)
