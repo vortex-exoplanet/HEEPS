@@ -114,9 +114,9 @@ def get_zernike(cube_name, pup, nzer):
 
 def remove_zernike(wf, pup, allSF, zpols):
     proper.prop_add_phase(wf, allSF)
-    LSF = proper.prop_zernikes(wf, np.arange(len(zpols)) + 1, zpols)
+    LSF = proper.prop_zernikes(wf, np.arange(len(zpols)) + 1, zpols).astype('float32')
     LSF[pup==0] = 0
-    HSF = allSF - LSF    
+    HSF = allSF.astype('float32') - LSF    
     return LSF, HSF
 
 def psd_spatial_zernike(cube_name, pup, zpols, nzer, ncube):
