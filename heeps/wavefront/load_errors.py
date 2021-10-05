@@ -4,23 +4,35 @@ import os.path
 from astropy.io import fits
 import numpy as np
 
-def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, f_phase='', 
-        f_amp='', add_point_err=False, f_point_err='', add_apo_drift=False, verbose=False, 
-        apo_drift=0.02, **conf):
+def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, 
+        f_phase='', f_amp='', add_point_err=False, f_point_err='', 
+        add_apo_drift=False, apo_drift=0.02, verbose=False, **conf):
     
     ''' Load wavefront errors.
     
-    nframes: int
+    nframes (int):
         number of frames to crop the input data
-    nstep: int
+    nstep (int):
         take 1 frame every nstep (cubesize = nframes/nstep)
-    add_phase: bool
+    npupil (int):
+        size of pupil
+    lam (float):
+        wavelength in m
+    add_phase (bool):
         true if adding phase screens
-    f_phase: str
+    add_amp (bool):
+        true if adding amplitude screens
+    f_phase (str):
         path to phase screens fits file
-    add_pointing: bool
+    f_amp (str):
+        path to amplitude screens fits file
+    add_point_err (bool):
         true if adding pointing errors
-    
+    f_point_err (str):
+        path to pointing errors fits file
+    add_apo_drift (bool):
+        true if adding apodizer drift
+
     '''
     # size of cubes/arrays
     nscreens = int((nframes/nstep) + 0.5)
@@ -57,7 +69,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, add_amp=False, 
     if add_point_err is True:
         tiptilts = np.array(fits.getdata(f_point_err), ndmin= 2)
         if len(tiptilts) > 1: # cube
-            tiptilts = tiptilts[:nframes][::nstep]        
+            tiptilts = tiptilts[:nframes][::nstep]
         # convert mas to rms phase error
         tiptilts = mas2rms(tiptilts, conf['diam_ext'])
         if verbose is True:
