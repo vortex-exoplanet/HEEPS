@@ -77,9 +77,9 @@ def read_config(verbose=False, **update_conf):
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
     f_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file
-    ls_dRext = 0.0282,                  # LS Rext undersize (% diam ext)
-    ls_dRint = 0.0282,                  # LS Rint oversize (% diam ext)
-    ls_dRspi = 0.037,                   # LS spider oversize (% diam ext)
+    ls_dRext = 0.0291,                  # LS Rext undersize (% diam ext)
+    ls_dRint = 0.0291,                  # LS Rint oversize (% diam ext)
+    ls_dRspi = 0.0317,                  # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
     vc_charge = 2,                      # vortex topological charge
     vc_zoffset = 0,                     # vortex defocus in m (z axis)
@@ -101,42 +101,42 @@ def read_config(verbose=False, **update_conf):
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],
     band_specs = {  
-        'L': {'lam': 3.82e-6,
+        'L': {'lam': 3.81e-6,
             'pscale': 5.47,
             'flux_star': 8.999e+10,                 # HCI-L long
             'flux_bckg': 8.878e+04,
-            'ls_dRspi': 0.037},
-        'M': {'lam': 4.8e-6,
+            'ls_dRspi': 0.0317},
+        'M': {'lam': 4.79e-6,
             'pscale': 5.47,
             'flux_star': 2.452e+10,                 # CO ref
             'flux_bckg': 6.714e+05,
-            'ls_dRspi': 0.037},
-        'N1': {'lam': 8.65e-6,
+            'ls_dRspi': 0.0317},
+        'N1': {'lam': 8.70e-6,
             'pscale': 6.79,
             'flux_star': 3.684e+10,                 # GeoSnap N1
             'flux_bckg': 4.725e+07,
-            'ls_dRspi': 0.037},
-        'N2': {'lam': 11.25e-6, 
+            'ls_dRspi': 0.0383},
+        'N2': {'lam': 11.33e-6, 
             'pscale': 6.79,
             'flux_star': 3.695e+10,                 # GeoSnap N2
             'flux_bckg': 1.122e+08,
-            'ls_dRspi': 0.037},
-        'N1a': {'lam': 8.65e-6, 
+            'ls_dRspi': 0.0383},
+        'N1a': {'lam': 8.67e-6, 
             'pscale': 10.78,
             'flux_star': 2.979e+10,                 # Aquarius N1
             'flux_bckg': 9.630e+07,
-            'ls_dRspi': 0.037},
-        'N2a': {'lam': 11.25e-6, 
+            'ls_dRspi': 0.0383},
+        'N2a': {'lam': 11.21e-6, 
             'pscale': 10.78,
             'flux_star': 2.823e+10,                 # Aquarius N2
             'flux_bckg': 2.142e+08,
-            'ls_dRspi': 0.037}
+            'ls_dRspi': 0.0383}
         },
     # Multiple HCI modes
     modes = ['RAVC', 'CVC', 'CLC', 'APP', 'ELT'],
     mode_specs = {
-        'RAVC': {'ls_dRint': 0.0282},
-        'CVC': {'ls_dRint': 0.05},
+        'RAVC': {'ls_dRint': 0.0291},
+        'CVC': {'ls_dRint': 0.08},
         'CLC': {'ls_dRint': 0.10}
         },
 
@@ -156,7 +156,7 @@ def read_config(verbose=False, **update_conf):
     ncpa_dyn = 40,                      # dynamic (nm rms)
 
     add_point_err = False,              # pointing errors
-    f_point_err = 'wavefront/point_all_3600s_300ms.fits',
+    f_point_err = 'wavefront/point_all_3600s_300ms_L.fits',
     point_qsta = 0.4,                   # quasistatic (mas rms)
     point_dyn = 2,                      # dynamic (mas rms)
 

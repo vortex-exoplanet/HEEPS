@@ -1,4 +1,4 @@
-from heeps.util.img_processing import crop_img, pad_img, resize_img
+from heeps.util.img_processing import crop_img, resize_img
 from heeps.util.multiCPU import multiCPU
 from heeps.util.notify import notify
 import os
@@ -11,27 +11,33 @@ conf['send_to'] = 'cdelacroix@uliege.be'
 conf['send_message'] = 'cube calculation finished OK.'
 
 # useful inputs
-tag = 'Cbasic_20201130'
+os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files')))
+tag = 'Cbasic_20211004'#'Cbasic_20201130'
 prefix = 'Residual_phase_screen_'#'tarPhase_1hr_100ms_'
 suffix = 'ms'
-duration = 3600
-samp = 300
+duration = 600#3600
+samp = 100#300
 start = 2101#0#1001
 nimg = 720
-npupil = 285
+band = 'L'
+npupil = 285#720
 pad_frame = False
-savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s.fits'%(tag, duration, samp, npupil)
+savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s_%s.fits'%(tag, duration, samp, band, npupil)
+#savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s_WVseeing.fits'%(tag, duration, samp, npupil)
 
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_2020-10-16T10:25:14/residualPhaseScreens'
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_2020-11-05T12:40:27/residualPhaseScreens'
-input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_2020-11-30T20:52:24/residualPhaseScreens'
-output_folder = 'METIS_CBASIC_CUBES'
+#input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_2020-11-30T20:52:24/residualPhaseScreens'
+#input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_uncorrected_2021-06-01T12:02:36/residualPhaseScreens'
+input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_noWtt_2021-10-04T12:28:42/residualPhaseScreens'
+output_folder = 'wavefront/cbasic'
 cpu_count = None
 
 # mask
 mask = fits.getdata(os.path.join(input_folder, 'Telescope_Pupil.fits'))
 mask = crop_img(mask, nimg)
 mask_pupil = np.rot90(resize_img(mask, npupil))
+#fits.writeto(os.path.join(output_folder, 'mask_%s_%s_%s.fits'%(tag, band, npupil)), np.float32(mask_pupil), overwrite=True)
 fits.writeto(os.path.join(output_folder, 'mask_%s_%s.fits'%(tag, npupil)), np.float32(mask_pupil), overwrite=True)
 
 # filenames

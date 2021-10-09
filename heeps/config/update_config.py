@@ -1,14 +1,13 @@
 from heeps.optics import vortex_init
 from heeps.util.round2odd import round2odd
 from heeps.util.save2pkl import save2pkl
-import collections
 import astropy.units as u
 import numpy as np
 
 def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC':{}}, 
-        lam=3.8e-6, pupil_img_size=40, diam_ext=37, diam_int=11, 
-        ngrid=1024, pscale=5.47, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, 
-        vc_charge=2, vortex_calib='', saveconf=False, verbose=False, **conf):
+        lam=3.8e-6, pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, 
+        pscale=5.47, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, saveconf=False, 
+        verbose=False, **conf):
     
     '''
     
