@@ -17,12 +17,12 @@ diam_nominal = 38.542
 
 master_seed = {'LTF':123456, 'HTF':345678}
 cutoff = 0.01 # in Hz
-tag = 'Cbasic_20201130'
+tag = 'Cfull_20211007'#'Cbasic_20201130'
 t_max = 3600 # in s
 dt = 300 # in ms
 npetals = 6
-f_scao_screens = 'wavefront/cbasic/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
-f_mask = 'wavefront/cbasic/mask_%s_%s_%s.fits'
+f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
+f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
 f_ncpa_frame = 'wavefront/ncpa/DIFF_LM_20201119_fullM1.fits'
 f_ncpa_screens = 'wavefront/ncpa/ncpa_fullM1_%s_%scpp_%s_%s.fits'
 f_petal_screens = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'

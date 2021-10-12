@@ -95,10 +95,11 @@ def temporal(t_max, dt, fc1, fc2, seed=123456):
     ys1 = np.real(ys[:N])
     return ys1
 
-def get_zernike(cube_name, pup, nzer):
+def fit_zer(pup, rad, nzer, cube):
     # pup should NOT have NANs for prop_fit_zernikes
-    def fit_zer(pup, rad, nzer, cube):
-        return proper.prop_fit_zernikes(cube, pup, rad, nzer, eps=0, fit=True)
+    return proper.prop_fit_zernikes(cube, pup, rad, nzer, eps=0, fit=True)
+
+def get_zernike(cube_name, pup, nzer):
     zpols_name = cube_name[:-5] + '_zpols_%s.fits'%nzer
     try:
         zpols = fits.getdata(zpols_name)
