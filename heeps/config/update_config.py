@@ -4,17 +4,17 @@ from heeps.util.save2pkl import save2pkl
 import astropy.units as u
 import numpy as np
 
-def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC':{}}, 
-        lam=3.8e-6, pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, 
-        pscale=5.47, hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, saveconf=False, 
+def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6, 
+        pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, pscale=5.47, 
+        hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, saveconf=False, 
         verbose=False, **conf):
     
     '''
     
-    Update config parameters. The following parameters 
-    will be updated to match the selected spectral band and HCI mode:
-        lam, pscale, flux_star, flux_bckg, ls_dRspi, ls_dRint, npupil, 
-        ndet, ravc_t, ravc_r, beam_ratio, r_obstr, hfov, hfov_lamD
+    Update config parameters. The following parameters will be updated to match 
+    the selected spectral band:
+        lam, pscale, flux_star, flux_bckg, npupil, ndet,
+        ravc_t, ravc_r, beam_ratio, r_obstr, hfov, hfov_lamD
     
     Returns: conf (updated and sorted)
 
@@ -23,11 +23,9 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', mode_specs={'RAVC'
     if verbose is True:
         print('Simulation config: band=%s, mode=%s'%(band, mode))
         print('\u203e'*18)
-    # update band and mode specs
+    # update band specs
     if np.any(band_specs.get(band)):
         conf.update(band_specs.get(band))
-    if np.any(mode_specs.get(mode)):
-        conf.update(mode_specs.get(mode))
     # calculate pupil size: must be odd for PROPER
     lam = conf.get('lam', lam)
     pscale = conf.get('pscale', pscale)

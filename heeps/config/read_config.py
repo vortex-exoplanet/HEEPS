@@ -9,9 +9,9 @@ proper.print_it = False
 def read_config(verbose=False, **update_conf):
 
     conf = dict(
-
+    
     # =============================================================================
-    #           Console and file management 
+    #           Console and file management
     # =============================================================================
     cpu_count = None,                   # 1 = single core; None = max cores
     send_to = None,                     # user's email, for notifications
@@ -43,13 +43,11 @@ def read_config(verbose=False, **update_conf):
     npetals = 6,                        # number of petals
     # number of hexagonal segments per column (from left to right)
     seg_ny = np.array([10, 13, 16, 19, 22, 23, 24, 25, 26, 27, 28, 29, \
-                      30, 31, 30, 31, 30, 31, 30, 31, 30, 31, 30, 29, \
-                      28, 27, 26, 25, 24, 23, 22, 19, 16, 13, 10]),
+                       30, 31, 30, 31, 30, 31, 30, 31, 30, 31, 30, 29, \
+                       28, 27, 26, 25, 24, 23, 22, 19, 16, 13, 10]),
     # coordinates of missing segments
-    seg_missing = [],
-#    seg_missing = [(-2,5),(-2,6),(-3,4),(-3,5),(-3,6),(-4,5),(-4,6)],
-
-
+    seg_missing = [], #[(-2,5),(-2,6),(-3,4),(-3,5),(-3,6),(-4,5),(-4,6)],
+    
     # =============================================================================
     #           Parameters for observing modes and bands
     # =============================================================================
@@ -100,45 +98,34 @@ def read_config(verbose=False, **update_conf):
     student_distrib = True,              # use Student's distribution instead of Gaussian
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],
-    band_specs = {  
+    band_specs = {
         'L': {'lam': 3.81e-6,
             'pscale': 5.47,
             'flux_star': 8.999e+10,                 # HCI-L long
-            'flux_bckg': 8.878e+04,
-            'ls_dRspi': 0.0317},
+            'flux_bckg': 8.878e+04},
         'M': {'lam': 4.79e-6,
             'pscale': 5.47,
             'flux_star': 2.452e+10,                 # CO ref
-            'flux_bckg': 6.714e+05,
-            'ls_dRspi': 0.0317},
+            'flux_bckg': 6.714e+05},
         'N1': {'lam': 8.70e-6,
             'pscale': 6.79,
             'flux_star': 3.684e+10,                 # GeoSnap N1
-            'flux_bckg': 4.725e+07,
-            'ls_dRspi': 0.0383},
+            'flux_bckg': 4.725e+07},
         'N2': {'lam': 11.33e-6, 
             'pscale': 6.79,
             'flux_star': 3.695e+10,                 # GeoSnap N2
-            'flux_bckg': 1.122e+08,
-            'ls_dRspi': 0.0383},
+            'flux_bckg': 1.122e+08},
         'N1a': {'lam': 8.67e-6, 
             'pscale': 10.78,
             'flux_star': 2.979e+10,                 # Aquarius N1
-            'flux_bckg': 9.630e+07,
-            'ls_dRspi': 0.0383},
+            'flux_bckg': 9.630e+07},
         'N2a': {'lam': 11.21e-6, 
             'pscale': 10.78,
             'flux_star': 2.823e+10,                 # Aquarius N2
-            'flux_bckg': 2.142e+08,
-            'ls_dRspi': 0.0383}
+            'flux_bckg': 2.142e+08}
         },
     # Multiple HCI modes
     modes = ['RAVC', 'CVC', 'CLC', 'APP', 'ELT'],
-    mode_specs = {
-        'RAVC': {'ls_dRint': 0.0291},
-        'CVC': {'ls_dRint': 0.08},
-        'CLC': {'ls_dRint': 0.10}
-        },
 
     # =============================================================================
     #           Parameters for wavefront
@@ -162,15 +149,15 @@ def read_config(verbose=False, **update_conf):
 
     add_apo_drift = False,              # apodizer drift
     apo_drift = 0.02,                   # (% ptv)
-    
+
     )                                   # end of default conf dict
- 
+
     # =============================================================================
     #           Perform initialization actions
     # =============================================================================
     
     # update conf dictionary
-    conf.update(**update_conf)    
+    conf.update(**update_conf)
     if verbose is True:
         print('Default config: band=%s, mode=%s'%(conf['band'], conf['mode']))
         print('\u203e'*15)
