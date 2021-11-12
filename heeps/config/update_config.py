@@ -13,8 +13,10 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
     
     Update config parameters. The following parameters will be updated to match 
     the selected spectral band:
-        lam, pscale, flux_star, flux_bckg, npupil, ndet,
-        ravc_t, ravc_r, beam_ratio, r_obstr, hfov, hfov_lamD
+        lam, pscale, flux_star, flux_bckg, npupil, beam_ratio, ndet,
+        hfov, hfov_lamD
+    For the RAVC mode, the following parameters will be updated:
+        r_obstr, ravc_t, ravc_r 
     
     Returns: conf (updated and sorted)
 
