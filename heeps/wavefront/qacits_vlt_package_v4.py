@@ -143,7 +143,6 @@ def run_qacits_vlt(parameter_file,
     mean_psf_flux = mean_psf_flux * sci_dit / psf_dit
 
     ### Image binning ########################################################
-    
     if ((n_bin == 1) and n_sci > 1):
         # all images averaged
         sci_cube_binned = np.expand_dims(np.mean(sci_cube, axis=0),0)
@@ -162,7 +161,6 @@ def run_qacits_vlt(parameter_file,
     ### Tip-tilt estimate ####################################################
     #-- load QACITS params
     qacits_params = ConfigObj(parameter_file, unrepr=True)
-    
     tiptilt_estimate = quadrant_tiptilt(qacits_params, 
                                         sci_cube_binned,vortex_center_yx, 
                                         mean_psf_flux, image_sampling,
@@ -176,12 +174,10 @@ def run_qacits_vlt(parameter_file,
         tt_rt = np.zeros_like(tiptilt_estimate)
         tt_rt[:,0] = np.sqrt(tiptilt_estimate[:,0]**2+tiptilt_estimate[:,1]**2)
         tt_rt[:,1] = np.arctan2(tiptilt_estimate[:,1],tiptilt_estimate[:,0]) * 180./np.pi
-        
         #-- some parameters for display
         subim_width_lbdd = 3.
         inner_rad_lbdd  = 1.9
         outer_rad_lbdd  = 2.3
-    
         #-- Quadrant analysis results for the last image
         img_i = -1
         print('\n Quadrant Analysis results'+
@@ -192,16 +188,265 @@ def run_qacits_vlt(parameter_file,
                                            fig_num=41, tt_lim=1., plot_title='QUADRANT ANALYSIS',
                                            img_circ_rad=(inner_rad_lbdd, outer_rad_lbdd), 
                                            tt_circ_rad=(.2,.4,.6,.8,1.))
-        
         #-- plot all estimates
         fig2, ax2 = display_tiptilt_sequence(tiptilt_estimate, 
                                              tt_circ_rad=(.2,.4,.6,.8,1.), 
                                              fignum=42)
-        
         plt.show(block=False)
 
-    
     return tiptilt_estimate, sci_cube_binned
+
+def quadrant_tiptilt_v8(qacits_params, img_cube, vortex_center_yx, psf_flux, 
+        image_sampling, calib_tt=None, model_calibration=False, force=None, 
+        exact=_exact_default_, verbose=False):
+    """
+    QACITS tip-tilt estimator method optimized for the VLT instruments (ERIS, NEAR).
+    
+     Parameters
+    ----------
+    qacits_params: dict
+        dict object containing the relevant parameter values for QACITS.
+    img_cube : 2D or 3D array
+        input science coronagraphic image cube used to estimate the tip-tilt 
+        based on the QACITS method. 
+        Dimensions are (ny, nx) for 1 frame or (n_img, ny, nx) for a cube.
+    vortex_center_yx : tuple of floats
+        coordinates of the vortex center position in pixels.
+        vortex_center_yx = (vortex_center_y, vortex_center_x).
+    psf_flux : float
+        Flux of the PSF integrated in an area of radius 1 lambda/D.
+    image_sampling : float
+        Image sampling given in pixels per lambda/D.
+    calib_tt : 1D array
+        when in model calibration mode, the true tip-tilt amplitude must be 
+        provided in order to perform the fit of the models.
+    model_calibration : boolean
+        If True, runs the calibration mode using sci_cube, psf_cube and calib_tt.
+    force : string
+        force the QACITS estimator to use only the inner (force='inner') or the
+        outer (force='outer') estimator.
+    exact : boolean
+        if True, the photometry in the quadrant will be exact (requires the
+        photutils module). Otherwise the photometry measurement is limited by
+        the pixel sampling.
+    verbose : boolean
+        prints various things in the console, for debugging purposes.
+        
+    Returns
+    -------
+    final_est_xy : ndarray
+        final tip-tilt (x,y) estimate
+    qacits_params : dict
+        updated qacits parameters
+    """
+    ### Unpack the parameters (dependant on the instrument) #################
+    radii = qacits_params['radii']
+    ratio = qacits_params['ratio']
+
+    ### Compute the differential intensities in the 3 regions #################
+    if len(img_cube.shape) == 2:
+        img_cube = np.expand_dims(img_cube, 0)
+    n_img = img_cube.shape[0]
+    img0 = img_cube[0]
+
+    #-- Create the corresponding masks
+    masks = {}
+    for key in radii:
+        masks[key]= (circle_mask(img0, radii[key][1] * image_sampling, 
+                              cx=vortex_center_yx[1], cy=vortex_center_yx[0]) * 
+                 (1.-circle_mask(img0, radii[key][0] * image_sampling, 
+                              cx=vortex_center_yx[1], cy=vortex_center_yx[0])))
+    
+    #-- Compute the differential intensities
+    all_dixy = {}
+    for key in masks:
+        if exact is True:
+            all_dixy1 = get_delta_i_exact(img_cube/psf_flux, 
+                    radii[key][1] * image_sampling,
+                    cx=vortex_center_yx[1], cy=vortex_center_yx[0])
+            if radii[key][0] !=0 :
+                all_dixy0 = get_delta_i_exact(img_cube/psf_flux, 
+                        radii[key][0] * image_sampling,
+                        cx=vortex_center_yx[1], cy=vortex_center_yx[0])
+            else :
+                all_dixy0 = 0.
+            all_dixy[key] = all_dixy1 - all_dixy0
+        else :
+            all_dixy[key] = get_delta_i(img_cube*masks[key]/psf_flux, 
+                    cx=vortex_center_yx[1], cy=vortex_center_yx[0])
+    
+    #-- Debias the diff. int. computed on full area from the linear component
+    #   (estimated from the outer area)
+    all_dixy['full'] += (ratio * all_dixy['outer'])
+
+    # Transform to mod-arg (modulus-argument)
+    all_di_mod = {}
+    all_di_arg = {}
+    for key in ['inner','outer','full']:
+        all_di_mod[key] = np.sqrt(all_dixy[key][:,0]**2 + all_dixy[key][:,1]**2)
+        all_di_arg[key] = np.arctan2(all_dixy[key][:,1], all_dixy[key][:,0])
+
+    #***** model calibration mode ********************************************
+    if model_calibration is True:
+        tt_fit_lim = {'inner':(0., 0.1),'outer':(0., 0.5),'full':(0.2, 0.5)}
+        colors = {'inner':[0.,0.3,.7],'outer':[.7,0.,0.3],'full':[0.,.7,0.5]}
+        plt.figure(num=1, figsize=(12,9))
+        plt.clf()
+        fig, ax = plt.subplots(nrows=3,ncols=2,num=1)
+        fig.subplots_adjust(hspace=0)
+        coeffs = {}
+        for i, region in enumerate(tt_fit_lim):
+            ind_x = np.where((calib_tt>tt_fit_lim[region][0]) & 
+                             (calib_tt<tt_fit_lim[region][1]))[0]
+            x = calib_tt[ind_x]
+            yy  = all_di_mod[region]
+            y = yy[ind_x]
+            if region == 'full':
+                y  = np.abs(y)**(1/3) # full estimator 
+            coeff = linregress(x,y).slope
+            fit_coeff = calib_tt*coeff
+            if region == 'full':
+                coeff = coeff**3
+                fit_coeff = fit_coeff**3
+            ax[i,0].set_xlabel(r'True tip-tilt [$\lambda/D$]')
+            ax[i,0].set_ylabel('Normalized Diff. Intensity')
+            ax[i,0].plot(calib_tt, yy, 'o', color=colors[region], alpha=.9, markersize=2,
+                       label=region+r' - r = {0:.1f} to {1:.1f} $\lambda/D$'
+                       .format(radii[region][0], radii[region][1]))
+            ax[i,0].plot(calib_tt, fit_coeff, color=colors[region], alpha=.6, linestyle='--', 
+                       label=r'Fit coeff. [{0:.2f}-{1:.2f}] $\lambda/D$ = {2:.3f}'
+                       .format(tt_fit_lim[region][0],tt_fit_lim[region][1],coeff))
+            ax[i,0].grid(color='.8',linestyle='--')
+            ax[i,0].set_xlim(0.,)
+            ax[i,0].legend()
+            error = ((yy - fit_coeff) / yy) * 100
+            ax[i,1].set_xlabel(r'True tip-tilt [$\lambda/D$]')
+            ax[i,1].set_ylabel('Model Error [%]')
+            ax[i,1].plot(calib_tt, error, 
+                       'o', markersize=2, color=colors[region], alpha=.6)
+            ax[i,1].set_ylim(-20., 20.)
+            ax[i,1].set_xlim(0.,)
+            ax[i,1].grid(color='.8',linestyle='--')
+            coeffs[region] = coeff
+
+        qacits_params['inner_slope'] = coeffs['inner']
+        qacits_params['outer_slope'] = coeffs['outer']
+        qacits_params['full_coeff'] = coeffs['full']
+        print('\nModel calibration results:'+
+              '\nInner slope = {0:.3f}\nOuter slope = {1:.3f}\nFull coeff  = {2:.3f}'
+              .format(*coeffs.values()))
+    
+    ### Inverse the models ####################################################
+    inner_slope = qacits_params['inner_slope']
+    outer_slope = qacits_params['outer_slope']
+    full_coeff = qacits_params['full_coeff']
+    phase_tolerance = qacits_params['phase_tolerance']
+    modul_tolerance = qacits_params['modul_tolerance']
+    small_tt_regime = qacits_params['small_tt_regime']
+    large_tt_regime = qacits_params['large_tt_regime']
+    
+    #-- inner region: linear
+    inner_est      = np.zeros((n_img, 2))
+    inner_est[:,0] = all_di_mod['inner'] / inner_slope
+    inner_est[:,1] = all_di_arg['inner'] + np.pi
+    #-- outer region: linear
+    outer_est      = np.zeros((n_img, 2))
+    outer_est[:,0] = all_di_mod['outer'] / outer_slope
+    outer_est[:,1] = all_di_arg['outer']
+    #-- full region: cubic
+    full_est      = np.zeros((n_img, 2))
+    full_est[:,0] = np.abs(all_di_mod['full']/full_coeff)**(1./3.)
+    full_est[:,1] = all_di_arg['full']    
+
+    #-- Estimator selection: 
+    final_est = np.zeros((n_img, 2))
+    test_output = np.zeros((n_img, 3))
+    if force == 'inner':
+        final_est = inner_est
+    elif force == 'outer':
+        final_est = outer_est
+    elif force == 'full':
+        final_est = full_est
+    else :
+        for i in range(n_img):
+            # modulus to be trusted for choosing tt regime
+            outer_modulus = outer_est[i,0]
+            
+            # build complex phasors
+            inner_phasor = inner_est[i,0] * np.exp(1j * inner_est[i,1]) 
+            outer_phasor = outer_est[i,0] * np.exp(1j * outer_est[i,1])
+            full_phasor  = full_est[i,0]  * np.exp(1j * full_est[i,1])
+            
+            # test estimate agreement
+            #-- phase agreement: IN/OUT
+            test_phasor = np.exp(1j * inner_est[i,1]) * np.exp(-1j * outer_est[i,1])
+            inout_test_phase = np.arctan2(np.imag(test_phasor), np.real(test_phasor))
+            in_out_phase_agreement = (np.abs(inout_test_phase) < phase_tolerance/180*np.pi)
+            #-- phase agreement: OUT/FULL
+            test_phasor = np.exp(1j * full_est[i,1]) * np.exp(-1j * outer_est[i,1])
+            fullout_test_phase = np.arctan2(np.imag(test_phasor), np.real(test_phasor))
+            full_out_phase_agreement = (np.abs(fullout_test_phase) < phase_tolerance/180*np.pi)
+            full_out_modul_agreement = (np.abs(full_est[i,0]-outer_est[i,0]) < full_est[i,0]*modul_tolerance)
+            if verbose is True :
+                print(i, inner_est[i,0], outer_est[i,0], full_est[i,0], in_out_phase_agreement, 
+                        np.abs(test_phasor)*180./np.pi, in_out_phase_agreement)
+                print('{0:03d} -- '.format(i) +
+                       '\n \t IN   {0:.3f} l/D {1:.1f} deg'.format(inner_est[i,0],inner_est[i,1]*180/np.pi)+
+                       '\n \t OUT  {0:.3f} l/D {1:.1f} deg'.format(outer_est[i,0],outer_est[i,1]*180/np.pi)+
+                       '\n \t FULL {0:.3f} l/D {1:.1f} deg'.format(full_est[i,0],full_est[i,1]*180/np.pi))
+            
+            ### SMALL TIPTILT REGIME
+            if outer_modulus < small_tt_regime :
+                if verbose is True :
+                    print('\n \t > IN-OUT phase agreement is {}'.format(in_out_phase_agreement))
+                if in_out_phase_agreement == True:
+                    meanphasor = (inner_phasor + outer_phasor)/2.
+                    if verbose is True :
+                        print('\t => small1: in+out')
+                else :
+                    meanphasor = outer_phasor 
+                    if verbose is True :
+                        print('\t => small2: out')
+
+            ### LARGE TIPTILT REGIME
+            else :
+                if verbose is True :
+                    print('\n \t > FULL-OUT phase agreement is {}'.format(full_out_phase_agreement)+
+                    '\n \t > FULL-OUT modulus agreement is {}'.format(full_out_modul_agreement))
+                if full_out_phase_agreement == True:
+                    if full_out_modul_agreement == True:
+                        meanphasor = ( outer_phasor + full_phasor )/2.
+                        if verbose is True :
+                            print('\t => large1: full+out')
+                    else :
+                        if full_est[i,0] < 1.:
+                            meanphasor = full_phasor
+                        else:
+                            meanphasor = np.exp(1j * full_est[i,1]) # set the maximal estimate to 1 lbd/D
+                        if verbose is True :
+                            print('\t => large2: full')
+                else :
+                    if full_est[i,0] < 1.:
+                        meanphasor = full_phasor
+                    else:
+                        meanphasor = np.exp(1j * full_est[i,1]) # set the maximal estimate to 1 lbd/D
+                    if verbose is True :
+                        print('\t => large3: full')
+
+            if verbose is True:
+                final_phase = np.arctan2(np.imag(meanphasor), np.real(meanphasor))*180./np.pi
+                print('\t    final estimator mod = {0:.3f} l/D phase = {1:.1f} deg'.format(np.abs(meanphasor), final_phase))
+            final_est[i,0] = np.abs(meanphasor)
+            final_est[i,1] = np.arctan2(np.imag(meanphasor),np.real(meanphasor))
+            test_output[i,:] = np.array([inout_test_phase,fullout_test_phase,np.abs(full_est[i,0]-outer_est[i,0])])
+    
+    ### Final estimator in X,Y ################################################
+    final_est_xy = np.zeros_like(final_est)
+    final_est_xy[:,0] = final_est[:,0] * np.cos(final_est[:,1])
+    final_est_xy[:,1] = final_est[:,0] * np.sin(final_est[:,1])
+
+    return final_est_xy, qacits_params
+
 
 def quadrant_tiptilt_v7b(qacits_params, img_cube, vortex_center_yx, 
                      psf_flux, image_sampling,
@@ -531,330 +776,6 @@ def quadrant_tiptilt_v7b(qacits_params, img_cube, vortex_center_yx,
     full_estimate_output[:,8:] = test_output
 
     return full_estimate_output
-
-
-def quadrant_tiptilt_v7(qacits_params, img_cube, vortex_center_yx, 
-                     psf_flux, image_sampling,
-                     model_calibration = False, calib_tt = None, 
-                     force=None, exact=True, verbose=False):
-    """
-    QACITS tip-tilt estimator method optimized for the ERIS instrument.
-    
-     Parameters
-    ----------
-    qacits_params: dict
-        ConfigObj object containing the relevant parameter values for QACITS.
-    img_cube : 2D or 3D array
-        input science coronagraphic image cube used to estimate the tip-tilt 
-        based on the QACITS method. 
-        Dimensions are (ny, nx) for 1 frame or (n_img, ny, nx) for a cube.
-    vortex_center_yx : tuple of floats
-        coordinates of the vortex center position in pixels.
-        vortex_center_yx = (vortex_center_y, vortex_center_x).
-    psf_flux : float
-        Flux of the PSF integrated in an area of radius 1 lambda/D.
-    image_sampling : float
-        Image sampling given in pixels per lambda/D.
-    model_calibration : boolean
-        If True, the QACITS model for ERIS (slopes and cubic coefficient) will
-        be computed using the input sci_cube, psf_cube and calib_tt.
-    calib_tt : 1D array
-        when in model calibration mode, the true tip-tilt amplitude must be 
-        provided in order to perform the fit of the models.
-    force : string
-        force the QACITS estimator to use only the inner (force='inner') or the
-        outer (force='outer') estimator.
-    exact : boolean
-        if True, the photometry in the quadrant will be exact (requires the
-        photutils module). Otherwise the photometry measurement is limited by
-        the pixel sampling.
-    verbose : boolean
-        prints various things in the console, for debugging purposes.
-        
-    Returns
-    -------
-    final_est_xy : 2D array
-        Final tip-tilt estimates in a 2D array of dimensions (n_img, 2). 
-        final_est_xy[:,0] and final_est_xy[:,1] are the tip-tilt amplitudes 
-        along the x and y directions respectively.
-    """
-    ### Unpack the parameters (dependant on the instrument) ###
-    radii = qacits_params['radii']
-    inner_slope = qacits_params['inner_slope']
-    outer_slope = qacits_params['outer_slope']
-    full_coeff = qacits_params['full_coeff']
-    ratio = qacits_params['ratio']
-    phase_tolerance = qacits_params['phase_tolerance'] / 180.0 * np.pi
-    modul_tolerance = qacits_params['modul_tolerance']
-    small_tt_regime = qacits_params['small_tt_regime']
-    large_tt_regime = qacits_params['large_tt_regime']
-
-    #***** model calibration mode *********************************************
-    if model_calibration is True:
-        inner_slope = 1.
-        outer_slope = 1.
-        full_coeff  = 1.
-        tt_fit_lim  = {'inner': (0., 0.1),
-                       'outer': (0., 0.5),
-                       'full':  (0.2, 0.5)}
-    ###########################################################################
-    
-    if len(img_cube.shape) == 2:
-        img_cube = np.expand_dims(img_cube, 0)
-    n_img = img_cube.shape[0]
-    
-    ### Compute the differential intensities in the 3 regions #################
-    img0 = img_cube[0]
-    #-- Create the corresponding masks
-    masks = {}
-    for key in radii:
-        masks[key]= (circle_mask(img0, radii[key][1] * image_sampling, 
-                              cx=vortex_center_yx[1], cy=vortex_center_yx[0]) * 
-                 (1.-circle_mask(img0, radii[key][0] * image_sampling, 
-                              cx=vortex_center_yx[1], cy=vortex_center_yx[0])) )
-    
-    #-- Compute the differential intensities
-    all_dix = {}
-    all_diy = {}
-    all_di_mod = {}
-    all_di_arg = {}
-
-    for key in masks:
-        if exact is True:
-            all_dixy1 = get_delta_i_exact(img_cube/psf_flux, radii[key][1] * image_sampling, 
-                                   cx=vortex_center_yx[1], 
-                                   cy=vortex_center_yx[0])
-            if radii[key][0] !=0 :
-                all_dixy0 = get_delta_i_exact(img_cube/psf_flux, radii[key][0] * image_sampling,
-                                       cx=vortex_center_yx[1], 
-                                       cy=vortex_center_yx[0])
-            else :
-                all_dixy0 = 0.
-                
-            all_dixy = all_dixy1 - all_dixy0
-            
-        else :
-            all_dixy = get_delta_i(img_cube*masks[key]/psf_flux, 
-                                   cx=vortex_center_yx[1], 
-                                   cy=vortex_center_yx[0])
-        
-        all_dix[key] = all_dixy[:,0]
-        all_diy[key] = all_dixy[:,1]
-        
-        all_di_mod[key] = np.sqrt(all_dix[key]**2+all_diy[key]**2)
-        all_di_arg[key] = np.arctan2(all_diy[key], all_dix[key])
-    
-    #print('all_dixy inner',all_dix['inner'])
-    #print('all_dixy outer',all_dix['outer'])
-    
-    #-- Debias the diff. int. computed on full area from the linear component
-    #   (estimated from the outer area)
-    all_dix['full'] += (ratio * all_dix['outer'])
-    all_diy['full'] += (ratio * all_diy['outer'])
-    all_di_mod['full'] = np.sqrt(all_dix['full']**2+all_diy['full']**2)
-    all_di_arg['full'] = np.arctan2(all_diy['full'], all_dix['full'])
-    
-    ### Inverse the models ####################################################
-    
-    #-- inner region: linear
-    inner_est      = np.zeros((n_img, 2))
-    inner_est[:,0] = all_di_mod['inner'] / inner_slope
-    inner_est[:,1] = all_di_arg['inner'] + np.pi
-    #-- outer region: linear
-    outer_est      = np.zeros((n_img, 2))
-    outer_est[:,0] = all_di_mod['outer'] / outer_slope
-    outer_est[:,1] = all_di_arg['outer']
-    #-- full region: cubic
-    full_est      = np.zeros((n_img, 2))
-    full_est[:,0] = np.abs(all_di_mod['full']/full_coeff)**(1./3.)
-    full_est[:,1] = all_di_arg['full']    
-
-    #***** model calibration mode ********************************************
-    if model_calibration is True:
-        colors = {'inner':[0.,0.3,.7],'outer':[.7,0.,0.3],'full':[0.,.7,0.5]}
-        slopes = {}
-        model_order = {'inner':1,'outer':1,'full':3}
-        plt.figure(num=1, figsize=(12,9))
-        plt.clf()
-        fig, ax = plt.subplots(nrows=3,ncols=2,num=1)
-        fig.subplots_adjust(hspace=0) #wspace=0
-        for i, region in enumerate(tt_fit_lim):
-            ind_x = np.where((calib_tt>tt_fit_lim[region][0]) & 
-                             (calib_tt<tt_fit_lim[region][1]))[0]
-            x = calib_tt[ind_x]
-            if   region == 'inner':
-                yy  = inner_est[:,0]
-            elif region == 'outer':
-                yy  = outer_est[:,0]
-            elif region == 'full':
-                yy  = full_est[:,0]
-            y = yy[ind_x]
-            lin_params = linregress(x,y)
-            slopes[region] = lin_params.slope
-#            ax[i].set_title(region)
-            ax[i,0].set_xlabel(r'True tip-tilt [$\lambda/D$]')
-            ax[i,0].set_ylabel('Normalized Diff. Intensity')
-            ax[i,0].plot(calib_tt, yy**model_order[region], 'o', 
-                       color=colors[region], alpha=.9, markersize=2,
-                       label=region+r' - r = {0:.1f} to {1:.1f} $\lambda/D$'
-                       .format(radii[region][0], radii[region][1]))
-            ax[i,0].plot(calib_tt, calib_tt**model_order[region]*slopes[region]**model_order[region], 
-                       color=colors[region], alpha=.6, linestyle='--', 
-                       label=r'Fit coeff. [{0:.2f}-{1:.2f}] $\lambda/D$ = {2:.3f}'
-                       .format(tt_fit_lim[region][0],tt_fit_lim[region][1],slopes[region]**model_order[region]))
-            ax[i,0].grid(color='.8',linestyle='--')
-            ax[i,0].set_xlim(0.,)
-            ax[i,0].legend()
-            
-            error = ((yy**model_order[region] - 
-                      calib_tt**model_order[region]*slopes[region]**model_order[region]) /
-                      yy**model_order[region]) * 100.
-            ax[i,1].set_xlabel(r'True tip-tilt [$\lambda/D$]')
-            ax[i,1].set_ylabel('Model Error [%]')
-            ax[i,1].plot(calib_tt, error, 
-                       'o', markersize=2, color=colors[region], alpha=.6)
-            ax[i,1].set_ylim(-20., 20.)
-            ax[i,1].set_xlim(0.,)
-            ax[i,1].grid(color='.8',linestyle='--')
-            
-#            ax[i,2].imshow(img_cube[12]*(masks[region]), cmap='plasma', 
-#                           vmin=np.min(img_cube[12]), vmax=np.max(img_cube[12]))
-#            ax[i,2].set_yticklabels([])
-#            ax[i,2].set_yticks([])
-#            ax[i,2].set_xticklabels([])
-#            ax[i,2].set_xticks([])
-        
-        inner_slope = slopes['inner']
-        outer_slope = slopes['outer']
-        full_coeff  = slopes['full']**3
-        print('\nModel calibration results:'+
-              '\nInner slope = {0:.3f}\nOuter slope = {1:.3f}\nFull coeff  = {2:.3f}'
-              .format(inner_slope,outer_slope,full_coeff))
-    # *************************************************************************
-    
-    #-- Estimator selection: 
-    final_est = np.zeros((n_img, 2))
-    if force == 'inner':
-        final_est = inner_est
-    elif force == 'outer':
-        final_est = outer_est
-    elif force == 'full':
-        final_est = full_est
-    else :
-        for i in range(n_img):
-            
-            # modulus to be trusted for choosing tt regime
-            outer_modulus = outer_est[i,0]
-            
-            # build complex phasors
-            inner_phasor = inner_est[i,0] * np.exp(1j * inner_est[i,1]) 
-            outer_phasor = outer_est[i,0] * np.exp(1j * outer_est[i,1])
-            full_phasor  = full_est[i,0]  * np.exp(1j * full_est[i,1])
-            
-            # test estimate agreement
-            #test_phasor = np.exp(1j * inner_est[i,1]) * np.exp(-1j * outer_est[i,1])
-            #test_phase = np.arctan2(np.imag(test_phasor), np.real(test_phasor))
-            #in_out_phase_agreement = (np.abs(test_phase) < phase_tolerance)
-            #in_out_modul_agreement = (np.abs(full_est[i,0]-outer_est[i,0]) < modulus*modul_tolerance)
-            
-            #-- phase agreement: IN/OUT
-            test_phasor = np.exp(1j * inner_est[i,1]) * np.exp(-1j * outer_est[i,1])
-            inout_test_phase = np.arctan2(np.imag(test_phasor), np.real(test_phasor))
-            in_out_phase_agreement = (np.abs(inout_test_phase) < phase_tolerance)
-            #-- phase agreement: OUT/FULL
-            test_phasor = np.exp(1j * full_est[i,1]) * np.exp(-1j * outer_est[i,1])
-            fullout_test_phase = np.arctan2(np.imag(test_phasor), np.real(test_phasor))
-            
-            full_out_phase_agreement = (np.abs(fullout_test_phase) < phase_tolerance)
-            full_out_modul_agreement = (np.abs(full_est[i,0]-outer_est[i,0]) < full_est[i,0]*modul_tolerance)
-            
-            
-            if verbose is True :
-                print(inner_est[i,0], outer_est[i,0], full_est[i,0], full_out_phase_agreement, np.abs(inout_test_phase)*180./np.pi, in_out_phase_agreement)
-           
-            ## Select estimator according to phasor agreement and tt regime
-            # if in_out_phase_agreement :
-#                 if modulus < small_tt_regime :    
-#                     meanphasor = ( phasor1 + phasor2 )/2.
-#                     if verbose is True :
-#                         print('small', np.abs(meanphasor))
-#                 else : 
-#                     if in_out_modul_agreement == True:
-#                         meanphasor = ( phasor2 + phasor3 )/2.
-#                         if verbose is True :
-#                             print('intermediate', np.abs(meanphasor))
-#                     else :
-#                         meanphasor = 0.
-#                         if verbose is True :
-#                             print('null', np.abs(meanphasor))
-#             else:
-#                 if modulus > large_tt_regime :
-#                     meanphasor = ( phasor2 + phasor3 )/2.
-#                     if verbose is True :
-#                         print('large', np.abs(meanphasor))
-#                 elif in_out_modul_agreement == True : 
-#                     meanphasor = phasor3
-#                     if verbose is True :
-#                         print('large2', np.abs(meanphasor))
-#                 else :
-#                     meanphasor = 0. 
-#                     if verbose is True :
-#                         print('null2', np.abs(meanphasor))
-            
-            ### SMALL TIPTILT REGIME
-            if outer_modulus < small_tt_regime :
-                if verbose is True :
-                    print('\n \t > IN-OUT phase agreement is {}'.format(in_out_phase_agreement))
-                    #file.write('\n \t > IN-OUT phase agreement is {}'.format(in_out_phase_agreement))
-                if in_out_phase_agreement == True:
-                    meanphasor = (inner_phasor + outer_phasor)/2.
-                    if verbose is True :
-                        print('\t => small1: in+out')
-                        #file.write('\t => small1: in+out')
-                else :
-                    meanphasor = outer_phasor 
-                    if verbose is True :
-                        print('\t => small2: out')
-                        #file.write('\t => small2: out')
-            ### LARGE TIPTILT REGIME
-            else :
-                if verbose is True :
-                    print('\n \t > FULL-OUT phase agreement is {}'.format(full_out_phase_agreement)+
-                    '\n \t > FULL-OUT modulus agreement is {}'.format(full_out_modul_agreement))
-                    #file.write('\n \t > FULL-OUT phase agreement is {}'.format(full_out_phase_agreement)+
-                    #'\n \t > FULL-OUT modulus agreement is {}'.format(full_out_modul_agreement))
-                if full_out_phase_agreement == True:
-                    if full_out_modul_agreement == True:
-                        meanphasor = ( outer_phasor + full_phasor )/2.
-                        if verbose is True :
-                            print('\t => large1: full+out')
-                            #file.write('\t => large1: full+out')
-                    else :
-                        if full_est[i,0] < 1.:
-                            meanphasor = full_phasor
-                        else:
-                            meanphasor = np.exp(1j * full_est[i,1]) # set the maximal estimate to 1 lbd/D
-                        if verbose is True :
-                            print('\t => large2: full')
-                            #file.write('\t => large2: full')
-                else :
-                    if full_est[i,0] < 1.:
-                        meanphasor = full_phasor
-                    else:
-                        meanphasor = np.exp(1j * full_est[i,1]) # set the maximal estimate to 1 lbd/D
-                    if verbose is True :
-                        print('\t => large3: full')
-                        #file.write('\t => large3: full')
-            
-            final_est[i,0] = np.abs(meanphasor)
-            final_est[i,1] = np.arctan2(np.imag(meanphasor),np.real(meanphasor))
-    
-    ### Final estimator in X,Y ################################################
-    final_est_xy = np.zeros_like(final_est)
-    final_est_xy[:,0] = final_est[:,0] * np.cos(final_est[:,1])
-    final_est_xy[:,1] = final_est[:,0] * np.sin(final_est[:,1])
-    
-    return final_est_xy
 
 def quadrant_tiptilt(qacits_params, img_cube, vortex_center_yx, 
                      psf_flux, image_sampling,

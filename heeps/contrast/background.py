@@ -17,7 +17,7 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, dit=0.3,
         mode (str):
             HCI mode: RAVC, CVC, APP, CLC            
         lam (float):
-            wazvelength in m
+            wavelength in m
         dit (float):
             detector integration time in s
         mag (float):
