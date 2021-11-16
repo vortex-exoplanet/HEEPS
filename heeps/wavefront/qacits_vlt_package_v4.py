@@ -445,7 +445,14 @@ def quadrant_tiptilt_v8(qacits_params, img_cube, vortex_center_yx, psf_flux,
     final_est_xy[:,0] = final_est[:,0] * np.cos(final_est[:,1])
     final_est_xy[:,1] = final_est[:,0] * np.sin(final_est[:,1])
 
-    return final_est_xy, qacits_params
+    full_estimate_output = np.ndarray((n_img, 11))
+    full_estimate_output[:,0:2] = final_est_xy
+    full_estimate_output[:,2:4] = inner_est
+    full_estimate_output[:,4:6] = outer_est
+    full_estimate_output[:,6:8] = full_est
+    full_estimate_output[:,8:] = test_output
+
+    return full_estimate_output
 
 
 def quadrant_tiptilt_v7b(qacits_params, img_cube, vortex_center_yx, 
