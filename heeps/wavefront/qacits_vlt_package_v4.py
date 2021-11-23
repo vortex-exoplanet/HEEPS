@@ -271,6 +271,9 @@ def quadrant_tiptilt_v8(qacits_params, img_cube, vortex_center_yx, psf_flux,
             else :
                 all_dixy0 = 0.
             all_dixy[key] = all_dixy1 - all_dixy0
+
+    #return all_dixy
+
         else :
             all_dixy[key] = get_delta_i(img_cube*masks[key]/psf_flux, 
                     cx=vortex_center_yx[1], cy=vortex_center_yx[0])
@@ -320,6 +323,7 @@ def quadrant_tiptilt_v8(qacits_params, img_cube, vortex_center_yx, psf_flux,
             ax[i,0].set_xlim(0.,)
             ax[i,0].legend()
             error = ((yy - fit_coeff) / yy) * 100
+            #error = ((yy - fit_coeff) / psf_flux) * 100
             ax[i,1].set_xlabel(r'True tip-tilt [$\lambda/D$]')
             ax[i,1].set_ylabel('Model Error [%]')
             ax[i,1].plot(calib_tt, error, 
