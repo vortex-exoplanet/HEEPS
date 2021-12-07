@@ -1,14 +1,16 @@
 import numpy as np
 import astropy.units as u
 
-def cart_coord(npupil):
+def cart_coord(npupil, dx=0, dy=0):
+    ''' dx, dy: misalignment percentage 
+    '''
     dn = 2/npupil
     pup_range = np.arange(-1, 1, dn) + dn/2
-    x, y = np.meshgrid(pup_range, pup_range)
+    x, y = np.meshgrid(pup_range - 2*dx, pup_range - 2*dy)
     return np.float32(x), np.float32(y)
 
-def polar_coord(npupil):
-    x, y = cart_coord(npupil)
+def polar_coord(npupil, dx=0, dy=0):
+    x, y = cart_coord(npupil, dx=dx, dy=dy)
     r = np.abs(x + 1j*y)
     t = np.angle(x + 1j*y)
     return np.float32(r), np.float32(t)
