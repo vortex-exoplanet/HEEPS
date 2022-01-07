@@ -34,9 +34,9 @@ def spatial(allSF, kernel, npupil=None, norm=False, verbose=False):
         HSF = allSF - LSF
     # print rms
     if verbose is True:
-        print('rms(all SF) = %3.2f'%(np.nanstd(allSF)))
-        print('rms(LSF) = %3.2f'%(np.nanstd(LSF)))
-        print('rms(HSF) = %3.2f'%(np.nanstd(HSF)))
+        print('rms(all SF) = %.2f nm'%(np.nanstd(allSF)))
+        print('rms(LSF) = %.2f nm'%(np.nanstd(LSF)))
+        print('rms(HSF) = %.2f nm'%(np.nanstd(HSF)))
     # normalize
     if norm is True:
         allSF /= np.nanstd(allSF)

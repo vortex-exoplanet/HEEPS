@@ -9,7 +9,7 @@ import os
 
 # inputs
 os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files')))
-nimg = 511
+nimg = 512 #511
 npupil = 285 # L band
 cpp = 10
 pupil_img_size = 39.9988
@@ -23,7 +23,7 @@ dt = 300 # in ms
 npetals = 6
 f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
 f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
-f_ncpa_frame = 'wavefront/ncpa/DIFF_LM_20201119_fullM1.fits'
+f_ncpa_frame = 'wavefront/ncpa/DIFF_LM_20211122_fullM1.fits'
 f_ncpa_screens = 'wavefront/ncpa/ncpa_fullM1_%s_%scpp_%s_%s.fits'
 f_petal_screens = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'
 
@@ -48,9 +48,9 @@ for rep in [1]:#np.arange(1,11):
         nkernel = nimg*diam_nominal/pupil_img_size
         kernel = conv_kernel(nkernel, cpp)
         ncpa_allSF, ncpa_LSF, ncpa_HSF = spatial(ncpa_frame, kernel, npupil=npupil, norm=True, verbose=True)
-        fits.writeto(f_ncpa_screens%('allSF', cpp, npupil), np.float32(ncpa_allSF))
-        fits.writeto(f_ncpa_screens%('LSF', cpp, npupil), np.float32(ncpa_LSF))
-        fits.writeto(f_ncpa_screens%('HSF', cpp, npupil), np.float32(ncpa_HSF))
+        fits.writeto(f_ncpa_screens%('allSF', cpp, 'L', npupil), ncpa_allSF)
+        fits.writeto(f_ncpa_screens%('LSF', cpp, 'L', npupil), ncpa_LSF)
+        fits.writeto(f_ncpa_screens%('HSF', cpp, 'L', npupil), ncpa_HSF)
     finally:
         LTF1 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_12000x1rms_seed=832404.fits')
         LTF2 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_12000x1rms_seed=523364.fits')
@@ -107,7 +107,8 @@ for rep in [1]:#np.arange(1,11):
     lamL = update_config(**dict(read_config(), band='L'))['lam']
     for band in ['L', 'M', 'N1', 'N2']:
         conf = update_config(**dict(read_config(), band=band))
-        scaling = conf['lam']/lamL
+        scaling = 1
+        #scaling = conf['lam']/lamL
         #print(scaling, conf['npupil'])
         f_out = f_scao_screens%(tag, t_max, dt, 'all_ncpa', band, conf['npupil'])
         fits.writeto(f_out, resize_cube(scao + ncpa_piston_ALL*scaling, conf['npupil']), overwrite=True)
