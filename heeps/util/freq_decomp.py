@@ -109,7 +109,8 @@ def get_zernike(cube_name, pup, nzer):
         cube = fits.getdata(cube_name)
         nimg = cube.shape[-1]
         pup = resize_cube(pup, nimg)
-        zpols = multiCPU(fit_zer, posargs=[pup, nimg/2, nzer], posvars=[cube], case='get zpols')
+        zpols = multiCPU(fit_zer, posargs=[pup, nimg/2, nzer], 
+                posvars=[cube], case='get zpols')
         fits.writeto(zpols_name, np.float32(zpols))
     return zpols
 
@@ -137,8 +138,9 @@ def psd_spatial_zernike(cube_name, pup, zpols, nzer, ncube):
         HSFs_rms = []
         for z in np.arange(nzer) + 1:
             verbose = True if z == 1 else False
-            LSF, HSF = multiCPU(remove_zernike, posargs=[deepcopy(wf), pup], \
-                    posvars=[cube, zpols[:,:z]], case='remove zernike', nout=2, verbose=verbose)
+            LSF, HSF = multiCPU(remove_zernike, posargs=[deepcopy(wf), pup],
+                        posvars=[cube, zpols[:,:z]], case='remove zernike', 
+                        nout=2, verbose=verbose)
             LSFs[z-1], HSFs[z-1] = LSF, HSF
             HSFs_rms.append(get_rms(HSF, verbose=verbose))
             print(z, end=', ')
