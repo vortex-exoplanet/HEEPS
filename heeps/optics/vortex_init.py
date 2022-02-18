@@ -84,18 +84,20 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
             # perfect-result vortex field
             perf_num = deepcopy(wf_tmp.wfarr)
             # write all fields 
-            data = np.dstack((psf_num.real.T, psf_num.imag.T, vvc.real.T, vvc.imag.T,\
-                perf_num.real.T, perf_num.imag.T)).T
-            fits.writeto(os.path.join(dir_temp, filename), np.float32(data), overwrite=True)
+            data = np.dstack((psf_num.real.T, psf_num.imag.T, vvc.real.T,
+                vvc.imag.T, perf_num.real.T, perf_num.imag.T)).T
+            fits.writeto(os.path.join(dir_temp, filename), np.float32(data), 
+                overwrite=True)
 
         # shift the phase ramp
         vvc = proper.prop_shift_center(vvc)
         # add vortex back-propagation parameters at the end of conf
         conf = {k: v for k, v in sorted(conf.items())}
-        conf.update(vortex_calib=calib, psf_num=psf_num, vvc=vvc, perf_num=perf_num)
+        conf.update(vortex_calib=calib, psf_num=psf_num, vvc=vvc, 
+            perf_num=perf_num)
 
         if verbose is True:
-            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f'%\
-                (vc_charge, ngrid, beam_ratio))
+            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f'
+                %(vc_charge, ngrid, beam_ratio))
 
         return conf
