@@ -10,16 +10,14 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_coun
         tag=None, onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
-    conf.update(cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak, \
-            add_cl_det=add_cl_det, add_cl_vort=add_cl_vort, tag=tag, onaxis=onaxis)
+    conf.update(cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak,
+        add_cl_det=add_cl_det, add_cl_vort=add_cl_vort, tag=tag, onaxis=onaxis)
     
     # preload amp screen if only one frame
     if len(amp_screens) == 1 and np.any(amp_screens) != None:
         import proper
-        from heeps.util.img_processing import pad_img, resize_img
-        amp_screens = np.nan_to_num(amp_screens[0])
-        amp_screens = pad_img(resize_img(amp_screens, conf['npupil']), conf['ngrid'])
-        proper.prop_multiply(wf, amp_screens)
+        from heeps.util.img_processing import pad_img
+        proper.prop_multiply(wf, pad_img(amp_screens, conf['ngrid']))
         # then create a cube of None values
         amp_screens = [None]*int((conf['nframes']/conf['nstep']) + 0.5)
 
