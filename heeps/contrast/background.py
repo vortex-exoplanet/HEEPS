@@ -1,9 +1,12 @@
+from heeps.contrast.sim_heeps import sim_heeps
 import numpy as np
 from astropy.io import fits
 
+
 def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, dit=0.3, 
         mag=5, mag_ref=0, flux_star=9e10, flux_bckg=9e4, app_single_psf=0.48, 
-        f_vc_trans=None, f_app_trans=None, seed=123456, verbose=False, **conf):
+        f_vc_trans=None, f_app_trans=None, seed=123456, verbose=False, 
+        call_ScopeSim=False, **conf):
 
     """ 
     This function applies background and photon noise to intup PSFs (off-axis and on-axis), 
@@ -36,6 +39,8 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, dit=0.3,
             path to APP transmittance fits file
         seed (int):
             seed used by numpy.random process
+        call_ScopeSim (bool):
+            true if interfacing ScopeSim
     
     Return:
         psf_ON (float ndarray):
@@ -60,16 +65,21 @@ def background(psf_ON, psf_OFF, mode='RAVC', lam=3.8e-6, dit=0.3,
     if 'APP' in mode:
         psf_OFF *= app_single_psf
         psf_ON *= app_single_psf
-    # rescale PSFs to star signal
-    star_signal = dit * flux_star * 10**(-0.4*(mag - mag_ref))
-    psf_OFF *= star_signal
-    psf_ON *= star_signal
-    # add background
-    bckg_noise = dit * flux_bckg * offaxis_trans * mask_trans
-    psf_ON += bckg_noise
-    # add photon noise ~ N(0, sqrt(psf))
-    np.random.seed(seed)
-    psf_ON += np.random.normal(0, np.sqrt(psf_ON))
+    
+    # TODO: fix scopesim-heeps interface
+    if call_ScopeSim is True:
+        psf_ON, psf_OFF = sim_heeps(psf_ON, psf_OFF, **conf)
+    else:
+        # rescale PSFs to star signal
+        star_signal = dit * flux_star * 10**(-0.4*(mag - mag_ref))
+        psf_OFF *= star_signal
+        psf_ON *= star_signal
+        # add background
+        bckg_noise = dit * flux_bckg * offaxis_trans * mask_trans
+        psf_ON += bckg_noise
+        # add photon noise ~ N(0, sqrt(psf))
+        np.random.seed(seed)
+        psf_ON += np.random.normal(0, np.sqrt(psf_ON))
 
     if verbose is True:
         print('   offaxis_trans=%3.4f, mask_trans=%3.4f,'%(offaxis_trans, mask_trans))
