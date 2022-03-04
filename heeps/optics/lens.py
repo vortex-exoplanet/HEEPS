@@ -16,4 +16,4 @@ def lens(wf, focal=660, offset_before=0, offset_after=0, offset_light_trap=0,
         # add light trap
         proper.prop_propagate(wf, focal - offset_light_trap)
         proper.prop_circular_aperture(wf, diam_light_trap, 0, 0, NORM=True)
-        proper.prop_propagate(wf, offset_light_trap)
+        proper.prop_propagate(wf, offset_light_trap + offset_after)

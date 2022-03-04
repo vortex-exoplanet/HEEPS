@@ -22,24 +22,27 @@ def run_heeps(savename='ADI_contrast_curve.png'):
     wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
 
     # 4. Load wavefront errors
-    phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(verbose=True, **conf)
+    phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(
+        verbose=True, **conf)
 
-    # 5. Propagate one frame of offaxis psf (i.e. planet)
-    psf = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, verbose=True, **conf)
+    # 5. Propagate one frame of off-axis psf (=planet)
+    _ = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, 
+        verbose=True, **conf)
 
-    # 6. Propagate cube of onaxis psfs (i.e. star)
-    psfs = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens, \
-        amp_screens=amp_screens, tiptilts=tiptilts, misaligns=misaligns, onaxis=True, \
-        savefits=True, verbose=True, **conf)
+    # 6. Propagate cube of on-axis psfs (=star)
+    _ = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens,
+        amp_screens=amp_screens, tiptilts=tiptilts, misaligns=misaligns, 
+        onaxis=True, savefits=True, verbose=True, **conf)
 
-    # 7. Produce 5-sigma sensitivity (contrast) curves for each set of PSFs (modes, bands)
-    sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
+    # 7. Produce a 5-sigma sensitivity (contrast) curve
+    sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, 
+        verbose=True, **conf)
 
     # 8. Create a figure 
     if savename != '':
         import matplotlib.pyplot as plt
         from matplotlib.pylab import ScalarFormatter
-        plt.figure(figsize=(12,4))
+        plt.figure(figsize=(9.5, 4))
         plt.grid(True), plt.grid(which='minor', linestyle=':')
         plt.loglog(), plt.gca().xaxis.set_major_formatter(ScalarFormatter())
         plt.xlabel('Angular separation $[arcsec]$')
@@ -47,10 +50,11 @@ def run_heeps(savename='ADI_contrast_curve.png'):
         label = '%s-band %s'%(conf['band'], conf['mode'])
         plt.plot(sep, sen, label=label, marker='d', markevery=0.12, markersize=4)
         plt.legend()
-        plt.xticks([0.02, 0.1, 0.5, 1])
-        plt.xlim(0.02,1)
-        plt.ylim(1e-6,1e-2)
-        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, transparent=True)
+        plt.xlim(0.02, 0.75)
+        plt.ylim(1e-8,1e-2)
+        plt.xticks([0.02, 0.05, 0.1, 0.2, 0.5])
+        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, 
+            transparent=True)
 
 if __name__ == "__main__":
     '''
