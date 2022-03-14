@@ -1,9 +1,7 @@
 from .create_hexagon import create_hexagon
-from heeps.util.img_processing import resize_img, pad_img
+from heeps.util.img_processing import resize_img
 import proper
 import numpy as np
-import os.path
-from astropy.io import fits 
 
 
 def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int=11, 
