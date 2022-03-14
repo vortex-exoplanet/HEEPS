@@ -3,8 +3,8 @@ from heeps.util.coord import cart_coord, polar_coord
 import numpy as np
 
 
-def create_ls(d_ext, d_int, ls_dRext, ls_dRint, ls_dRspi, npupil=285, 
-        pupil_img_size=40, diam_nominal=37, spi_width=0.5, ls_misalign_x=0, 
+def create_ls(d_ext, d_int, npupil=285, pupil_img_size=40, diam_nominal=38, 
+        spi_width=0.5, ls_dRext=0, ls_dRint=0, ls_dRspi=0, ls_misalign_x=0, 
         ls_misalign_y=0, circ_ext=True, circ_int=True, **conf):
     # misalignments
     dx = ls_misalign_x*diam_nominal/pupil_img_size
