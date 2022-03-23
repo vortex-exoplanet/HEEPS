@@ -8,7 +8,7 @@ import os.path
 from astropy.io import fits 
 
 
-def pupil(f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
+def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
         pupil_img_size=40, diam_ext=37, diam_int=11, spi_width=0.5, 
         spi_angles=[0,60,120], npetals=6, seg_width=0, seg_gap=0, seg_rms=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
@@ -67,15 +67,19 @@ def pupil(f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
     beam_ratio = npupil/ngrid*(diam_ext/pupil_img_size)
     wf = proper.prop_begin(pupil_img_size, lam, ngrid, beam_ratio)
 
-    # load pupil file
-    if os.path.isfile(f_pupil):
+    # case 1: load pupil from data
+    if pup is not None:
+        if verbose is True:
+            print("Load pupil data from 'pup'")
+        pup = resize_img(pup, npupil)
+
+    # case 2: load pupil from file
+    elif os.path.isfile(f_pupil):
         if verbose is True:
             print("Load pupil from '%s'"%os.path.basename(f_pupil))
-        #conf.update()
-        pup = fits.getdata(f_pupil).astype(np.float32)
-        # resize to npupil
-        pup = resize_img(pup, npupil)
-    # if no pupil file, create a pupil
+        pup = resize_img(fits.getdata(f_pupil), npupil)
+    
+    # case 3: create a pupil
     else:
         if verbose is True:
             print("Create pupil: spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_rms=%s"\
