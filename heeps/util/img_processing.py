@@ -12,22 +12,25 @@ def get_piston(cube, verbose=False):
     if cube.ndim < 3:
         return np.mean(cube[cube!=0])
     else:
-        return np.mean(multiCPU(get_piston, posvars=[cube], case='get piston', verbose=verbose))
+        return np.mean(multiCPU(get_piston, posvars=[cube], 
+                                case='get piston', verbose=verbose))
 
 def get_rms(cube, verbose=False):
     if cube.ndim < 3:
         return np.std(cube[cube!=0])
     else:
-        return np.mean(multiCPU(get_rms, posvars=[cube], case='get rms', verbose=verbose))
+        return np.mean(multiCPU(get_rms, posvars=[cube], 
+                                case='get rms', verbose=verbose))
 
 def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]
-    kwargs = dict(preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing)
+    kwargs = dict(mode=mode, preserve_range=preserve_range, 
+                    anti_aliasing=anti_aliasing)
     if cube.ndim < 3:
         return resize_img(cube, new_size, **kwargs)
     else:
-        return multiCPU(resize_img, posvars=posvars, kwargs=kwargs, \
+        return multiCPU(resize_img, posvars=posvars, kwargs=kwargs, 
             case='resize cube', cpu_count=cpu_count, verbose=verbose)
 
 def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
@@ -36,7 +39,7 @@ def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
     if cube.ndim < 3:
         return crop_img(cube, new_size, **kwargs)
     else:
-        return multiCPU(crop_img, posvars=posvars, kwargs=kwargs, \
+        return multiCPU(crop_img, posvars=posvars, kwargs=kwargs, 
             case='crop cube', cpu_count=cpu_count, verbose=verbose)
 
 def resize_img(img, new_size, preserve_range=True, mode='reflect',
@@ -55,8 +58,8 @@ def resize_img(img, new_size, preserve_range=True, mode='reflect',
     if new_size != img.shape:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore") # when anti_aliasing=False, and NANs
-            img = np.float32(resize(np.float32(img), new_size, \
-                preserve_range=preserve_range, mode=mode, anti_aliasing=anti_aliasing))
+            img = np.float32(resize(np.float32(img), new_size, mode=mode, 
+                preserve_range=preserve_range, anti_aliasing=anti_aliasing))
     return img
 
 def pad_img(img, padded_size, pad_value=0):
@@ -114,6 +117,17 @@ def crop_img(img, new_size, margin=0, verbose=True):
         # crop image
         img = img[cropx[0]-mx1:-cropx[1]+mx2, cropy[0]-my1:-cropy[1]+my2]
     return img
+
+def is_odd(n):
+    return bool(n % 2)
+
+def oversamp(start, end, precision=1e-2, stop=1e6):
+    scale = end/start
+    size = np.array([(x, x*scale) for x in np.arange(start, stop) 
+            if x*scale % 1 < precision and is_odd(x) == is_odd(round(x*scale))])
+    to_pad = round(size[0,0]) if np.any(size) else 0
+    to_resize = round(size[0,1]) if np.any(size) else 0
+    return to_pad, to_resize
 
 def zoomWithMissingData(data, newSize, method='linear', non_valid_value=np.nan):
     '''

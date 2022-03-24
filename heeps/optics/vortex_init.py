@@ -7,7 +7,7 @@ import proper
 from copy import deepcopy
 
 def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024, 
-        beam_ratio=0.26, focal=660, vc_charge=2, verbose=False, **conf):
+        beam_ratio=0.26, focal=660, vc_charge=2, ramp_oversamp=11, verbose=False, **conf):
 
     '''
     
@@ -55,11 +55,10 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
             # pre-vortex field
             psf_num = deepcopy(wf_tmp.wfarr)
             # vortex phase ramp is oversampled for a better discretization
-            ramp_oversamp = 11.
             nramp = int(ngrid*ramp_oversamp)
             start = -nramp/2 - int(ramp_oversamp)/2 + 0.5
             end   =  nramp/2 - int(ramp_oversamp)/2 + 0.5
-            Vp = np.arange(start, end, 1.)
+            Vp = np.arange(start, end, 1)
             # Pancharatnam Phase = arg<Vref,Vp> (horizontal input polarization)
             Vref = np.ones(Vp.shape)
             prod = np.outer(Vref, Vp)
