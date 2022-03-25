@@ -65,7 +65,7 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
 
     # initialize wavefront using PROPER
     beam_ratio = npupil/ngrid*(diam_ext/pupil_img_size)
-    wf = proper.prop_begin(pupil_img_size, lam, ngrid, beam_ratio)
+    wf = proper.prop_begin(diam_ext, lam, ngrid, beam_ratio)
 
     # case 1: load pupil from data
     if pup is not None:

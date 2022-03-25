@@ -54,7 +54,7 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
             RAVC_amp = impro.pad_img(RAVC_amp, ngrid)
             RAVC_phase = impro.pad_img(RAVC_phase, ngrid)
             # build complex apodizer
-            apo = RAVC_amp*np.exp(1j*RAVC_phase)
+            ring = RAVC_amp*np.exp(1j*RAVC_phase)
 
         # or else, define the apodizer as a ring (with % misalignments)
         else:
