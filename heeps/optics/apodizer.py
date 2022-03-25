@@ -62,8 +62,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ravc_misalign=None,
             ravc_misalign = [0,0,0,0,0,0] if ravc_misalign is None else list(ravc_misalign)
             dx_amp, dy_amp, dz_amp = ravc_misalign[0:3]
             dx_phase, dy_phase, dz_phase = ravc_misalign[3:6]
-            # create apodizer
-            ring = circular_apodization(wf, ravc_r, 1., ravc_t, xc=dx_amp, \
+            # create apodizer (margin is twice as big as all-glass diam)
+            ring = circular_apodization(wf, ravc_r, 2, ravc_t, xc=dx_amp, \
                 yc=dy_amp, NORM=True)
             if verbose is True:
                 print('   apply ring apodizer: ravc_t=%s, ravc_r=%s'\
