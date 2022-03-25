@@ -6,8 +6,9 @@ import numpy as np
 import proper
 from copy import deepcopy
 
-def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024, 
-        beam_ratio=0.26, focal=660, vc_charge=2, ramp_oversamp=11, verbose=False, **conf):
+def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, ngrid=1024, 
+        beam_ratio=0.26, diam_norm=1.08, focal=660, vc_charge=2, 
+        ramp_oversamp=11, verbose=False, **conf):
 
     '''
     
@@ -25,7 +26,7 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
     [conf.pop(key) for key in ['conf', 'verbose'] if key in conf]
 
     # check if back-propagation params already loaded for this calib
-    calib = 'vortex_%s_%s_%3.4f'%(vc_charge, ngrid, beam_ratio)
+    calib = 'vortex_%s_%s_%.4f_%.4f'%(vc_charge, ngrid, diam_norm, beam_ratio)
     if vortex_calib == calib:
         return conf
         
@@ -48,8 +49,8 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
             if verbose is True:
                 print("   writing vortex back-propagation params")
             # create circular pupil
-            wf_tmp = proper.prop_begin(diam_ext, lam, ngrid, beam_ratio)
-            proper.prop_circular_aperture(wf_tmp, 1, NORM=True)
+            wf_tmp = proper.prop_begin(1, 1, ngrid, beam_ratio)
+            proper.prop_circular_aperture(wf_tmp, diam_norm, NORM=True)
             # propagate to vortex
             lens(wf_tmp, focal)
             # pre-vortex field
@@ -78,7 +79,7 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, lam=3.8, ngrid=1024,
             proper.prop_multiply(wf_tmp, vvc)
             # null the amplitude inside the Lyot Stop, and back propagate
             lens(wf_tmp, focal)
-            proper.prop_circular_obscuration(wf_tmp, 1., NORM=True)
+            proper.prop_circular_obscuration(wf_tmp, diam_norm, NORM=True)
             lens(wf_tmp, -focal)
             # perfect-result vortex field
             perf_num = deepcopy(wf_tmp.wfarr)

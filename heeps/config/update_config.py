@@ -13,7 +13,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
     
     Update config parameters. The following parameters will be updated to match 
     the selected spectral band:
-        lam, pscale, flux_star, flux_bckg, npupil, beam_ratio, ndet,
+        lam, pscale, flux_star, flux_bckg, npupil, diam_norm, beam_ratio, ndet,
         hfov, hfov_lamD
     For the RAVC mode, the following parameters will be updated:
         r_obstr, ravc_t, ravc_r 
@@ -36,7 +36,9 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
     # recalculate wavelength based on npupil
     lam = lam_npupil/npupil
     del(lam_npupil)
-    # calculate beam ratio
+    # normalized pupil image size (to pass to conf)
+    diam_norm = pupil_img_size/diam_ext
+    # calculate beam ratio (to pass to conf)
     beam_ratio = npupil/ngrid*diam_ext/pupil_img_size
     # final image size on detector
     ndet = round2odd(2*hfov/pscale*1e3)
