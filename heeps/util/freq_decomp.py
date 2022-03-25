@@ -132,7 +132,7 @@ def psd_spatial_zernike(cube_name, pup, zpols, nzer, ncube):
         nimg = cube.shape[-1]
         pup = resize_cube(pup, nimg)
         zpols = zpols[:ncube,:nzer]
-        wf = proper.prop_begin(nimg, 1, nimg, 1) # initial wavefront
+        wf = proper.prop_begin(1, 1, nimg, 1) # initial wavefront
         LSFs = np.empty((nzer, ncube, nimg, nimg))
         HSFs = np.empty((nzer, ncube, nimg, nimg))
         HSFs_rms = []

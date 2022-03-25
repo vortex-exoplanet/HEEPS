@@ -49,7 +49,7 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int
     nhr += nhr % 2
     nhr_size = pupil_img_size*nhr/(nhr-1)
     # create pupil using PROPER tools
-    wf_tmp = proper.prop_begin(nhr_size, 1, nhr, diam_ext/nhr_size) 
+    wf_tmp = proper.prop_begin(1, 1, nhr, diam_ext/nhr_size) 
     if diam_ext > 0:
         proper.prop_circular_aperture(wf_tmp, 1, dx, dy, NORM=True)
     if diam_int > 0:
