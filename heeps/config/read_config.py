@@ -76,10 +76,12 @@ def read_config(verbose=False, **update_conf):
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
     f_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file
-    ls_dRext = 0.0291,                  # LS Rext undersize (% diam ext)
-    ls_dRint = 0.0291,                  # LS Rint oversize (% diam ext)
-    ls_dRspi = 0.0317,                  # LS spider oversize (% diam ext)
+    ls_dRext = 0.0307,                  # LS Rext undersize (% diam ext)
+    ls_dRint = 0.0307,                  # LS Rint oversize (% diam ext)
+    ls_dRspi = 0.0333,                  # LS spider oversize (% diam ext)
     ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
+    ls_ext_circ = True,                 # circular LS external diameter
+    ls_int_circ = True,                 # circular LS internal diameter
     lt_dist = 0,                        # lith trap distance in m (36.67)
     lt_diam = 0,                        # lith trap norm diameter (0.3837)
     vc_charge = 2,                      # vortex topological charge

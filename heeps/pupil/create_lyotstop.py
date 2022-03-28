@@ -4,11 +4,11 @@ import numpy as np
 
 
 def create_ls(d_ext, d_int, npupil=285, pupil_img_size=40, diam_nominal=38, 
-        spi_width=0.5, ls_dRext=0, ls_dRint=0, ls_dRspi=0, ls_misalign_x=0, 
-        ls_misalign_y=0, circ_ext=True, circ_int=True, **conf):
+        spi_width=0.5, dRext=0, dRint=0, dRspi=0, misalign_x=0, 
+        misalign_y=0, circ_ext=True, circ_int=True, **conf):
     # misalignments
-    dx = ls_misalign_x*diam_nominal/pupil_img_size
-    dy = ls_misalign_y*diam_nominal/pupil_img_size
+    dx = misalign_x*diam_nominal/pupil_img_size
+    dy = misalign_y*diam_nominal/pupil_img_size
     # create spider stop
     conf = dict(
         npupil=npupil,
@@ -16,13 +16,13 @@ def create_ls(d_ext, d_int, npupil=285, pupil_img_size=40, diam_nominal=38,
         diam_ext=2*pupil_img_size,  # no circular aperture
         diam_int=0,                 # no central obscuration
         seg_width=0,                # no segments
-        spi_width=spi_width + ls_dRspi*diam_nominal,
+        spi_width=spi_width + dRspi*diam_nominal,
         dx=dx,
         dy=dy)
     mask_spi = create_pupil(**conf)
     # create outer and inner stops
-    r_ext = (d_ext - ls_dRext*diam_nominal) / pupil_img_size
-    r_int = (d_int + ls_dRint*diam_nominal) / pupil_img_size
+    r_ext = (d_ext - dRext*diam_nominal) / pupil_img_size
+    r_int = (d_int + dRint*diam_nominal) / pupil_img_size
     # create mask
     r, t = polar_coord(npupil, dx=dx, dy=dy)
     mask_ext = (r < r_ext) if circ_ext == True \

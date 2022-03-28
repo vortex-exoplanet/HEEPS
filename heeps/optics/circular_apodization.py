@@ -1,6 +1,6 @@
 import proper
 
-def circular_apodization(wf, radius, t_in, t_out, xc = 0.0, yc = 0.0, NORM=False):
+def circular_apodization(wf, radius, t_in, t_out, xc=0, yc=0, NORM=False):
 
     apodizer = proper.prop_ellipse(wf, radius, radius, xc, yc, NORM=NORM)
 
