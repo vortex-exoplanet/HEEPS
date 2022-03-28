@@ -6,9 +6,9 @@ import numpy as np
 import proper
 from copy import deepcopy
 
-def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, ngrid=1024, 
-        beam_ratio=0.26, diam_norm=1.08, focal=660, vc_charge=2, 
-        ramp_oversamp=11, verbose=False, **conf):
+def vortex_init(vortex_calib='', dir_temp='', ngrid=1024, beam_ratio=0.26, 
+        diam_norm=1.08, focal=660, vc_charge=2, ramp_oversamp=11, 
+        verbose=False, **conf):
 
     '''
     
@@ -97,7 +97,7 @@ def vortex_init(vortex_calib='', dir_temp='', diam_ext=37, ngrid=1024,
             perf_num=perf_num)
 
         if verbose is True:
-            print('   vc_charge=%s, ngrid=%s, beam_ratio=%3.4f'
-                %(vc_charge, ngrid, beam_ratio))
+            print('   vc_charge=%s, ngrid=%s, diam_norm=%.4f, beam_ratio=%.4f'
+                %(vc_charge, ngrid, diam_norm, beam_ratio))
 
         return conf
