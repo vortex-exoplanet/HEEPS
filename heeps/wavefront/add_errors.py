@@ -3,8 +3,9 @@ from heeps.util.img_processing import pad_img
 import proper
 import numpy as np
 
-def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, tiptilt=None, 
-               misalign=[0,0,0,0,0,0], ngrid=1024, verbose=False, **conf):
+def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, 
+        tiptilt=None, misalign=[0,0,0,0,0,0], ngrid=1024, 
+        apo_loaded=False, verbose=False, **conf):
     
     # apply phase screen (scao residuals, ncpa, petal piston)
     if phase_screen is not None:
@@ -21,7 +22,7 @@ def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, tiptilt=None
         proper.prop_zernikes(wf, [2,3], np.array(tiptilt, ndmin=1))
 
     # pupil-plane apodization (already preloaded if no RA misalign)
-    if onaxis == False or ('RAVC' in conf['mode'] and misalign is not None):
+    if apo_loaded == False:
         conf.update(ravc_misalign=misalign)
         wf = apodizer(wf, onaxis=onaxis, verbose=verbose, **conf)
         

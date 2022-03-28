@@ -5,9 +5,10 @@ from copy import deepcopy
 import proper
 import numpy as np
 
-def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign=[0,0,0,0,0,0], 
-        ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, fp_offsets=None, 
-        tag=None, onaxis=True, savefits=False, verbose=False, **conf):
+def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, 
+        misalign=[0,0,0,0,0,0], ngrid=1024, npupil=285, vc_chrom_leak=2e-3, 
+        add_cl_det=False, fp_offsets=None, tag=None, onaxis=True, 
+        savefits=False, verbose=False, **conf):
             
     """ 
     Propagate one single wavefront.
@@ -26,6 +27,7 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, misalign
     wf1 = deepcopy(wf)
 
     # apply wavefront errors (SCAO residuals, NCPA, Talbot effect, ...)
+    # and apodization (RAP, APP)
     wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen,
         tiptilt=tiptilt, misalign=misalign, verbose=verbose, **conf)
     

@@ -5,9 +5,10 @@ from heeps.util.notify import notify
 from heeps.util.multiCPU import multiCPU
 import numpy as np
 
-def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_count=1,
-        vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, 
-        tag=None, onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
+def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, 
+        mode='RAVC', ngrid=1024, nframes=10, nstep=1, cpu_count=1, 
+        vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, tag=None, 
+        onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
     conf.update(cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak,
@@ -17,13 +18,15 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, cpu_coun
     if len(amp_screens) == 1 and np.any(amp_screens) != None:
         import proper
         from heeps.util.img_processing import pad_img
-        proper.prop_multiply(wf, pad_img(amp_screens, conf['ngrid']))
+        proper.prop_multiply(wf, pad_img(amp_screens, ngrid))
         # then create a cube of None values
-        amp_screens = [None]*int((conf['nframes']/conf['nstep']) + 0.5)
+        amp_screens = [None]*int(nframes/nstep + 0.5)
 
     # preload apodizer when no drift
-    if np.all(misaligns) == None or 'APP' in conf['mode']:
+    conf['apo_loaded'] = False
+    if ('APP' in mode) or ('RAVC' in mode and np.all(misaligns) == None):
         wf = apodizer(wf, verbose=False, **conf)
+        conf['apo_loaded'] = True
     
     if verbose == True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
