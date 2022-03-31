@@ -1,5 +1,5 @@
 from heeps.optics import vortex_init
-from heeps.util.round2odd import round2odd
+from heeps.util.round2 import round2odd
 from heeps.util.save2pkl import save2pkl
 import astropy.units as u
 import numpy as np
