@@ -4,8 +4,7 @@ import astropy.units as u
 def cart_coord(npupil, dx=0, dy=0):
     ''' dx, dy: misalignment percentage 
     '''
-    dn = 2/npupil
-    pup_range = np.arange(-1, 1, dn) + dn/2
+    pup_range = np.linspace(-1 + 1/npupil, 1 - 1/npupil, npupil)
     x, y = np.meshgrid(pup_range - 2*dx, pup_range - 2*dy)
     return np.float32(x), np.float32(y)
 
@@ -18,7 +17,7 @@ def polar_coord(npupil, dx=0, dy=0):
 def disk_coord(radius, nr=4):
     dr = radius/(nr - 0.5)
     x, y = [0], [0] # center
-    for r in np.arange(radius/dr)*dr:
+    for r in np.arange(1, nr)*dr:
         npts = int(round(2*np.pi*r/dr))
         for t in np.arange(npts)*2*np.pi/npts:
             z = r*np.exp(1j*t)

@@ -121,10 +121,12 @@ def crop_img(img, new_size, margin=0, verbose=True):
 def is_odd(n):
     return bool(n % 2)
 
-def oversamp(start, end, precision=1e-2, stop=1e6):
+def oversamp(start, end, precision=1e-2, stop=1e6, to_odd=False):
     scale = end/start
     size = np.array([(x, x*scale) for x in np.arange(start, stop) 
-            if x*scale % 1 < precision and is_odd(x) == is_odd(round(x*scale))])
+            if x*scale % 1 < precision 
+            and is_odd(x) == is_odd(start)
+            and (is_odd(round(x*scale)) or not to_odd)])
     to_pad = round(size[0,0]) if np.any(size) else 0
     to_resize = round(size[0,1]) if np.any(size) else 0
     return to_pad, to_resize

@@ -45,7 +45,9 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int
     '''
 
     # create a high res pupil with PROPER of even size (nhr)
-    while npupil > nhr - 1:
+    if (npupil > nhr) and (npupil % 2):
+        nhr = npupil + 1
+    while nhr < npupil + 1:
         nhr *= 2
     nhr_size = pupil_img_size*nhr/(nhr-1)
     # create pupil using PROPER tools
