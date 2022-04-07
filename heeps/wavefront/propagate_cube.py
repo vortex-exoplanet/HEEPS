@@ -11,7 +11,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
         onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
-    conf.update(cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak,
+    conf.update(mode=mode, cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak,
         add_cl_det=add_cl_det, add_cl_vort=add_cl_vort, tag=tag, onaxis=onaxis)
     
     # preload amp screen if only one frame
