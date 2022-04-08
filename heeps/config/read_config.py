@@ -76,10 +76,9 @@ def read_config(verbose=False, **update_conf):
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
     f_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file
-    ls_dRext = 0.0307,                  # LS Rext undersize (% diam ext)
-    ls_dRint = 0.0307,                  # LS Rint oversize (% diam ext)
-    ls_dRspi = 0.0333,                  # LS spider oversize (% diam ext)
-    ls_misalign = [0,0,0,0,0,0],        # Lyot stop misalignment
+    ls_dRext = 0.0207,                  # LS Rext undersize (% diam ext)
+    ls_dRint = 0.0207,                  # LS Rint oversize (% diam ext)
+    ls_dRspi = 0.0207,                  # LS spider oversize (% diam ext)
     ls_ext_circ = True,                 # circular LS external diameter
     ls_int_circ = True,                 # circular LS internal diameter
     lt_dist = 0,                        # lith trap distance in m (36.67)
@@ -90,9 +89,8 @@ def read_config(verbose=False, **update_conf):
     add_cl_vort = False,                # add chromatic leakage at the vortex plane
     add_cl_det = False,                 # add chromatic leakage at the detector plane
     ravc_calc = True,                   # calculate RA params (Mawet2013)
-    ravc_t = 0.745,                     # (calc=False) mean-M1 RA trans
-    ravc_r = 0.505,                     # (calc=False) mean-M1 RA radius wrt allglass
-    ravc_misalign = [0,0,0,0,0,0],      # RA misalignment
+    ravc_t = 0.7909,                    # (calc=False) mean-M1 RA trans
+    ravc_r = 0.5190,                    # (calc=False) mean-M1 RA radius wrt allglass
     clc_diam = 80,                      # CLC occulter diam in mas
     f_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
@@ -154,6 +152,9 @@ def read_config(verbose=False, **update_conf):
 
     add_apo_drift = False,              # apodizer drift
     apo_drift = 0.02,                   # (% ptv)
+
+    add_ls_drift = False,               # Lyot stop drift
+    ls_drift = 0.02,                    # (% ptv)
 
     )                                   # end of default conf dict
 

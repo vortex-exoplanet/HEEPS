@@ -6,9 +6,9 @@ import proper
 import numpy as np
 
 def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, 
-        misalign=[0,0,0,0,0,0], fp_offsets=None, ngrid=1024, npupil=285, 
-        vc_chrom_leak=2e-3, add_cl_det=False, tag=None, onaxis=True, 
-        savefits=False, verbose=False, **conf):
+        apo_misalign=None, ls_misalign=None, fp_offsets=None, ngrid=1024,
+        npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, tag=None,
+        onaxis=True, savefits=False, verbose=False, **conf):
 
     """
     Propagate one single wavefront.
@@ -29,7 +29,7 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
     # apply wavefront errors (SCAO residuals, NCPA, Talbot effect, ...)
     # and apodization (RAP, APP)
     wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen,
-        tiptilt=tiptilt, misalign=misalign, verbose=verbose, **conf)
+        tiptilt=tiptilt, apo_misalign=apo_misalign, verbose=verbose, **conf)
 
     # imaging a point source
     def point_source(wf1, verbose, conf):
@@ -37,14 +37,14 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
             if add_cl_det is True:
                 cl = deepcopy(wf1)
                 cl._wfarr = np.flip(cl._wfarr) # 2 FFTs
-                cl = lyot_stop(cl, verbose=verbose, **conf)
+                cl = lyot_stop(cl, ls_misalign=ls_misalign, verbose=verbose, **conf)
             wf1 = fp_mask(wf1, verbose=verbose, **conf)
-            wf1 = lyot_stop(wf1, verbose=verbose, **conf)
+            wf1 = lyot_stop(wf1, ls_misalign=ls_misalign, verbose=verbose, **conf)
             if add_cl_det is True:
                 wf1._wfarr += cl._wfarr*np.sqrt(vc_chrom_leak)
         else:
             wf1._wfarr = np.flip(wf1._wfarr) # 2 FFTs
-            wf1 = lyot_stop(wf1, verbose=verbose, **conf)
+            wf1 = lyot_stop(wf1, ls_misalign=ls_misalign, verbose=verbose, **conf)
         return detector(wf1, verbose=verbose, **conf)
 
     # imaging a point source

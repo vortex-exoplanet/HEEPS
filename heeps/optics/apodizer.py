@@ -5,12 +5,12 @@ import numpy as np
 import os.path
 from astropy.io import fits 
 
-def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285, 
-        f_app_phase='', f_app_amp='', f_ravc_amp='', f_ravc_phase='', 
-        ravc_misalign=None, onaxis=True, verbose=False, **conf):
-    
-    ''' Create a wavefront object at the entrance pupil plane. 
-    The pupil is either loaded from a fits file, or created using 
+def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
+        f_app_amp='', f_app_phase='', f_ravc_amp='', f_ravc_phase='',
+        apo_misalign=None, onaxis=True, verbose=False, **conf):
+
+    ''' Create a wavefront object at the entrance pupil plane.
+    The pupil is either loaded from a fits file, or created using
     pupil parameters.
     Can also select only one petal and mask the others.
 
@@ -22,8 +22,6 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         RA transmittance
     ravc_r: float
         RA radius
-    ravc_misalign: list of float
-        RA misalignment
     ngrid: int
         number of pixels of the wavefront array
     npupil: int
@@ -34,6 +32,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
     f_ravc_amp: str
     f_ravc_phase: str 
         ring apodizer files (optional)
+    apo_misalign: list of float
+        apodizer misalignment
 
     '''
 
@@ -56,10 +56,10 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
             # build complex apodizer
             ring = RAVC_amp*np.exp(1j*RAVC_phase)
 
-        # or else, define the apodizer as a ring (with % misalignments)
+        # else, define the apodizer as a ring (with % misalignments)
         else:
             # RAVC misalignments
-            dx, dy = [0, 0] if ravc_misalign is None else list(ravc_misalign)[0:2]
+            dx, dy = [0, 0] if apo_misalign is None else list(apo_misalign)[0:2]
             # create apodizer
             ring = circular_apodization(wf, ravc_r, 1, ravc_t, xc=dx, 
                 yc=dy, NORM=True)
@@ -69,7 +69,6 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
 
         # multiply the loaded apodizer
         proper.prop_multiply(wf, ring)
-
 
     # case 2: Apodizing Phase Plate
     elif 'APP' in mode:
@@ -99,5 +98,5 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
-            
+
     return wf

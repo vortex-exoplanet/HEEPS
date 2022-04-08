@@ -4,9 +4,9 @@ import proper
 import numpy as np
 
 def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, 
-        tiptilt=None, misalign=[0,0,0,0,0,0], ngrid=1024, 
+        tiptilt=None, apo_misalign=None, ngrid=1024,
         apo_loaded=False, verbose=False, **conf):
-    
+
     # apply phase screen (scao residuals, ncpa, petal piston)
     if phase_screen is not None:
         assert phase_screen.ndim == 2, "phase_screen dim must be 2."
@@ -23,7 +23,7 @@ def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None,
 
     # pupil-plane apodization (already preloaded if no RA misalign)
     if apo_loaded == False:
-        conf.update(ravc_misalign=misalign)
-        wf = apodizer(wf, onaxis=onaxis, verbose=verbose, **conf)
-        
+        wf = apodizer(wf, ngrid=ngrid, apo_misalign=apo_misalign,
+            onaxis=onaxis, verbose=verbose, **conf)
+
     return wf

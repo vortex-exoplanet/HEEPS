@@ -22,8 +22,8 @@ def run_heeps(savename='ADI_contrast_curve.png'):
     wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
 
     # 4. Load wavefront errors
-    phase_screens, amp_screens, tiptilts, misaligns = heeps.wavefront.load_errors(
-        verbose=True, **conf)
+    phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns = \
+        heeps.wavefront.load_errors(verbose=True, **conf)
 
     # 5. Propagate one frame of off-axis psf (=planet)
     _ = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, 
@@ -31,8 +31,8 @@ def run_heeps(savename='ADI_contrast_curve.png'):
 
     # 6. Propagate cube of on-axis psfs (=star)
     _ = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens,
-        amp_screens=amp_screens, tiptilts=tiptilts, misaligns=misaligns, 
-        onaxis=True, savefits=True, verbose=True, **conf)
+        amp_screens=amp_screens, tiptilts=tiptilts, apo_misaligns=apo_misaligns,
+        ls_misaligns=ls_misaligns, onaxis=True, savefits=True, verbose=True, **conf)
 
     # 7. Produce a 5-sigma sensitivity (contrast) curve
     sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, 
