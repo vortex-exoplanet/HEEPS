@@ -6,11 +6,11 @@ import proper
 import numpy as np
 
 def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, 
-        misalign=[0,0,0,0,0,0], ngrid=1024, npupil=285, vc_chrom_leak=2e-3, 
-        add_cl_det=False, fp_offsets=None, tag=None, onaxis=True, 
+        misalign=[0,0,0,0,0,0], fp_offsets=None, ngrid=1024, npupil=285, 
+        vc_chrom_leak=2e-3, add_cl_det=False, tag=None, onaxis=True, 
         savefits=False, verbose=False, **conf):
-            
-    """ 
+
+    """
     Propagate one single wavefront.
     An off-axis PSF can be obtained by switching onaxis to False,
     thereby decentering the focal plane mask (if any).
@@ -22,7 +22,7 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
     # update conf
     conf.update(ngrid=ngrid, npupil=npupil, vc_chrom_leak=vc_chrom_leak,
             add_cl_det=add_cl_det, tag=tag, onaxis=onaxis)
-    
+
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)
 
@@ -30,7 +30,7 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
     # and apodization (RAP, APP)
     wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen,
         tiptilt=tiptilt, misalign=misalign, verbose=verbose, **conf)
-    
+
     # imaging a point source
     def point_source(wf1, verbose, conf):
         if onaxis == True: # focal-plane mask, only in 'on-axis' configuration

@@ -6,14 +6,15 @@ from heeps.util.multiCPU import multiCPU
 import numpy as np
 
 def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns, 
-        mode='RAVC', ngrid=1024, nframes=10, nstep=1, cpu_count=1, 
+        nframes=10, nstep=1, mode='RAVC', ngrid=1024, cpu_count=1, 
         vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, tag=None, 
         onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
-    conf.update(mode=mode, cpu_count=cpu_count, vc_chrom_leak=vc_chrom_leak,
-        add_cl_det=add_cl_det, add_cl_vort=add_cl_vort, tag=tag, onaxis=onaxis)
-    
+    conf.update(mode=mode, ngrid=ngrid, cpu_count=cpu_count, 
+        vc_chrom_leak=vc_chrom_leak, add_cl_det=add_cl_det, 
+        add_cl_vort=add_cl_vort, tag=tag, onaxis=onaxis)
+
     # preload amp screen if only one frame
     if len(amp_screens) == 1 and np.any(amp_screens) != None:
         import proper
@@ -27,7 +28,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
     if ('APP' in mode) or ('RAVC' in mode and np.all(misaligns) == None):
         wf = apodizer(wf, verbose=False, **conf)
         conf['apo_loaded'] = True
-    
+
     if verbose == True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
         if add_cl_det is True:
@@ -38,7 +39,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, misaligns,
     # run simulation
     posvars = [phase_screens, amp_screens, tiptilts, misaligns]
     kwargs = dict(verbose=False, **conf)
-    psfs = multiCPU(propagate_one, posargs=[wf], posvars=posvars, kwargs=kwargs, \
+    psfs = multiCPU(propagate_one, posargs=[wf], posvars=posvars, kwargs=kwargs,
         case='e2e simulation', cpu_count=cpu_count)
 
     # if only one wavefront, make dim = 2
