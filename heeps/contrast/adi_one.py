@@ -8,15 +8,15 @@ import os.path
 import warnings
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
-        pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, rim=19,
-        app_strehl=0.64, nscreens=None, ndet=None, tag=None, student_distrib=True,
-        savepsf=False, savefits=False, starphot=1e11, verbose=False, **conf):
-    
-    """ 
+        pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
+        nscreens=None, ndet=None, tag=None, OAT=None, student_distrib=True, 
+        savepsf=False, savefits=False, rim=19, starphot=1e11, verbose=False, **conf):
+
+    """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
     for a specific set of off-axis PSF and on-axis PSF (or cube of PSFs),
     using the VIP package to perform ADI post-processing.
-    
+
     Args:
         dir_output (str):
             path to output fits files and input PSFs (onaxis & offaxis)
@@ -25,7 +25,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         mode (str):
             HCI mode: RAVC, CVC, APP, CLC
         add_bckg (bool)
-            true means background flux and photon noise are added 
+            true means background flux and photon noise are added
         pscale (float):
             pixel scale in mas/pix (e.g. METIS LM=5.47, NQ=6.79)
         dit (float):
@@ -36,8 +36,6 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
         dec (float):
             star declination in deg (e.g. 51 Eri -2.47)
-        rim (int):
-            psf image radius in pixels
         app_strehl (float):
             APP Strehl ratio
         nscreens (int):
@@ -46,12 +44,16 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             size of the screens at the detector, default to None for full size
         tag (str):
             tag added to the saved filename
+        OAT (str):
+            path to off-axis transmission file, default to None
         student_distrib (bool):
             true if using a Student's t-distribution sensitivity, else Gaussian
         savepsf (bool):
             true if ADI psf is saved in a fits file
         savefits (bool):
             true if ADI contrast curve is saved in a fits file
+        rim (int):
+            psf image radius in pixels
         starphot (float):
             normalization factor for aperture photometry with VIP
 
@@ -66,6 +68,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
     # get normalized on-axis PSFs (star)
     psf_ON = fits.getdata(loadname%'onaxis')
+    header_ON = fits.getheader(loadname%'onaxis')
     assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
     # cut/crop cube
     if nscreens != None:
@@ -84,7 +87,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
         conf.update(mode=mode, dit=dit, mag=mag)
-        psf_ON, psf_OFF = background(psf_ON, psf_OFF, verbose=True, **conf)
+        psf_ON, psf_OFF = background(psf_ON, psf_OFF, header=header_ON,
+            verbose=True, **conf)
     # apply APP Strehl
     if 'APP' in mode:
         psf_OFF *= app_strehl
@@ -94,7 +98,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     (xoff, yoff) = psf_OFF.shape
     (cx, cy) = (int(xoff/2), int(yoff/2))
     # fit a 2D Gaussian --> output: fwhm, x-y centroid
-    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1, \
+    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1,
             cy-rim:cy+rim+1], True, (rim,rim), debug=False, full_output=True)
     # derive the FWHM
     fwhm = np.mean([fit['fwhm_x'],fit['fwhm_y']])
@@ -103,7 +107,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shiftx, shifty)
     psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
     # FWHM aperture photometry of psf_OFF_crop
-    ap_flux = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim], \
+    ap_flux = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim],
             fwhm, verbose=False)[0]
     # normalize to starphot (for VIP)
     if starphot is None:
@@ -120,18 +124,23 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     dr = np.deg2rad(dec)
     lr = np.deg2rad(lat)
     # parallactic angle in deg
-    pa = -np.rad2deg(np.arctan2(-np.sin(hr), np.cos(dr)*np.tan(lr) \
-            - np.sin(dr)*np.cos(hr)))
-    
+    pa = -np.rad2deg(np.arctan2(-np.sin(hr), 
+                                 np.cos(dr)*np.tan(lr) - np.sin(dr)*np.cos(hr)))
+
     """ VIP: post-processing (ADI, ADI-PCA,...) """
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
+    # get off-axis transmission
+    if OAT != None:
+        OAT = fits.getdata(OAT)
+        OAT = (OAT[1], OAT[0])
     # contrast curve after post-processing (pscale in arcsec)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # for AstropyDeprecationWarning
-        cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop, \
-                fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5, \
-                debug=False, plot=False, verbose=verbose)
+        cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop,
+                fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5,
+                debug=False, plot=False, transmission=OAT, imlib='opencv', 
+                verbose=verbose)
     # angular separations (in arcsec)
     sep = cc_pp.loc[:,'distance_arcsec'].values
     # sensitivities (Student's or Gaussian distribution)
@@ -146,12 +155,12 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
-        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag), dir_output=dir_output, band=band, mode=mode)
+        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag), 
+            dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
         _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
-        save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), dir_output=dir_output, band=band, mode=mode)
+        save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
+            dir_output=dir_output, band=band, mode=mode)
 
     return sep, sen
-    
-
