@@ -95,9 +95,11 @@ def crop_img(img, new_size, margin=0, verbose=True):
         assert len(new_size) == 2, requirement
         (x1, y1) = new_size
     (x2, y2) = img.shape
-    if not np.any(np.array([x1,y1]) < np.array([x2,y2])):
+    if np.any(np.array([x1,y1]) > np.array([x2,y2])):
         if verbose == True:
             print('crop size is larger than img size')
+    elif np.all(np.array([x1,y1]) == np.array([x2,y2])):
+        pass
     else:
         # determine cropping region
         dx = int((x2 - x1)/2)

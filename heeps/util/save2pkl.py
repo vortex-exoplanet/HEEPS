@@ -1,13 +1,13 @@
 import pickle
 import os
 
-def save2pkl(data, name, dir_output='output_files', band='L', mode='RAVC', **conf):
+def save2pkl(name, band='L', mode='RAVC', dir_output='output_files', **conf):
 
     ''' Save data to a pickle file. '''
 
     # update dict
-    conf.update(dir_output=dir_output)
-    ignore = ['perf_num','psf_num','vvc','lyotmask']
+    conf.update(band=band, mode=mode, dir_output=dir_output)
+    ignore = ['perf_num', 'psf_num', 'vvc', 'lyotmask', 'ls_mask']
     for key in ignore :
         if key in conf.keys():
             del conf[key]

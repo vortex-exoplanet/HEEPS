@@ -9,17 +9,19 @@ import os
 
 # inputs
 os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files')))
-nimg = 512 #511
-npupil = 285 # L band
+nimg = 720 #512 #511
+band = 'L'
+npupil = 285
 cpp = 10
 pupil_img_size = 39.9988
 diam_nominal = 38.542
 
-master_seed = {'LTF':123456, 'HTF':345678}
-cutoff = 0.01 # in Hz
-tag = 'Cfull_20211007'#'Cbasic_20201130'
-t_max = 3600 # in s
-dt = 300 # in ms
+#master_seed = {'LTF':123456, 'HTF':345678} #12000 frames
+master_seed = {'LTF':234567, 'HTF':456789} #6000 frames
+cutoff = 0.01       # in Hz
+tag = 'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
+t_max = 600#3600    # in s
+dt = 100#300        # in ms
 npetals = 6
 f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
 f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
@@ -30,14 +32,14 @@ f_petal_screens = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'
 # calculate cube size
 nframes = int(t_max/dt*1000)
 # load scao atmosphere residuals and mask
-scao = fits.getdata(f_scao_screens%(tag, t_max, dt, 'scao_only', 'L', npupil))
-mask = fits.getdata(f_mask%(tag, 'L', npupil)) > 0.5
+scao = fits.getdata(f_scao_screens%(tag, t_max, dt, 'scao_only', band, npupil))
+mask = fits.getdata(f_mask%(tag, band, npupil)) > 0.5
 
 # create ncpa maps (spatial frequencies)
 try:
-    ncpa_allSF = fits.getdata(f_ncpa_screens%('allSF', cpp, 'L', npupil))
-    ncpa_LSF = fits.getdata(f_ncpa_screens%('LSF', cpp, 'L', npupil))
-    ncpa_HSF = fits.getdata(f_ncpa_screens%('HSF', cpp, 'L', npupil))
+    ncpa_allSF = fits.getdata(f_ncpa_screens%('allSF', cpp, band, npupil))
+    ncpa_LSF = fits.getdata(f_ncpa_screens%('LSF', cpp, band, npupil))
+    ncpa_HSF = fits.getdata(f_ncpa_screens%('HSF', cpp, band, npupil))
     print('NCPA spatial files loaded.')
 except FileNotFoundError:
     print('Creating NCPA spatial files...')
@@ -49,13 +51,13 @@ except FileNotFoundError:
     ncpa_allSF *= mask
     ncpa_LSF *= mask
     ncpa_HSF *= mask
-    fits.writeto(f_ncpa_screens%('allSF', cpp, 'L', npupil), ncpa_allSF)
-    fits.writeto(f_ncpa_screens%('LSF', cpp, 'L', npupil), ncpa_LSF)
-    fits.writeto(f_ncpa_screens%('HSF', cpp, 'L', npupil), ncpa_HSF)
+    fits.writeto(f_ncpa_screens%('allSF', cpp, band, npupil), ncpa_allSF)
+    fits.writeto(f_ncpa_screens%('LSF', cpp, band, npupil), ncpa_LSF)
+    fits.writeto(f_ncpa_screens%('HSF', cpp, band, npupil), ncpa_HSF)
 finally:
-    LTF1 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_12000x1rms_seed=832404.fits')
-    LTF2 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_12000x1rms_seed=523364.fits')
-    HTF1 = fits.getdata('wavefront/ncpa/time_series_HTF_0.01-1Hz_12000x1rms_seed=832404.fits')
+    LTF1 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_%sx1rms_seed=832404.fits'%nframes)
+    LTF2 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_%sx1rms_seed=523364.fits'%nframes)
+    HTF1 = fits.getdata('wavefront/ncpa/time_series_HTF_0.01-1Hz_%sx1rms_seed=832404.fits'%nframes)
     ncpa_STA = np.array([ncpa_HSF]*nframes)
     ncpa_QLSF = np.array([x*ncpa_LSF for x in LTF1])
     ncpa_QHSF = np.array([x*ncpa_HSF for x in LTF2])
@@ -63,9 +65,9 @@ finally:
 
 # create petal piston cubes
 f_piston_Q = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'\
-    %('LTF', master_seed['LTF'], 'L', npupil)
+    %('LTF', master_seed['LTF'], band, npupil)
 f_piston_DYN = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'\
-    %('HTF', master_seed['HTF'], 'L', npupil)
+    %('HTF', master_seed['HTF'], band, npupil)
 try:
     piston_Q = fits.getdata(f_piston_Q)
     piston_DYN = fits.getdata(f_piston_DYN)
@@ -87,7 +89,8 @@ except FileNotFoundError:
         # mask, normalize and save petal piston
         pp *= mask
         pp /= pp_rms
-        fits.writeto(f_petal_screens%(TF, master_seed[TF], 'L', npupil), np.float32(pp), overwrite=True)
+        fits.writeto(f_petal_screens%(TF, master_seed[TF], band, npupil), 
+                    np.float32(pp), overwrite=True)
     piston_Q = fits.getdata(f_piston_Q)
     piston_DYN = fits.getdata(f_piston_DYN)
 
