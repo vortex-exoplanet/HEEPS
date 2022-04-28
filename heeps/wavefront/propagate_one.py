@@ -5,9 +5,9 @@ from copy import deepcopy
 import proper
 import numpy as np
 
-def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, 
-        apo_misalign=None, ls_misalign=None, fp_offsets=None, ngrid=1024,
-        npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, tag=None,
+def propagate_one(wf, mode='RAVC', phase_screen=None, amp_screen=None, 
+        tiptilt=None, apo_misalign=None, ls_misalign=None, fp_offsets=None, 
+        ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, tag=None,
         onaxis=True, savefits=False, verbose=False, **conf):
 
     """
@@ -20,8 +20,9 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
         print('Create single %s-axis PSF'%{True:'on',False:'off'}[onaxis])
 
     # update conf
-    conf.update(ngrid=ngrid, npupil=npupil, vc_chrom_leak=vc_chrom_leak,
-            add_cl_det=add_cl_det, tag=tag, onaxis=onaxis)
+    conf.update(mode=mode, ngrid=ngrid, npupil=npupil,
+            vc_chrom_leak=vc_chrom_leak, add_cl_det=add_cl_det,
+            tag=tag, onaxis=onaxis)
 
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)
@@ -33,15 +34,17 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
 
     # imaging a point source
     def point_source(wf1, verbose, conf):
-        if onaxis == True: # focal-plane mask, only in 'on-axis' configuration
-            if add_cl_det is True:
+        if onaxis == True:
+            if add_cl_det is True and 'VC' in mode: # add chromatic leakage (vortex only)
                 cl = deepcopy(wf1)
                 cl._wfarr = np.flip(cl._wfarr) # 2 FFTs
                 cl = lyot_stop(cl, ls_misalign=ls_misalign, verbose=verbose, **conf)
-            wf1 = fp_mask(wf1, verbose=verbose, **conf)
+                chrom_leak = cl._wfarr*np.sqrt(vc_chrom_leak)
+            else:
+                chrom_leak = 0
+            wf1 = fp_mask(wf1, verbose=verbose, **conf) # focal-plane mask (onaxis only)
             wf1 = lyot_stop(wf1, ls_misalign=ls_misalign, verbose=verbose, **conf)
-            if add_cl_det is True:
-                wf1._wfarr += cl._wfarr*np.sqrt(vc_chrom_leak)
+            wf1._wfarr += chrom_leak
         else:
             wf1._wfarr = np.flip(wf1._wfarr) # 2 FFTs
             wf1 = lyot_stop(wf1, ls_misalign=ls_misalign, verbose=verbose, **conf)
