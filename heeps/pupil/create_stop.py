@@ -1,0 +1,66 @@
+from .create_pupil import create_pupil
+from heeps.util.coord import cart_coord, polar_coord
+import numpy as np
+
+
+def create_stop(d_ext, d_int, dRext, dRint, dRspi, npupil=285, 
+        pupil_img_size=40, diam_nominal=38, spi_width=0.5, seg_width=1.45,
+        misalign_x=0, misalign_y=0, circ_ext=True, circ_int=True, **conf):
+    '''
+    Margins are calculated wrt nominal diameter, and applied (added/subtracted) 
+    to the external/internal diameters, and spider width.
+    '''
+    # misalignments
+    dx = misalign_x*diam_nominal/pupil_img_size
+    dy = misalign_y*diam_nominal/pupil_img_size
+    # create spider stop
+    conf = dict(
+        npupil = npupil,
+        pupil_img_size = pupil_img_size, 
+        diam_ext = 2*pupil_img_size,  # no circular aperture
+        diam_int = 0,                 # no central obscuration
+        seg_width = 0,                # no segments
+        spi_width = spi_width + dRspi*diam_nominal,
+        dx = dx,
+        dy = dy)
+    mask_spi = create_pupil(**conf)
+    # calculate dodecagonal (outer) diameter
+    if circ_ext == False:
+        alpha = np.arcsin(seg_width/d_ext)
+        d_ext *= np.cos(alpha)
+    # calculate dodecagonal (inner) diameter
+    if circ_int == False:
+        beta = np.pi/6 - np.arcsin(seg_width*np.sin(np.pi/6)/d_int)
+        d_int *= np.cos(beta)
+    # create outer and inner stops
+    r_ext = (d_ext - dRext*diam_nominal) / pupil_img_size
+    r_int = (d_int + dRint*diam_nominal) / pupil_img_size
+    # create mask
+    r, t = polar_coord(npupil, dx=dx, dy=dy)
+    mask_ext = (r < r_ext) if circ_ext == True \
+                         else 1 - dodecagon(r_ext, npupil, dx=dx, dy=dy)
+    mask_int = (r > r_int) if circ_int == True \
+                         else 1 - hexagon(r_int, npupil, dx=dx, dy=dy)
+    # pupil stop
+    return mask_ext * mask_int * mask_spi
+
+def dodecagon(r_ext, npupil, dx=0, dy=0):
+    x, y = cart_coord(npupil, dx=dx, dy=dy)
+    M1 = mask_angle(x, y, r_ext, 0)
+    M2 = mask_angle(x, y, r_ext, 30)
+    M3 = mask_angle(x, y, r_ext, 60)
+    M4 = mask_angle(x, y, r_ext, 90)
+    return np.uint8(M1 + M2 + M3 + M4)
+
+def hexagon(r_int, npupil, dx=0, dy=0):
+    x, y = cart_coord(npupil, dx=dx, dy=dy)
+    M5 = mask_angle(x, y, r_int, 0)
+    M6 = mask_angle(x, y, r_int, 60)
+    return 1 - np.uint8(M5 + M6)
+
+def mask_angle(x, y, r, theta):
+    P = (r*np.cos(np.deg2rad(theta)), r*np.sin(np.deg2rad(theta)))
+    a = np.tan(np.deg2rad(theta - 90))
+    b = P[1] - a*P[0]
+    mask = (y > a*x + b) + (y > -a*x + b) + (y < a*x - b) + (y < -a*x - b)
+    return mask

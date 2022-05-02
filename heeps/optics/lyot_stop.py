@@ -1,5 +1,5 @@
 from heeps.util.img_processing import resize_img, pad_img
-from heeps.pupil.create_lyotstop import create_ls
+from heeps.pupil.create_stop import create_stop
 import proper
 from astropy.io import fits
 import os.path
@@ -32,15 +32,11 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
             d_int = ravc_r*diam_ext if 'RAVC' in mode else diam_int
             circ_ext = ls_ext_circ
             circ_int = True         if 'RAVC' in mode else ls_int_circ
-            dRext = ls_dRext
-            dRint = ls_dRint
-            dRspi = ls_dRspi
             misalign_x , misalign_y = [0, 0] if ls_misalign is None \
                                             else list(ls_misalign)[0:2]
             # create Lyot stop
-            ls_mask = create_ls(d_ext, d_int, npupil=npupil,
-                dRext=dRext, dRint=dRint, dRspi=dRspi,
-                misalign_x=misalign_x, misalign_y=misalign_y,
+            ls_mask = create_stop(d_ext, d_int, ls_dRext, ls_dRint, ls_dRspi,
+                npupil=npupil, misalign_x=misalign_x, misalign_y=misalign_y,
                 circ_ext=circ_ext, circ_int=circ_int, **conf)
             if verbose is True:
                 print('   apply Lyot stop: circ_ext=%s, circ_int=%s'
