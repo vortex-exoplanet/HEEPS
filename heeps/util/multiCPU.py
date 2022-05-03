@@ -4,8 +4,8 @@ from functools import partial
 from sys import platform
 import time
 
-def multiCPU(f, posargs=[], posvars=[], kwargs={}, nout=1, estimate_time=False, 
-        case=None, cpu_count=None, verbose=True):
+def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
+        estimate_time=False, case=None, cpu_count=None, verbose=True):
 
     assert type(posargs)==list, 'posargs must be a list [] of positionnal arguments'
     assert type(posvars)==list, 'posvars must be a list [] of positionnal variables for multiprocessing'
@@ -37,7 +37,7 @@ def multiCPU(f, posargs=[], posvars=[], kwargs={}, nout=1, estimate_time=False,
         p = mpro.Pool(cpu_count)
         func = partial(f, *posargs, **kwargs)
         res_multi = np.array(p.starmap(func, zip(*posvars)))
-        if nout > 1:
+        if multi_out is True:
             res_multi = tuple(np.array(x) for x in res_multi.swapaxes(0, 1))
         p.close()
         p.join()
@@ -57,7 +57,7 @@ def multiCPU(f, posargs=[], posvars=[], kwargs={}, nout=1, estimate_time=False,
             if i == 0:
                 res_multi = res
             else:
-                if nout > 1:
+                if multi_out is True:
                     res_multi = tuple(anystack(x, y) for x, y in zip(res_multi, res))
                 else:
                     res_multi = anystack(res_multi, res)

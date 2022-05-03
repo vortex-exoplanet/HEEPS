@@ -58,7 +58,7 @@ for onoff in ['onaxis']:
                 cube2 = np.array(fits.getdata('%s_%s_%s_%s_neg.fits'%(onoff, plane,band,mode)), ndmin=3)
                 case = 'create %s band %s cube'%(band, mode)
                 (cube1, cube2) = multiCPU(build_APP, posargs=[plane, mode, band, delta, ndet],\
-                    posvars=[cube1, cube2], nout=2, case=case, cpu_count=conf['cpucount'])
+                    posvars=[cube1, cube2], multi_out=True, case=case, cpu_count=conf['cpucount'])
 
                 filename = '%s_%s_%s_%s_%s.fits'%(onoff, plane, band, mode, 'raw')
                 fits.writeto(filename, cube1, overwrite=True)

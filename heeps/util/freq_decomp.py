@@ -140,7 +140,7 @@ def psd_spatial_zernike(cube_name, pup, zpols, nzer, ncube):
             verbose = True if z == 1 else False
             LSF, HSF = multiCPU(remove_zernike, posargs=[deepcopy(wf), pup],
                         posvars=[cube, zpols[:,:z]], case='remove zernike', 
-                        nout=2, verbose=verbose)
+                        multi_out=True, verbose=verbose)
             LSFs[z-1], HSFs[z-1] = LSF, HSF
             HSFs_rms.append(get_rms(HSF, verbose=verbose))
             print(z, end=', ')
