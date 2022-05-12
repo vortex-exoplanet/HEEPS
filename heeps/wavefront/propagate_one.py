@@ -5,8 +5,8 @@ from copy import deepcopy
 import proper
 import numpy as np
 
-def propagate_one(wf, mode='RAVC', phase_screen=None, amp_screen=None, 
-        tiptilt=None, apo_misalign=None, ls_misalign=None, fp_offsets=None, 
+def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None, 
+        apo_misalign=None, ls_misalign=None, mode='RAVC', fp_offsets=None, 
         ngrid=1024, npupil=285, vc_chrom_leak=2e-3, add_cl_det=False, tag=None,
         onaxis=True, savefits=False, verbose=False, **conf):
 
