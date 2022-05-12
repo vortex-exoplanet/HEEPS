@@ -4,7 +4,7 @@ import proper
 import numpy as np
 
 def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, 
-        tiptilt=None, apo_misalign=None, ngrid=1024,
+        tiptilt=None, apo_misalign=None, ngrid=1024, astigmatism=0,
         apo_loaded=False, verbose=False, **conf):
 
     # apply phase screen (scao residuals, ncpa, petal piston)
@@ -20,6 +20,10 @@ def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None,
     # apply tip-tilt (Zernike 2,3)
     if tiptilt is not None:
         proper.prop_zernikes(wf, [2,3], np.array(tiptilt, ndmin=1))
+
+    # add constant oblique astigmatism
+    if astigmatism != 0:
+        proper.prop_zernikes(wf, [5], np.array(astigmatism, ndmin=1))
 
     # pupil-plane apodization (already preloaded if no RA misalign)
     if apo_loaded == False:
