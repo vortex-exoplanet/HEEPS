@@ -82,3 +82,6 @@ target/
 
 #Google Drive
 .tmp.driveupload
+
+#Visual Studio Code
+.vscode/
