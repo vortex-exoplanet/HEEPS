@@ -23,7 +23,7 @@ Currently, the simulator includes four coronagraphs:
 - [Bowens et al. 2021](https://www.aanda.org/articles/aa/full_html/2021/09/aa41109-21/aa41109-21.html), Exoplanets with ELT-METIS: I. Estimating the direct imaging exoplanet yield around stars within 6.5 parsecs
 
 ## Dependencies
-You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/check_versions.ipynb)  
+You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/check_versions.ipynb)  
 
 [![Python](https://img.shields.io/badge/Python-3.7.0-brightgreen.svg)]()  
 [![Proper](https://img.shields.io/badge/Proper-3.2.5-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)  
@@ -36,4 +36,4 @@ You can use this tool to check all versions: [check_versions.ipynb](https://gith
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-3.3.0-brightgreen.svg)]()
 
 ## Quick start
-This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/tools/demo.ipynb)
+This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/demo.ipynb)
