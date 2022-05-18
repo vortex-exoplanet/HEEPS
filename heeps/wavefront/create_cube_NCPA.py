@@ -16,12 +16,12 @@ cpp = 10
 pupil_img_size = 39.9988
 diam_nominal = 38.542
 
-#master_seed = {'LTF':123456, 'HTF':345678} #12000 frames
-master_seed = {'LTF':234567, 'HTF':456789} #6000 frames
+master_seed = {'LTF':123456, 'HTF':345678} #12000 frames
+#master_seed = {'LTF':234567, 'HTF':456789} #6000 frames
 cutoff = 0.01       # in Hz
-tag = 'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
-t_max = 600#3600    # in s
-dt = 100#300        # in ms
+tag = 'Cfull_20220512'#'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
+t_max = 3600#600#   # in s
+dt = 300#100#       # in ms
 npetals = 6
 f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
 f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
@@ -114,6 +114,8 @@ for band in ['L', 'M', 'N1', 'N2']:
     scaling = 1
     #scaling = conf['lam']/lamL
     #print(scaling, conf['npupil'])
+    f_out = f_scao_screens%(tag, t_max, dt, 'scao_only', band, conf['npupil'])
+    fits.writeto(f_out, resize_cube(scao, conf['npupil']), overwrite=True)
     f_out = f_scao_screens%(tag, t_max, dt, 'all_ncpa', band, conf['npupil'])
     fits.writeto(f_out, resize_cube(scao + ncpa_piston_ALL*scaling, conf['npupil']), overwrite=True)
     print('%s created'%f_out)
