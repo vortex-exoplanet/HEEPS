@@ -75,10 +75,10 @@ def read_config(verbose=False, **update_conf):
     dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
-    f_lyot_stop = 'pupil/ls_ravc_allglass_285.fits', # lyot stop file
-    ls_dRext = 0.0207,                  # LS Rext undersize (% diam ext)
-    ls_dRint = 0.0207,                  # LS Rint oversize (% diam ext)
-    ls_dRspi = 0.0207,                  # LS spider oversize (% diam ext)
+    f_lyot_stop = 'pupil/ls_RAVC_L_285_dRext=0.0477_dRint=0.02_dRspi=0.0249.fits', # lyot stop file
+    ls_dRext = 0.0477,                  # LS Rext undersize (% diam ext)
+    ls_dRint = 0.02,                    # LS Rint oversize (% diam ext)
+    ls_dRspi = 0.0249,                  # LS spider oversize (% diam ext)
     ls_ext_circ = True,                 # circular LS external diameter
     ls_int_circ = True,                 # circular LS internal diameter
     lt_dist = 0,                        # lith trap distance in m (36.67)
