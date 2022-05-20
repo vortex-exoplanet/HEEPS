@@ -7,7 +7,7 @@ from astropy.io import fits
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         f_app_amp='', f_app_phase='', f_ravc_amp='', f_ravc_phase='',
-        apo_misalign=None, onaxis=True, verbose=False, **conf):
+        apo_misalign=None, onaxis=True, verbose=False, save_ring=False, **conf):
 
     ''' Create a wavefront object at the entrance pupil plane.
     The pupil is either loaded from a fits file, or created using
@@ -63,6 +63,9 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
             # create apodizer
             ring = circular_apodization(wf, ravc_r, 1, ravc_t, xc=dx, 
                 yc=dy, NORM=True)
+            if save_ring is True:
+                fits.writeto('apo_ring_r=%.4f_t=%.4f.fits'%(ravc_r, ravc_t),
+                    impro.crop_img(ring, npupil), overwrite=True)
             if verbose is True:
                 print('   apply ring apodizer: ravc_t=%s, ravc_r=%s'
                     %(round(ravc_t, 4), round(ravc_r, 4)))
