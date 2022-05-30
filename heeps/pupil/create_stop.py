@@ -1,9 +1,10 @@
 from .create_pupil import create_pupil
 from heeps.util.coord import cart_coord, polar_coord
+from heeps.util.img_processing import resize_img
 import numpy as np
 
 
-def create_stop(d_ext, d_int, dRext, dRint, dRspi, npupil=285, 
+def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, 
         pupil_img_size=40, diam_nominal=38, spi_width=0.5, seg_width=1.45,
         misalign_x=0, misalign_y=0, circ_ext=True, circ_int=True, **conf):
     '''
@@ -15,11 +16,11 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, npupil=285,
     dy = misalign_y*diam_nominal/pupil_img_size
     # create spider stop
     conf = dict(
-        npupil = npupil,
+        npupil = nhr,               # high res
         pupil_img_size = pupil_img_size, 
-        diam_ext = 2*pupil_img_size,  # no circular aperture
-        diam_int = 0,                 # no central obscuration
-        seg_width = 0,                # no segments
+        diam_ext = 2*pupil_img_size,# no circular aperture
+        diam_int = 0,               # no central obscuration
+        seg_width = 0,              # no segments
         spi_width = spi_width + dRspi*diam_nominal,
         dx = dx,
         dy = dy)
@@ -36,13 +37,15 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, npupil=285,
     r_ext = (d_ext - dRext*diam_nominal) / pupil_img_size
     r_int = (d_int + dRint*diam_nominal) / pupil_img_size
     # create mask
-    r, t = polar_coord(npupil, dx=dx, dy=dy)
+    r, t = polar_coord(nhr, dx=dx, dy=dy)
     mask_ext = (r < r_ext) if circ_ext == True \
-                         else 1 - dodecagon(r_ext, npupil, dx=dx, dy=dy)
+                         else 1 - dodecagon(r_ext, nhr, dx=dx, dy=dy)
     mask_int = (r > r_int) if circ_int == True \
-                         else 1 - hexagon(r_int, npupil, dx=dx, dy=dy)
+                         else 1 - hexagon(r_int, nhr, dx=dx, dy=dy)
+    # resize
+    mask = resize_img(mask_ext*mask_int*mask_spi, npupil)
     # pupil stop
-    return mask_ext * mask_int * mask_spi
+    return mask
 
 def dodecagon(r_ext, npupil, dx=0, dy=0):
     x, y = cart_coord(npupil, dx=dx, dy=dy)

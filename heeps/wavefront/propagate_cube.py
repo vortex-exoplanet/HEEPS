@@ -37,21 +37,23 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
             print('   preloading amplitude screen')
 
     # preload apodizer when no drift
-    if ('APP' in mode) or ('RAVC' in mode and np.all(apo_misaligns) == None):
+    conf['apo_loaded'] = False
+    nodrift = np.all(apo_misaligns[:-1] == apo_misaligns[1:])
+    if ('APP' in mode) or ('RAVC' in mode and nodrift):
         wf1 = apodizer(wf1, verbose=False, **conf)
         conf['apo_loaded'] = True
         if verbose == True:
-            print('   preloading %s apodizer'%mode)
-    else:
-        conf['apo_loaded'] = False
+            print('   preloading %s apodizer, apo_misalign=%s'%(mode, apo_misaligns[0]))
 
     # preload Lyot stop when no drift
-    if ('VC' in mode or 'LC' in mode) and np.all(ls_misaligns) == None:
+    nodrift = np.all(ls_misaligns[:-1] == ls_misaligns[1:])
+    if ('VC' in mode or 'LC' in mode) and nodrift:
         conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=False, **conf)
         if verbose == True:
-            print('   preloading Lyot stop')
+            print('   preloading Lyot stop, ls_misalign=%s'%ls_misaligns[0])
 
     # run simulation
+    del conf['apo_misalign'], conf['ls_misalign']
     posvars = [phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns]
     kwargs = dict(verbose=False, **conf)
     psfs = multiCPU(propagate_one, posargs=[wf1], posvars=posvars, kwargs=kwargs,

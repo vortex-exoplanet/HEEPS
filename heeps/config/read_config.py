@@ -75,12 +75,13 @@ def read_config(verbose=False, **update_conf):
     dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
-    f_lyot_stop = 'pupil/ls_RAVC_L_285_dRext=0.0477_dRint=0.02_dRspi=0.0249.fits', # lyot stop file
+    f_lyot_stop = '',                   # lyot stop file
     ls_dRext = 0.0477,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.02,                    # LS Rint oversize (% diam ext)
     ls_dRspi = 0.0249,                  # LS spider oversize (% diam ext)
     ls_ext_circ = True,                 # circular LS external diameter
     ls_int_circ = True,                 # circular LS internal diameter
+    ls_misalign = None,                 # constant lyot stop misalignment
     lt_dist = 0,                        # lith trap distance in m (36.67)
     lt_diam = 0,                        # lith trap norm diameter (0.3837)
     vc_charge = 2,                      # vortex topological charge
@@ -91,6 +92,7 @@ def read_config(verbose=False, **update_conf):
     ravc_calc = True,                   # calculate RA params (Mawet2013)
     ravc_t = 0.7909,                    # (calc=False) mean-M1 RA trans
     ravc_r = 0.5190,                    # (calc=False) mean-M1 RA radius wrt allglass
+    apo_misalign = None,                # constant apodizer misalignment
     clc_diam = 80,                      # CLC occulter diam in mas
     f_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance

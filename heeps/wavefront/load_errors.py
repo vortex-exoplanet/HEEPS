@@ -6,7 +6,8 @@ import numpy as np
 
 def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         add_amp=False, f_amp='', add_point_err=False, f_point_err='', dit=0.3,
-        add_apo_drift=False, apo_drift=0.02, add_ls_drift=False, ls_drift=0.02,
+        add_apo_drift=False, apo_drift=0.02, apo_misalign=None, 
+        add_ls_drift=False, ls_drift=0.02, ls_misalign=None,
         verbose=False, **conf):
 
     ''' Load wavefront errors.
@@ -35,10 +36,14 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         true if adding apodizer drift
     apo_drift (float):
         apodizer drift
+    apo_misalign (list):
+        constant apodizer misalignment (if no drift)
     add_ls_drift (bool):
         true if adding lyot stop drift
     ls_drift (float):
         lyot stop drift
+    ls_misalign (list):
+        constant lyot stop misalignment (if no drift)
     '''
     # size of cubes/arrays
     nscreens = int((nframes/nstep) + 0.5)
@@ -93,7 +98,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         if verbose is True:
             print('Load apodizer drift=%s %% ptv'%apo_drift)
     else:
-        apo_misaligns = np.array([None]*nscreens)
+        apo_misaligns = np.array([apo_misalign]*nscreens)   # constant misalignment
 
     # load lyot stop drift
     if add_ls_drift is True and ('VC' in conf['mode'] or 'LC' in conf['mode']):
@@ -103,6 +108,6 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         if verbose is True:
             print('Load Lyot stop drift=%s %% ptv'%ls_drift)
     else:
-        ls_misaligns = np.array([None]*nscreens)
+        ls_misaligns = np.array([ls_misalign]*nscreens)     # constant misalignment
 
     return phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns

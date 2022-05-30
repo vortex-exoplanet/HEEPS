@@ -1,11 +1,9 @@
-from heeps.optics import apodizer
 from heeps.util.img_processing import pad_img
 import proper
 import numpy as np
 
-def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None, 
-        tiptilt=None, apo_misalign=None, ngrid=1024, astigmatism=0,
-        apo_loaded=False, verbose=False, **conf):
+def add_errors(wf, phase_screen=None, amp_screen=None, 
+        tiptilt=None, ngrid=1024, astigmatism=0, **conf):
 
     # apply phase screen (scao residuals, ncpa, petal piston)
     if phase_screen is not None:
@@ -24,10 +22,5 @@ def add_errors(wf, onaxis=True, phase_screen=None, amp_screen=None,
     # add constant oblique astigmatism
     if astigmatism != 0:
         proper.prop_zernikes(wf, [5], np.array(astigmatism, ndmin=1))
-
-    # pupil-plane apodization (already preloaded if no RA misalign)
-    if apo_loaded == False:
-        wf = apodizer(wf, ngrid=ngrid, apo_misalign=apo_misalign,
-            onaxis=onaxis, verbose=verbose, **conf)
 
     return wf

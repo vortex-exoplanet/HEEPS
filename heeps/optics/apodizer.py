@@ -68,7 +68,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
                     impro.crop_img(ring, npupil), overwrite=True)
             if verbose is True:
                 print('   apply ring apodizer: ravc_t=%s, ravc_r=%s'
-                    %(round(ravc_t, 4), round(ravc_r, 4)))
+                    %(round(ravc_t, 4), round(ravc_r, 4))
+                    + ', apo_misalign=%s'%apo_misalign)
 
         # multiply the loaded apodizer
         proper.prop_multiply(wf, ring)

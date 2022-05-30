@@ -13,17 +13,17 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
 
     if mode in ['CVC', 'RAVC', 'CLC']:
 
-        # case 1: load mask from data
+        # case 1: mask already preloaded
         if ls_mask is not None:
             if verbose is True:
-                print("   apply lyot stop data from 'ls_mask'")
-            ls_mask = resize_img(ls_mask, npupil)
+                print("   apply preloaded lyot stop")
 
         # case 2: load mask from file
         elif os.path.isfile(f_lyot_stop):
             if verbose is True:
                 print("   apply lyot stop from '%s'"%os.path.basename(f_lyot_stop))
             ls_mask = resize_img(fits.getdata(f_lyot_stop), npupil)
+            ls_mask = pad_img(ls_mask, ngrid)
 
         # case 3: create a lyot stop mask
         else:
@@ -42,12 +42,15 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
                 print('   apply Lyot stop: circ_ext=%s, circ_int=%s'
                     %(circ_ext, circ_int)
                     + ', ls_dRext=%.4f, ls_dRint=%.4f, ls_dRspi=%.4f'
-                    %(ls_dRext, ls_dRint, ls_dRspi))
-            
-        # optional: can return updated conf, instead of applying Lyot stop
+                    %(ls_dRext, ls_dRint, ls_dRspi)
+                    + ', ls_misalign=%s'%ls_misalign)
+            # zero-pad
+            ls_mask = pad_img(ls_mask, ngrid)
+
+        # optional: can return mask, instead of applying Lyot stop
         if not apply_ls:
             return ls_mask
         else:
-            proper.prop_multiply(wf, pad_img(ls_mask, ngrid))
+            proper.prop_multiply(wf, ls_mask)
 
     return wf
