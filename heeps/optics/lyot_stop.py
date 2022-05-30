@@ -39,10 +39,8 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
                 npupil=npupil, misalign_x=misalign_x, misalign_y=misalign_y,
                 circ_ext=circ_ext, circ_int=circ_int, **conf)
             if verbose is True:
-                print('   apply Lyot stop: circ_ext=%s, circ_int=%s'
-                    %(circ_ext, circ_int)
-                    + ', ls_dRext=%.4f, ls_dRint=%.4f, ls_dRspi=%.4f'
-                    %(ls_dRext, ls_dRint, ls_dRspi)
+                print('   apply Lyot stop: circ_ext/int=%s'%[circ_ext, circ_int]
+                    + ', ls_dRext/int/spi=%s'%[ls_dRext, ls_dRint, ls_dRspi]
                     + ', ls_misalign=%s'%ls_misalign)
             # zero-pad
             ls_mask = pad_img(ls_mask, ngrid)
