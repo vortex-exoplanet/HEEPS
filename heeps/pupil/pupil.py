@@ -10,11 +10,10 @@ from astropy.io import fits
 
 def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
         pupil_img_size=40, diam_ext=37, diam_int=11, spi_width=0.5, 
-        spi_angles=[0,60,120], npetals=6, seg_width=0, seg_gap=0, seg_rms=0, 
+        spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10],
-        seg_missing=[], select_petal=None, norm_I=True, savefits=False, 
-        verbose=False, **conf):
+        seg_missing=[], norm_I=True, savefits=False, verbose=False, **conf):
     
     ''' Create a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
@@ -56,12 +55,10 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
             number of hexagonal segments per column (from left to right)
         seg_missing: list of tupples
             coordinates of missing segments
-        npetals: int
-            number of petals
-        select_petal: int
-            selected petal in range npetals, default to None
-    
     '''
+
+    if verbose is True:
+        print("Entrance pupil:", end=' ')
 
     # initialize wavefront using PROPER
     beam_ratio = npupil/ngrid*(diam_ext/pupil_img_size)
@@ -70,19 +67,19 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
     # case 1: load pupil from data
     if pup is not None:
         if verbose is True:
-            print("Load pupil data from 'pup'")
+            print("loaded from 'pup' array")
         pup = resize_img(pup, npupil)
 
     # case 2: load pupil from file
     elif os.path.isfile(f_pupil):
         if verbose is True:
-            print("Load pupil from '%s'"%os.path.basename(f_pupil))
+            print("loaded from '%s'"%os.path.basename(f_pupil))
         pup = resize_img(fits.getdata(f_pupil), npupil)
     
     # case 3: create a pupil
     else:
         if verbose is True:
-            print("Create pupil: spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_rms=%s"\
+            print("spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_rms=%s"\
                 %(spi_width, seg_width, seg_gap, seg_rms))
         conf.update(npupil=npupil,
                     pupil_img_size=pupil_img_size, 
@@ -97,13 +94,6 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
                     seg_rms=seg_rms)
         pup = create_pupil(**conf)
 
-    # select one petal (optional)
-    if select_petal in range(npetals) and npetals > 1:
-        if verbose is True:
-            print("   select_petal=%s"%select_petal)
-        petal = create_petal(select_petal, npetals, npupil)
-        pup *= petal
-
     # normalize the entrance pupil intensity (total flux = 1)
     if norm_I is True:
         I_pup = pup**2
@@ -115,4 +105,7 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
     # pad with zeros and add to wavefront
     proper.prop_multiply(wf, pad_img(pup, ngrid))
     
+    if verbose is True:
+        print('\u203e'*15)
+
     return wf
