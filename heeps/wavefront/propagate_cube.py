@@ -11,7 +11,7 @@ import numpy as np
 def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
         ls_misaligns, nframes=10, nstep=1, mode='RAVC', ngrid=1024, cpu_count=1,
         vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, tag=None, 
-        onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
+        onaxis=True, avg=False, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
     conf.update(mode=mode, ngrid=ngrid, cpu_count=cpu_count, 
@@ -21,7 +21,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)
 
-    if verbose == True:
+    if verbose is True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
         if add_cl_det is True:
             print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
@@ -42,14 +42,14 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
     if ('APP' in mode) or ('RAVC' in mode and nodrift):
         wf1 = apodizer(wf1, verbose=False, **conf)
         conf['apo_loaded'] = True
-        if verbose == True:
+        if verbose is True:
             print('   preloading %s apodizer, apo_misalign=%s'%(mode, apo_misaligns[0]))
 
     # preload Lyot stop when no drift
     nodrift = np.all(ls_misaligns[:-1] == ls_misaligns[1:])
     if ('VC' in mode or 'LC' in mode) and nodrift:
         conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=False, **conf)
-        if verbose == True:
+        if verbose is True:
             print('   preloading Lyot stop, ls_misalign=%s'%ls_misaligns[0])
 
     # run simulation
@@ -59,9 +59,13 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
     psfs = multiCPU(propagate_one, posargs=[wf1], posvars=posvars, kwargs=kwargs,
         case='e2e simulation', cpu_count=cpu_count)
 
-    # if only one wavefront, make dim = 2
-    if len(psfs) == 1:
-        psfs = psfs[0]
+    # optional: average cube
+    if avg is True:
+        if verbose is True:
+            print('   averaging PSF cube\n')
+        psfs = np.mean(psfs, axis=0)
+    elif verbose is True:
+        print('')
 
     # save cube of PSFs to fits file, and notify by email
     if savefits == True:
