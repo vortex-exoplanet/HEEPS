@@ -10,8 +10,8 @@ import numpy as np
 
 def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
         ls_misaligns, nframes=10, nstep=1, mode='RAVC', ngrid=1024, cpu_count=1,
-        vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, tag=None, 
-        onaxis=True, avg=False, send_to=None, savefits=False, verbose=False, **conf):
+        vc_chrom_leak=2e-3, add_cl_det=False, add_cl_vort=False, avg=False, tag=None, 
+        onaxis=True, send_to=None, savefits=False, verbose=False, **conf):
 
     # update conf
     conf.update(mode=mode, ngrid=ngrid, cpu_count=cpu_count, 
