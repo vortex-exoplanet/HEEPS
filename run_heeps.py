@@ -21,22 +21,18 @@ def run_heeps(savename='ADI_contrast_curve.png'):
     # 3. Load entrance pupil, and create 'wavefront' object
     wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
 
-    # 4. Load wavefront errors
-    phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns = \
-        heeps.wavefront.load_errors(verbose=True, **conf)
+    # 4.  Create a PSF template for injecting fake exoplanets
+    heeps.wavefront.propagate(wf, onaxis=False, avg=True, savefits=True, verbose=True, **conf);
 
-    # 5. Propagate one frame of off-axis psf (=planet)
-    _ = heeps.wavefront.propagate_one(wf, onaxis=False, savefits=True, 
-        verbose=True, **conf)
+    # 5. Create a cube of on-axis psfs (=star)
+    heeps.wavefront.propagate(wf, onaxis=True, savefits=True, verbose=True, **conf);
 
-    # 6. Propagate cube of on-axis psfs (=star)
-    _ = heeps.wavefront.propagate_cube(wf, phase_screens=phase_screens,
-        amp_screens=amp_screens, tiptilts=tiptilts, apo_misaligns=apo_misaligns,
-        ls_misaligns=ls_misaligns, onaxis=True, savefits=True, verbose=True, **conf)
+    # 6. Produce a 5-sigma sensitivity (contrast) curve
+    sep1, sen1 = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
 
-    # 7. Produce a 5-sigma sensitivity (contrast) curve
-    sep, sen = heeps.contrast.adi_one(savepsf=True, savefits=True, 
-        verbose=True, **conf)
+    # 7. Add star flux + background flux + photon noise
+    conf['add_bckg'] = True
+    sep2, sen2 = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
 
     # 8. Create a figure 
     if savename != '':
@@ -47,14 +43,14 @@ def run_heeps(savename='ADI_contrast_curve.png'):
         plt.loglog(), plt.gca().xaxis.set_major_formatter(ScalarFormatter())
         plt.xlabel('Angular separation $[arcsec]$')
         plt.ylabel('5-$\sigma$ sensitivity (contrast)')
-        label = '%s-band %s'%(conf['band'], conf['mode'])
-        plt.plot(sep, sen, label=label, marker='d', markevery=0.12, markersize=4)
+        plt.title('%s-band %s, SCAO only, %s frames'%(conf['band'], conf['mode'], conf['nframes']))
+        plt.plot(sep1, sen1, 'C0', label='w/o background', marker='d', markevery=0.12, markersize=4)
+        plt.plot(sep2, sen2, 'C0:', label='with background (star mag=5)', marker='d', markevery=0.12, markersize=4)
         plt.legend()
         plt.xlim(0.02, 0.75)
-        plt.ylim(1e-8,1e-2)
+        plt.ylim(1e-8, 1e-2)
         plt.xticks([0.02, 0.05, 0.1, 0.2, 0.5])
-        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, 
-            transparent=True)
+        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, transparent=True);
 
 if __name__ == "__main__":
     '''

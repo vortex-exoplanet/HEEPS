@@ -80,7 +80,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if psf_OFF.ndim == 3:
         psf_OFF = psf_OFF[0,:,:] # only first frame
     if verbose is True:
-        print('Load PSFs for ADI')
+        print('Apply ADI technique: add_bckg=%s'%add_bckg)
+        print('\u203e'*20)
         print('   mode=%s, band=%s'%(mode, band))
         print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
         print('   pscale=%s mas, dit=%s s'%(pscale, dit))
@@ -101,7 +102,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1,
             cy-rim:cy+rim+1], True, (rim,rim), debug=False, full_output=True)
     # derive the FWHM
-    fwhm = np.mean([fit['fwhm_x'],fit['fwhm_y']])
+    fwhm = np.mean([fit['fwhm_x'], fit['fwhm_y']])
     # recenter and crop
     shiftx, shifty = rim-fit['centroid_x'], rim-fit['centroid_y']
     psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shiftx, shifty)
