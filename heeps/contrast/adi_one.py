@@ -1,5 +1,6 @@
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
+from heeps.util.paralang import paralang
 from .background import background
 import vip_hci
 import numpy as np
@@ -64,21 +65,18 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             5-sigma sensitivity (contrast)
     """
 
-    # PSF filenames
+    # load PSFs: on-axis (star) and off-axis (planet)
     loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
-    # get normalized on-axis PSFs (star)
+    psf_OFF = fits.getdata(loadname%'offaxis')
     psf_ON = fits.getdata(loadname%'onaxis')
     header_ON = fits.getheader(loadname%'onaxis')
     assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
+    assert psf_OFF.ndim == 2, "off-axis PSF frame must be 2-dimensional"
     # cut/crop cube
-    if nscreens != None:
+    if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
-    if ndet != None:
+    if ndet is not None:
         psf_ON = crop_cube(psf_ON, ndet)
-    # get normalized off-axis PSF (planet)
-    psf_OFF = fits.getdata(loadname%'offaxis')
-    if psf_OFF.ndim == 3:
-        psf_OFF = psf_OFF[0,:,:] # only first frame
     if verbose is True:
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)
@@ -94,18 +92,24 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if 'APP' in mode:
         psf_OFF *= app_strehl
 
+    # parallactic angle in deg
+    pa = paralang(psf_ON.shape[0], dec, lat)
+    # get off-axis transmission
+    if OAT is not None:
+        OAT = fits.getdata(OAT)
+        OAT = (OAT[1], OAT[0])
     """ VIP: aperture photometry of psf_OFF used to scale the contrast """
     # get the center pixel
-    (xoff, yoff) = psf_OFF.shape
-    (cx, cy) = (int(xoff/2), int(yoff/2))
+    (yoff, xoff) = psf_OFF.shape
+    (cy, cx) = (yoff//2, xoff//2)
     # fit a 2D Gaussian --> output: fwhm, x-y centroid
-    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cx-rim:cx+rim+1,
-            cy-rim:cy+rim+1], True, (rim,rim), debug=False, full_output=True)
+    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cy-rim:cy+rim+1,
+            cx-rim:cx+rim+1], True, (rim,rim), debug=False, full_output=True)
     # derive the FWHM
     fwhm = np.mean([fit['fwhm_x'], fit['fwhm_y']])
     # recenter and crop
     shiftx, shifty = rim-fit['centroid_x'], rim-fit['centroid_y']
-    psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shiftx, shifty)
+    psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shifty, shiftx)
     psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
     # FWHM aperture photometry of psf_OFF_crop
     ap_flux = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim],
@@ -117,24 +121,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_ON *= starphot/ap_flux
         psf_OFF_crop *= starphot/ap_flux
 
-    """ parallactic angles for ADI """
-    # hour angle to deg conversion
-    ha = 360/24
-    # angles in rad
-    hr = np.deg2rad(np.linspace(-ha/2, ha/2, psf_ON.shape[0]))
-    dr = np.deg2rad(dec)
-    lr = np.deg2rad(lat)
-    # parallactic angle in deg
-    pa = -np.rad2deg(np.arctan2(-np.sin(hr), 
-                                 np.cos(dr)*np.tan(lr) - np.sin(dr)*np.cos(hr)))
-
-    """ VIP: post-processing (ADI, ADI-PCA,...) """
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
-    # get off-axis transmission
-    if OAT != None:
-        OAT = fits.getdata(OAT)
-        OAT = (OAT[1], OAT[0])
     # contrast curve after post-processing (pscale in arcsec)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # for AstropyDeprecationWarning
