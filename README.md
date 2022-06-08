@@ -25,16 +25,16 @@ Currently, the simulator includes four coronagraphs:
 ## Dependencies
 You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/check_versions.ipynb)
 
-[![Python](https://img.shields.io/badge/Python-3.7.0-brightgreen.svg)]()
-[![Proper](https://img.shields.io/badge/Proper-3.2.6a-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)
-[![Scopesim](https://img.shields.io/badge/Scopesim-0.1.1-brightgreen.svg)]()
+[![Python](https://img.shields.io/badge/Python-3.7.0-brightgreen.svg)]()  
+[![Proper](https://img.shields.io/badge/Proper-3.2.6a-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)  
+[![Scopesim](https://img.shields.io/badge/Scopesim-0.1.1-brightgreen.svg)]()  
+[![Numpy](https://img.shields.io/badge/Numpy-1.21.2-brightgreen.svg)]()
+[![Scipy](https://img.shields.io/badge/Scipy-1.1.0-brightgreen.svg)]()
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.3.0-brightgreen.svg)]()  
 [![Vip-hci](https://img.shields.io/badge/Vip_hci-1.0.0-brightgreen.svg)]()
 [![Photutils](https://img.shields.io/badge/Photutils-0.7.2-brightgreen.svg)]()
 [![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
 [![Skimage](https://img.shields.io/badge/Skimage-0.18.3-brightgreen.svg)]()
-[![Numpy](https://img.shields.io/badge/Numpy-1.21.2-brightgreen.svg)]()
-[![Scipy](https://img.shields.io/badge/Scipy-1.1.0-brightgreen.svg)]()
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.3.0-brightgreen.svg)]()
 
 ## Quick start
 This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/demo.ipynb)
