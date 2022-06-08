@@ -21,17 +21,15 @@ def propagate_one(wf, phase_screen=None, amp_screen=None, tiptilt=None,
 
     # update conf
     conf.update(mode=mode, ngrid=ngrid, npupil=npupil, tag=tag, onaxis=onaxis,
-            vc_chrom_leak=vc_chrom_leak, add_cl_det=add_cl_det)
-    # no misalignment for off-axis PSF
-    if onaxis == True:
-        conf.update(apo_misalign=apo_misalign, ls_misalign=ls_misalign)
+            vc_chrom_leak=vc_chrom_leak, add_cl_det=add_cl_det,
+            apo_misalign=apo_misalign, ls_misalign=ls_misalign)
 
     # keep a copy of the input wavefront
     wf1 = deepcopy(wf)
 
     # pupil-plane apodization (RAP, APP) already preloaded if no RA drift
     if apo_loaded == False:
-        wf = apodizer(wf, verbose=verbose, **conf)
+        wf = apodizer(wf1, verbose=verbose, **conf)
 
     # apply wavefront errors (SCAO residuals, NCPA, Talbot effect, ...)
     wf1 = add_errors(wf1, phase_screen=phase_screen, amp_screen=amp_screen,

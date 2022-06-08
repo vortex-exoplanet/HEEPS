@@ -62,7 +62,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
     # optional: average cube
     if avg is True:
         if verbose is True:
-            print('   averaging PSF cube\n')
+            print('Average PSF cube\n')
         psfs = np.mean(psfs, axis=0)
     elif verbose is True:
         print('')
