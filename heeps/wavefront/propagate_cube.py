@@ -30,7 +30,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
 
     # preload amp screen if only one frame
     if len(amp_screens) == 1 and np.any(amp_screens) != None:
-        proper.prop_multiply(wf1, pad_img(amp_screens, ngrid))
+        proper.prop_multiply(wf1, pad_img(amp_screens[0], ngrid))
         # then create a cube of None values
         amp_screens = [None]*int(nframes/nstep + 0.5)
         if verbose == True:
