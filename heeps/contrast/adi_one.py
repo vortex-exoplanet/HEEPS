@@ -1,8 +1,8 @@
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
 from heeps.util.paralang import paralang
+from heeps.util.psf_template import psf_template
 from .background import background
-from .psf_off_template import psf_off_template
 import vip_hci
 import numpy as np
 from astropy.io import fits
@@ -99,7 +99,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         OAT = fits.getdata(OAT)
         OAT = (OAT[1], OAT[0])
     # aperture photometry of an off-axis PSF template, used to scale the contrast
-    psf_OFF_crop, fwhm, ap_flux = psf_off_template(psf_OFF)
+    psf_OFF_crop, fwhm, ap_flux = psf_template(psf_OFF)
     # normalize to starphot (for VIP)
     if starphot is None:
         starphot = ap_flux
