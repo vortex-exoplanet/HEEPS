@@ -2,6 +2,7 @@ from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
 from heeps.util.paralang import paralang
 from .background import background
+from .psf_off_template import psf_off_template
 import vip_hci
 import numpy as np
 from astropy.io import fits
@@ -11,7 +12,7 @@ import warnings
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, OAT=None, student_distrib=True, 
-        savepsf=False, savefits=False, rim=19, starphot=1e11, verbose=False, **conf):
+        savepsf=False, savefits=False, starphot=1e11, verbose=False, **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -91,36 +92,20 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # apply APP Strehl
     if 'APP' in mode:
         psf_OFF *= app_strehl
-
     # parallactic angle in deg
     pa = paralang(psf_ON.shape[0], dec, lat)
     # get off-axis transmission
     if OAT is not None:
         OAT = fits.getdata(OAT)
         OAT = (OAT[1], OAT[0])
-    """ VIP: aperture photometry of psf_OFF used to scale the contrast """
-    # get the center pixel
-    (yoff, xoff) = psf_OFF.shape
-    (cy, cx) = (yoff//2, xoff//2)
-    # fit a 2D Gaussian --> output: fwhm, x-y centroid
-    fit = vip_hci.var.fit_2dgaussian(psf_OFF[cy-rim:cy+rim+1,
-            cx-rim:cx+rim+1], True, (rim,rim), debug=False, full_output=True)
-    # derive the FWHM
-    fwhm = np.mean([fit['fwhm_x'], fit['fwhm_y']])
-    # recenter and crop
-    shiftx, shifty = rim-fit['centroid_x'], rim-fit['centroid_y']
-    psf_OFF = vip_hci.preproc.frame_shift(psf_OFF, shifty, shiftx)
-    psf_OFF_crop = psf_OFF[cx-rim:cx+rim+1, cy-rim:cy+rim+1]
-    # FWHM aperture photometry of psf_OFF_crop
-    ap_flux = vip_hci.metrics.aperture_flux(psf_OFF_crop, [rim], [rim],
-            fwhm, verbose=False)[0]
+    # aperture photometry of an off-axis PSF template, used to scale the contrast
+    psf_OFF_crop, fwhm, ap_flux = psf_off_template(psf_OFF)
     # normalize to starphot (for VIP)
     if starphot is None:
         starphot = ap_flux
     else:
         psf_ON *= starphot/ap_flux
         psf_OFF_crop *= starphot/ap_flux
-
     # VIP post-processing algorithm
     algo = vip_hci.medsub.median_sub
     # contrast curve after post-processing (pscale in arcsec)
@@ -128,7 +113,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         warnings.simplefilter("ignore") # for AstropyDeprecationWarning
         cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop,
                 fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5,
-                debug=False, plot=False, transmission=OAT, imlib='opencv', 
+                debug=False, plot=False, transmission=OAT, imlib='opencv',
                 verbose=verbose)
     # angular separations (in arcsec)
     sep = cc_pp.loc[:,'distance_arcsec'].values
@@ -144,7 +129,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
-        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag), 
+        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
             dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
