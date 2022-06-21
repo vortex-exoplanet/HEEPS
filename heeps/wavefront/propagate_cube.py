@@ -29,28 +29,31 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
             print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # preload amp screen if only one frame
-    if len(amp_screens) == 1 and np.any(amp_screens) != None:
-        proper.prop_multiply(wf1, pad_img(amp_screens[0], ngrid))
-        # then create a cube of None values
-        amp_screens = [None]*int(nframes/nstep + 0.5)
-        if verbose == True:
-            print('   preloading amplitude screen')
+    if np.any(amp_screens) != None:
+        if len(amp_screens) == 1:
+            proper.prop_multiply(wf1, pad_img(amp_screens[0], ngrid))
+            # then create a cube of None values
+            amp_screens = [None]*int(nframes/nstep + 0.5)
+            if verbose == True:
+                print('   preloading amplitude screen')
+        elif verbose is True:
+            print('   amplitude screen not preloaded: len(amp_screens)=%s'%len(amp_screens))
 
     # preload apodizer when no drift
     conf['apo_loaded'] = False
-    nodrift = np.all(apo_misaligns[:-1] == apo_misaligns[1:])
-    if ('APP' in mode) or ('RAVC' in mode and nodrift):
-        wf1 = apodizer(wf1, verbose=False, **conf)
-        conf['apo_loaded'] = True
-        if verbose is True:
-            print('   preloading %s apodizer, apo_misalign=%s'%(mode, apo_misaligns[0]))
+    if ('APP' in mode) or ('RAVC' in mode):
+        if np.all(apo_misaligns[:-1] == apo_misaligns[1:]):
+            wf1 = apodizer(wf1, verbose=verbose, **conf)
+            conf['apo_loaded'] = True
+        elif verbose is True:
+            print('   %s apodizer not preloaded: apo_misalign=%s'%(mode, apo_misaligns[0]))
 
     # preload Lyot stop when no drift
-    nodrift = np.all(ls_misaligns[:-1] == ls_misaligns[1:])
-    if ('VC' in mode or 'LC' in mode) and nodrift:
-        conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=False, **conf)
-        if verbose is True:
-            print('   preloading Lyot stop, ls_misalign=%s'%ls_misaligns[0])
+    if ('VC' in mode or 'LC' in mode):
+        if np.all(ls_misaligns[:-1] == ls_misaligns[1:]):
+            conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=False, **conf)
+        elif verbose is True:
+            print('   Lyot stop not preloaded: ls_misalign=%s'%ls_misaligns[0])
 
     # run simulation
     del conf['apo_misalign'], conf['ls_misalign']

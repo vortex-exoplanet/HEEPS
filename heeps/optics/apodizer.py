@@ -79,13 +79,13 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         # get amplitude and phase data
         if os.path.isfile(f_app_amp):
             if verbose is True:
-                print('   apply APP stop (amplitude)')
+                print("   apply APP stop from '%s'"%os.path.basename(f_app_amp))
             APP_amp = fits.getdata(f_app_amp)
         else:
             APP_amp = np.ones((npupil, npupil))
         if os.path.isfile(f_app_phase) and onaxis == True:
             if verbose is True:
-                print('   apply APP phase')
+                print("   apply APP phase from '%s'"%os.path.basename(f_app_phase))
             APP_phase = fits.getdata(f_app_phase)
         else:
             APP_phase = np.zeros((npupil, npupil))
