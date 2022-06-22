@@ -11,8 +11,8 @@ import warnings
 
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
-        nscreens=None, ndet=None, tag=None, OAT=None, student_distrib=True, 
-        savepsf=False, savefits=False, starphot=1e11, verbose=False, **conf):
+        nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
+        savepsf=False, starphot=1e11, savefits=False, verbose=False, **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -46,7 +46,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             size of the screens at the detector, default to None for full size
         tag (str):
             tag added to the saved filename
-        OAT (str):
+        f_oat (str):
             path to off-axis transmission file, default to None
         student_distrib (bool):
             true if using a Student's t-distribution sensitivity, else Gaussian
@@ -54,8 +54,6 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             true if ADI psf is saved in a fits file
         savefits (bool):
             true if ADI contrast curve is saved in a fits file
-        rim (int):
-            psf image radius in pixels
         starphot (float):
             normalization factor for aperture photometry with VIP
 
@@ -95,11 +93,13 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # parallactic angle in deg
     pa = paralang(psf_ON.shape[0], dec, lat)
     # get off-axis transmission
-    if 'VC' in mode and OAT is not None:
-        OAT = fits.getdata(OAT)
+    if 'VC' in mode and f_oat is not None:
+        OAT = fits.getdata(f_oat)
         OAT = (OAT[1], OAT[0])
         if verbose is True:
-            print('Loading Vortex off-axis transmission')
+            print('   loading Vortex off-axis transmission')
+    else:
+        OAT = None
     # aperture photometry of an off-axis PSF template, used to scale the contrast
     psf_OFF_crop, fwhm, ap_flux = psf_template(psf_OFF)
     # normalize to starphot (for VIP)

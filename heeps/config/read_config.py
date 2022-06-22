@@ -94,6 +94,7 @@ def read_config(verbose=False, **update_conf):
     ravc_r = 0.5190,                    # (calc=False) RAP radius wrt allglass
     apo_misalign = None,                # constant apodizer misalignment
     clc_diam = 80,                      # CLC occulter diam in mas
+    f_oat = 'optics/oat_L_RAVC.fits',   # vortex off-axis transmission
     f_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
     f_app_amp = 'optics/METIS_LMS_L_amp.fits', # APP amplitude
@@ -175,7 +176,7 @@ def read_config(verbose=False, **update_conf):
             %(conf['npupil'], conf['pscale'], conf['lam']))
         hfov = conf['ndet']/2*conf['pscale']/1e3
         hfov_lamD = hfov*u.arcsec.to('rad')/(conf['lam']/conf['diam_ext'])
-        print('   ndet=%s (-> hfov=%s arcsec, %s lam/D)\n'%(conf['ndet'], \
+        print('   ndet=%s (-> hfov=%s arcsec, %s lam/D)\n'%(conf['ndet'],
             round(hfov,2), round(hfov_lamD,2)))
     
     # create directories
@@ -188,8 +189,8 @@ def read_config(verbose=False, **update_conf):
     os.makedirs(conf['dir_temp'], exist_ok=True)
     
     # create paths to fits files
-    for filename in ['f_pupil', 'f_phase', 'f_amp', 'f_point_err', 'f_lyot_stop', \
-            'f_vc_trans', 'f_app_trans', 'f_app_amp', 'f_app_phase']:
+    for filename in ['f_pupil', 'f_phase', 'f_amp', 'f_point_err', 'f_lyot_stop',
+            'f_oat', 'f_vc_trans', 'f_app_trans', 'f_app_amp', 'f_app_phase']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive

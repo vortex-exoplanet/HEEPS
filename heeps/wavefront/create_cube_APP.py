@@ -12,7 +12,7 @@ modes = ['APP']
 #ndets = [377, 473]               # image size: 512, 256
 
 bands = ['L']
-deltas = [19]
+deltas = [29]#19]
 ndets = [403]
 
 
@@ -20,14 +20,14 @@ conf = {}
 conf['cpucount'] = None
 conf['nframes'] = 12000
 
-def build_APP(plane, mode, band, dpx, npx, pos, neg):
+def build_APP(dpx, npx, pos, neg):
         # merge pos and neg cubes
         psf_raw = pos
-        cx = int(npx/2)
-        psf_raw[:cx,:] = neg[:cx,:]
+        #cx = int(npx/2)
+        #psf_raw[:cx,:] = neg[:cx,:]
+        psf_raw[neg<pos] = neg[neg<pos]
 
         # apply scaling to the vertical middle band
-        suffix = ''
         xmin = int((npx-dpx)/2)
         xmax = int((npx+dpx)/2)
         dark_level = np.median(psf_raw)
@@ -57,7 +57,7 @@ for onoff in ['onaxis']:
                 # cube2 = negative PSF => will store ADI contrast PSF
                 cube2 = np.array(fits.getdata('%s_%s_%s_%s_neg.fits'%(onoff, plane,band,mode)), ndmin=3)
                 case = 'create %s band %s cube'%(band, mode)
-                (cube1, cube2) = multiCPU(build_APP, posargs=[plane, mode, band, delta, ndet],\
+                (cube1, cube2) = multiCPU(build_APP, posargs=[delta, ndet],\
                     posvars=[cube1, cube2], multi_out=True, case=case, cpu_count=conf['cpucount'])
 
                 filename = '%s_%s_%s_%s_%s.fits'%(onoff, plane, band, mode, 'raw')
