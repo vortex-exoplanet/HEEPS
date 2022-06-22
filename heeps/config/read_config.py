@@ -89,7 +89,7 @@ def read_config(verbose=False, **update_conf):
     vc_chrom_leak = 2e-3,               # vortex chromatic leakage
     add_cl_vort = False,                # add chromatic leakage at the vortex plane
     add_cl_det = False,                 # add chromatic leakage at the detector plane
-    ravc_calc = True,                   # calculate RAP params (Mawet2013)
+    ravc_calc = False,                   # calculate RAP params (Mawet2013)
     ravc_t = 0.7909,                    # (calc=False) RAP amplitude trans
     ravc_r = 0.5190,                    # (calc=False) RAP radius wrt allglass
     apo_misalign = None,                # constant apodizer misalignment
