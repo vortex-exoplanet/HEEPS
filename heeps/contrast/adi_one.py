@@ -95,9 +95,11 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # parallactic angle in deg
     pa = paralang(psf_ON.shape[0], dec, lat)
     # get off-axis transmission
-    if OAT is not None:
+    if 'VC' in mode and OAT is not None:
         OAT = fits.getdata(OAT)
         OAT = (OAT[1], OAT[0])
+        if verbose is True:
+            print('Loading Vortex off-axis transmission')
     # aperture photometry of an off-axis PSF template, used to scale the contrast
     psf_OFF_crop, fwhm, ap_flux = psf_template(psf_OFF)
     # normalize to starphot (for VIP)
