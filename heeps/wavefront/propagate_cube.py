@@ -23,10 +23,11 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
 
     if verbose is True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
-        if add_cl_det is True:
-            print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
-        if add_cl_vort is True:
-            print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
+        if 'VC' in mode and onaxis is True:
+            if add_cl_det is True:
+                print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
+            if add_cl_vort is True:
+                print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # preload amp screen if only one frame
     if np.any(amp_screens) != None:
@@ -46,14 +47,14 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
             wf1 = apodizer(wf1, verbose=verbose, **conf)
             conf['apo_loaded'] = True
         elif verbose is True:
-            print('   %s apodizer not preloaded: apo_misalign=%s'%(mode, apo_misaligns[0]))
+            print('   %s apodizer not preloaded: len(apo_misalign)=%s'%(mode, len(apo_misaligns)))
 
     # preload Lyot stop when no drift
     if ('VC' in mode or 'LC' in mode):
         if np.all(ls_misaligns[:-1] == ls_misaligns[1:]):
-            conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=False, **conf)
+            conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=verbose, **conf)
         elif verbose is True:
-            print('   Lyot stop not preloaded: ls_misalign=%s'%ls_misaligns[0])
+            print('   Lyot stop not preloaded: len(ls_misalign)=%s'%len(ls_misaligns))
 
     # run simulation
     del conf['apo_misalign'], conf['ls_misalign']
