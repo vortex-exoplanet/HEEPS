@@ -97,7 +97,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         OAT = fits.getdata(f_oat)
         OAT = (OAT[1], OAT[0])
         if verbose is True:
-            print('   loading Vortex off-axis transmission')
+            print("   load vortex off-axis transmission from '%s'"%os.path.basename(f_oat))
     else:
         OAT = None
     # aperture photometry of an off-axis PSF template, used to scale the contrast

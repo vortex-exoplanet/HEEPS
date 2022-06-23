@@ -11,7 +11,7 @@ savename_fits = 'cc_raw_%s_%s_%s.fits'
 # radius of CLC occulter in lam/D
 r_CLC = 2.5
 # modes per band
-band_specs = {'L': {'modes': ['APP_adi', 'APP_raw'],#['RAVC', 'APP', 'CVC', 'CLC', 'ELT'],
+band_specs = {'L': {'modes': ['RAVC', 'APPLMS_adi', 'APPLMS_raw', 'CVC'],#['RAVC', 'APPIMG_adi', 'APPIMG_raw', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
               'M': {'modes': ['RAVC', 'APP', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
@@ -25,19 +25,17 @@ os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/output_files')))
 cases = ['water_vapor/scao_only/yes',
            'water_vapor/scao_only/no',
            'water_vapor/scao_only/noTT']
-cases = ['scao_only']
+cases = ['noTTnoPP', 'scao_only', 'all_effects']
 
 print('\n%s: producing raw contrast curves.'\
             %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
 for case in cases:
-    print('%s'%case)
+    print('\ncase: %s'%case)
 
     for band in bands:
-        print('%s'%band)
         pscale = band_specs[band]['pscale']
         modes = band_specs[band]['modes']
         for mode in modes:
-            print('%s'%mode, end=', ')
             # off-axis PSF
             psf_OFF = fits.getdata(os.path.join(case, 'offaxis_PSF_%s_%s.fits'%(band, mode)))
             ndet = psf_OFF.shape[-1]
@@ -67,4 +65,4 @@ for case in cases:
             header = fits.Header({'date':date, 'band':band, 'mode':mode})
             hdu = fits.PrimaryHDU(np.float32([x,y2]), header=header)
             hdu.writeto(os.path.join(case, savename_fits%(band, mode, case.replace('/','_'))), overwrite=True)
-            print('saved to ', os.path.join(case, savename_fits%(band, mode, case.replace('/','_'))))
+            print('saved to', os.path.join(savename_fits%(band, mode, case.replace('/','_'))))

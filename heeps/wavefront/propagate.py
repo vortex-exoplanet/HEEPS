@@ -8,9 +8,11 @@ def propagate(wf, nframes=10, nstep=1, nframes_avg=10, avg=False, tag=None,
         print('%s-axis PSF:'%{True:'On',False:'Off'}[onaxis])
         print('\u203e'*{True:12,False:13}[onaxis])
 
-    conf.update(
-        nframes = nframes_avg if avg is True else nframes,
-        nstep = 1             if avg is True else nstep,
+    if avg is True:
+        conf.update(
+            nframes = nframes_avg,
+            nstep = 1,
+            send_to = None,
         )
 
     phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns = \
