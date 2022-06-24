@@ -8,10 +8,8 @@ import time
 # inputs
 bands = ['L']#'L', 'M', 'N1', 'N2']
 savename_fits = 'cc_raw_%s_%s_%s.fits'
-# radius of CLC occulter in lam/D
-r_CLC = 2.5
 # modes per band
-band_specs = {'L': {'modes': ['RAVC', 'APPLMS_adi', 'APPLMS_raw', 'CVC'],#['RAVC', 'APPIMG_adi', 'APPIMG_raw', 'CVC', 'CLC', 'ELT'],
+band_specs = {'L': {'modes': ['CLC'],#['RAVC', 'APPIMG', 'APPLMS', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
               'M': {'modes': ['RAVC', 'APP', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
@@ -26,6 +24,7 @@ cases = ['water_vapor/scao_only/yes',
            'water_vapor/scao_only/no',
            'water_vapor/scao_only/noTT']
 cases = ['noTTnoPP', 'scao_only', 'all_effects']
+cases = ['scao_only']
 
 print('\n%s: producing raw contrast curves.'\
             %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
@@ -54,12 +53,6 @@ for case in cases:
             y2 /= peak
             # x axis in lam/D
             x = pscale*1e-3*np.arange(rim)
-            # CLC mode
-            if 'CLC' in mode:
-                mask = np.where(x>r_CLC)[0]
-                x = x[mask]
-                y1 = y1[mask]
-                y2 = y2[mask]
             # save to hdu
             date = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
             header = fits.Header({'date':date, 'band':band, 'mode':mode})
