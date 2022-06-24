@@ -9,7 +9,7 @@ import time
 bands = ['L']#'L', 'M', 'N1', 'N2']
 savename_fits = 'cc_raw_%s_%s_%s.fits'
 # modes per band
-band_specs = {'L': {'modes': ['CLC'],#['RAVC', 'APPIMG', 'APPLMS', 'CVC', 'CLC', 'ELT'],
+band_specs = {'L': {'modes': ['RAVC', 'CVC', 'APPIMG', 'APPLMS', 'CLC', 'ELT'],
                    'pscale': 5.47},
               'M': {'modes': ['RAVC', 'APP', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
@@ -24,7 +24,7 @@ cases = ['water_vapor/scao_only/yes',
            'water_vapor/scao_only/no',
            'water_vapor/scao_only/noTT']
 cases = ['noTTnoPP', 'scao_only', 'all_effects']
-cases = ['scao_only']
+cases = ['ideal']
 
 print('\n%s: producing raw contrast curves.'\
             %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))

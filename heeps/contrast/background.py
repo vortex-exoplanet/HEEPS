@@ -48,18 +48,17 @@ def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3,
     """
 
     # calculate offaxis-PSF transmission
-    offaxis_trans = np.sum(psf_OFF)
-    # apply mask transmittance
-    data = None
+    thruput = np.sum(psf_OFF)
+    # load mask transmittance
     if 'VC' in mode:
         data = fits.getdata(f_vc_trans)
+        mask_trans = np.interp(lam*1e6, data[0], data[1])
     elif 'APP' in mode:
         data = fits.getdata(f_app_trans)
-    if data is not None:
         mask_trans = np.interp(lam*1e6, data[0], data[1])
-        psf_OFF *= mask_trans
-        psf_ON *= mask_trans
-    # apply correction for APP single PSF
+    else:
+        mask_trans = 1
+    # apply correction for APP single PSF (~48%)
     if 'APP' in mode:
         psf_OFF *= app_single_psf
         psf_ON *= app_single_psf
@@ -71,17 +70,17 @@ def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3,
     else:
         # rescale PSFs to star signal
         star_signal = dit * flux_star * 10**(-0.4*(mag - mag_ref))
-        psf_OFF *= star_signal
-        psf_ON *= star_signal
+        psf_OFF *= star_signal * mask_trans
+        psf_ON *= star_signal * mask_trans
         # add background
-        bckg_noise = dit * flux_bckg * offaxis_trans * mask_trans
+        bckg_noise = dit * flux_bckg * thruput * mask_trans
         psf_ON += bckg_noise
         # add photon noise ~ N(0, sqrt(psf))
         np.random.seed(seed)
         psf_ON += np.random.normal(0, np.sqrt(psf_ON))
 
     if verbose is True:
-        print('   offaxis_trans=%.4f, mask_trans=%.4f,'%(offaxis_trans, mask_trans))
+        print('   thruput=%.4f, mask_trans=%.4f,'%(thruput, mask_trans))
         print('   mag=%s, dit=%.3f'%(mag, dit))
         print('   star_signal=%.2e, bckg_noise=%.2e'%(star_signal, bckg_noise))
 
