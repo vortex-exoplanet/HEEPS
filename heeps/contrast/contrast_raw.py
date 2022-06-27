@@ -1,15 +1,14 @@
 import heeps.util.img_processing as impro
 from astropy.io import fits
-import astropy.units as u
 import numpy as np
 import os
 import time
 
 # inputs
-bands = ['L']#'L', 'M', 'N1', 'N2']
+bands = ['L', 'N2']#'L', 'M', 'N1', 'N2']
 savename_fits = 'cc_raw_%s_%s_%s.fits'
 # modes per band
-band_specs = {'L': {'modes': ['RAVC', 'CVC', 'APPIMG', 'APPLMS', 'CLC', 'ELT'],
+band_specs = {'L': {'modes': ['RAVC', 'CVC', 'APPIMG', 'CLC', 'ELT'],#, 'APPLMS'
                    'pscale': 5.47},
               'M': {'modes': ['RAVC', 'APP', 'CVC', 'CLC', 'ELT'],
                    'pscale': 5.47},
@@ -23,8 +22,8 @@ os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/output_files')))
 cases = ['water_vapor/scao_only/yes',
            'water_vapor/scao_only/no',
            'water_vapor/scao_only/noTT']
-cases = ['noTTnoPP', 'scao_only', 'all_effects']
-cases = ['ideal']
+cases = ['noTTnoPP', 'ideal']
+cases = ['scao_only', 'all_effects']
 
 print('\n%s: producing raw contrast curves.'\
             %(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())))
