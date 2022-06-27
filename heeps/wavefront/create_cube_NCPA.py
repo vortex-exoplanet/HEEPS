@@ -27,7 +27,7 @@ f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
 f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
 f_ncpa_frame = 'wavefront/ncpa/DIFF_LM_20211122_fullM1.fits'
 f_ncpa_screens = 'wavefront/ncpa/ncpa_fullM1_%s_%scpp_%s_%s.fits'
-f_petal_screens = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'
+f_petal_screens = 'wavefront/petal/cube_petal_piston_%s_seed=%s_%s_%s.fits'
 
 # calculate cube size
 nframes = int(t_max/dt*1000)
@@ -64,10 +64,8 @@ finally:
     ncpa_DYN = np.array([x*ncpa_allSF for x in HTF1])
 
 # create petal piston cubes
-f_piston_Q = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'\
-    %('LTF', master_seed['LTF'], band, npupil)
-f_piston_DYN = 'wavefront/ncpa/cube_petal_piston_%s_seed=%s_%s_%s.fits'\
-    %('HTF', master_seed['HTF'], band, npupil)
+f_piston_Q = f_petal_screens%('LTF', master_seed['LTF'], band, npupil)
+f_piston_DYN = f_petal_screens%('HTF', master_seed['HTF'], band, npupil)
 try:
     piston_Q = fits.getdata(f_piston_Q)
     piston_DYN = fits.getdata(f_piston_DYN)
