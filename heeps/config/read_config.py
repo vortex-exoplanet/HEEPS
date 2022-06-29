@@ -38,7 +38,7 @@ def read_config(verbose=False, **update_conf):
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
-    seg_rms = 0,                        # rms of the reflectivity of all segments
+    seg_rms = 0,                        # rms of the segment reflectivities (in intensity)
     select_petal = None,
     npetals = 6,                        # number of petals
     # number of hexagonal segments per column (from left to right)

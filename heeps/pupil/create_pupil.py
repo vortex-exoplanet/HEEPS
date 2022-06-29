@@ -92,8 +92,9 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int
                 else:
                     # creates one hexagonal segment at x, y position in meters
                     segment = create_hexagon(nhr, seg_r, seg_y, seg_x, sampling)
-                    # multiply by segment reflectivity and add to segments
-                    seg_refl = np.random.normal(1, seg_rms)
+                    # calculate segment reflectivities in amplitude (seg_rms=intensity)
+                    seg_refl = np.random.normal(1, seg_rms)**0.5
+                    # multiply, then add segment to segments
                     segments += segment*seg_refl
                     seg_y += seg_d
         # need to transpose, due to the orientation of hexagons in create_hexagon
