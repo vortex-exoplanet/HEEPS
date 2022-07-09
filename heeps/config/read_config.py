@@ -153,7 +153,8 @@ def read_config(verbose=False, **update_conf):
     f_point_err = 'wavefront/point_all_3600s_300ms_L.fits',
     point_qsta = 0.4,                   # quasistatic (mas rms)
     point_dyn = 2,                      # dynamic (mas rms)
-    astigmatism = 0,                    # constant oblique astigmatism
+    zern = None,                        # constant Zernike, e.g. astigmatism 30 nm rms,
+                                        # zern = [5, 30e-9]
 
     add_apo_drift = False,              # apodizer drift
     apo_drift = 0.02,                   # (% ptv)
