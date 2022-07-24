@@ -97,9 +97,9 @@ def read_config(verbose=False, **update_conf):
     f_oat = 'optics/oat_L_RAVC.fits',   # vortex off-axis transmission
     f_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
-    f_app_amp = 'optics/METIS_IMG_L_amp.fits', # APP amplitude
-    f_app_phase = 'optics/METIS_IMG_L_phase.fits', # APP phase
-    app_strehl = 0.64,                   # APP Strehl ratio
+    f_app_amp = 'optics/app/METIS_IMG_L_amp_ROF.fits', # APP amplitude
+    f_app_phase = 'optics/app/METIS_IMG_L_phase_ROF.fits', # APP phase
+    app_strehl = 0.6,                    # APP Strehl ratio
     app_single_psf = 0.48,               # APP single PSF (4% leakage)
     student_distrib = True,              # use Student's distribution instead of Gaussian
     # Multiple spectral bands
