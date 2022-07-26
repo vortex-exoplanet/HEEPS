@@ -5,9 +5,9 @@ from astropy.io import fits
 
 band = 'L'#'M'
 ndet = 293                          # image size (fov 0.8")
-cw = 39#49                          # PSF core width
+cw = 24#49                          # PSF core width
 modes = ['APPIMG', 'APPLMS']        # APP modes
-stripe_width = [57, 29]#[71, 35]    # bright stripe (IMG:57, LMS:29)
+stripe_width = [48, 29]#[71, 35]    # bright stripe (IMG:48, LMS:29)
 vertical_stripe = [True, False]     # vertical stripe (or horizontal)
 remove_stripe = True
 

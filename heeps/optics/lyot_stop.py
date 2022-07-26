@@ -45,7 +45,7 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
             # zero-pad
             ls_mask = pad_img(ls_mask, ngrid)
 
-        # optional: can return mask, instead of applying Lyot stop
+        # optional: can return lyot stop array, instead of applying to wavefront
         if not apply_ls:
             return ls_mask
         else:

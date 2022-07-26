@@ -5,7 +5,7 @@ import numpy as np
 
 
 def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, 
-        pupil_img_size=40, diam_nominal=38, spi_width=0.5, seg_width=1.45,
+        pupil_img_size=40, diam_nominal=38, spi_width=0.54, seg_width=1.45,
         misalign_x=0, misalign_y=0, circ_ext=True, circ_int=True, **conf):
     '''
     Margins are calculated wrt nominal diameter, and applied (added/subtracted) 

@@ -5,7 +5,7 @@ import numpy as np
 
 
 def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int=11, 
-        spi_width=0.5, spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
+        spi_width=0.54, spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
         seg_missing=[], dx=0, dy=0, seed=123456, **conf):
