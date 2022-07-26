@@ -1,8 +1,9 @@
+from .background import background
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
 from heeps.util.paralang import paralang
 from heeps.util.psf_template import psf_template
-from .background import background
+import multiprocessing as mpro
 import vip_hci
 import numpy as np
 from astropy.io import fits
@@ -12,7 +13,8 @@ import warnings
 def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
-        savepsf=False, starphot=1e11, savefits=False, verbose=False, **conf):
+        savepsf=False, starphot=1e11, cpu_count=None, savefits=False,
+        verbose=False, **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -56,6 +58,9 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             true if ADI contrast curve is saved in a fits file
         starphot (float):
             normalization factor for aperture photometry with VIP
+        cpu_count (int):
+            number of CPU cores to use, 'None' means use maximum number of cores
+
 
     Return:
         sep (float ndarray):
@@ -109,6 +114,9 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_ON *= starphot/ap_flux
         psf_OFF_crop *= starphot/ap_flux
     # VIP post-processing algorithm
+    if cpu_count == None:
+        cpu_count = mpro.cpu_count()
+    algo_dict = dict(nproc=cpu_count)
     algo = vip_hci.medsub.median_sub
     # contrast curve after post-processing (pscale in arcsec)
     with warnings.catch_warnings():
@@ -116,7 +124,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         cc_pp = vip_hci.metrics.contrast_curve(psf_ON, pa, psf_OFF_crop,
                 fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5,
                 debug=False, plot=False, transmission=OAT, imlib='opencv',
-                verbose=verbose)
+                verbose=verbose, **algo_dict)
     # angular separations (in arcsec)
     sep = cc_pp.loc[:,'distance_arcsec'].values
     # sensitivities (Student's or Gaussian distribution)
