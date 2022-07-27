@@ -10,7 +10,7 @@ from astropy.io import fits
 import os.path
 import warnings
 
-def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
+def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
         savepsf=False, starphot=1e11, cpu_count=None, savefits=False,
@@ -18,7 +18,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
-    for a specific set of off-axis PSF and on-axis PSF (or cube of PSFs),
+    for a specific set of off-axis PSF and on-axis cube of PSFs,
     using the VIP package to perform ADI post-processing.
 
     Args:
@@ -65,8 +65,8 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     Return:
         sep (float ndarray):
             angular separation in arcsec
-        sen (float ndarray):
-            5-sigma sensitivity (contrast)
+        adi (float ndarray):
+            ADI 5-sigma sensitivity (contrast)
     """
 
     # load PSFs: on-axis (star) and off-axis (planet)
@@ -125,11 +125,13 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
                 fwhm, pscale/1e3, starphot, algo=algo, nbranch=1, sigma=5,
                 debug=False, plot=False, transmission=OAT, imlib='opencv',
                 verbose=verbose, **algo_dict)
+        if verbose is True:
+            print('')
     # angular separations (in arcsec)
     sep = cc_pp.loc[:,'distance_arcsec'].values
     # sensitivities (Student's or Gaussian distribution)
     distrib = 'sensitivity_student' if student_distrib == True else 'sensitivity_gaussian'
-    sen = cc_pp.loc[:,distrib].values
+    adi = cc_pp.loc[:,distrib].values
     # filename for fitsfiles
     if add_bckg is True:
         name = 'adi_bckg%s_mag%s'%(int(add_bckg), mag)
@@ -139,7 +141,7 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
-        save2fits(np.array([sep,sen]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
+        save2fits(np.array([sep, adi]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
             dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
@@ -147,4 +149,4 @@ def adi_one(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
             dir_output=dir_output, band=band, mode=mode)
 
-    return sep, sen
+    return sep, adi

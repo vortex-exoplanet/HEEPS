@@ -7,7 +7,7 @@
 import heeps
 import sys
 
-def run_heeps(savename='ADI_contrast_curve.png'):
+def run_heeps(savename='contrast_curve.png'):
 
     # 1. Create a config dictionary with your simulation parameters in read_config
     conf = heeps.config.read_config(verbose=False)
@@ -27,30 +27,43 @@ def run_heeps(savename='ADI_contrast_curve.png'):
     # 5. Create a cube of on-axis psfs (=star)
     heeps.wavefront.propagate(wf, onaxis=True, savefits=True, verbose=True, **conf);
 
-    # 6. Produce a 5-sigma sensitivity (contrast) curve
-    sep1, sen1 = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
+    # 6. Produce a raw contrast curve
+    sep, raw = heeps.contrast.cc_raw(savefits=True, verbose=True, **conf)
 
-    # 7. Add star flux + background flux + photon noise
+    # 7. Produce a 5-sigma sensitivity (contrast) curve
+    sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
+
+    # 8. Add star flux + background flux + photon noise
     conf['add_bckg'] = True
-    sep2, sen2 = heeps.contrast.adi_one(savepsf=True, savefits=True, verbose=True, **conf)
+    sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
 
-    # 8. Create a figure 
+    # 9. Create a figure 
     if savename != '':
+        xlabel = 'Angular separation $[arcsec]$'
+        ylabel_adi = '5-$\sigma$ sensitivity (contrast)'
+        ylabel_raw = 'raw contrast'
         import matplotlib.pyplot as plt
-        from matplotlib.pylab import ScalarFormatter
-        plt.figure(figsize=(9.5, 4))
-        plt.grid(True), plt.grid(which='minor', linestyle=':')
-        plt.loglog(), plt.gca().xaxis.set_major_formatter(ScalarFormatter())
-        plt.xlabel('Angular separation $[arcsec]$')
-        plt.ylabel('5-$\sigma$ sensitivity (contrast)')
-        plt.title('%s-band %s, SCAO only, %s frames'%(conf['band'], conf['mode'], conf['nframes']))
-        plt.plot(sep1, sen1, 'C0', label='w/o background', marker='d', markevery=0.12, markersize=4)
-        plt.plot(sep2, sen2, 'C0:', label='with background (star mag=5)', marker='d', markevery=0.12, markersize=4)
-        plt.legend()
-        plt.xlim(0.02, 0.75)
-        plt.ylim(1e-8, 1e-2)
-        plt.xticks([0.02, 0.05, 0.1, 0.2, 0.5])
-        plt.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, transparent=True);
+        fig = plt.figure(figsize=(12, 6))
+        fig.subplots(2, 1, sharex=True)
+        fig.subplots_adjust(hspace=0.02)
+        axes = fig.axes
+        axes[0].set_ylim(1e-7, 1e-2)
+        axes[1].set_ylim(1e-7, 9e-3)
+        axes[1].set_xlabel(xlabel)
+        for j, (ax, ylabel) in enumerate(zip(axes, [ylabel_raw, ylabel_adi])):
+            ax.set_ylabel(ylabel)
+            ax.grid(True), ax.grid(which='minor', linestyle=':')
+            ax.loglog()
+            ax.xaxis.set_major_formatter(plt.ScalarFormatter())
+            ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
+            ax.set_xlim(0.02, 0.75)
+        axes[0].plot(sep, raw, 'C0', label='RAVC', marker='d', markevery=0.12, markersize=4)
+        axes[0].legend()
+        axes[0].set_title('HCI modes; scao only; star mag L = 6')
+        axes[1].plot(sep1, adi1, 'C0', label='RAVC', marker='d', markevery=0.12, markersize=4)
+        axes[1].plot(sep2, adi2, ':C0', label='background', marker='d', markevery=0.12, markersize=4)
+        axes[1].legend(ncol=2, loc='upper right')
+        fig.savefig('%s/%s'%(conf['dir_output'], savename), dpi=300, transparent=True);
 
 if __name__ == "__main__":
     '''

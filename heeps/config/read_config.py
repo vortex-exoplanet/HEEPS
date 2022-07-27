@@ -136,7 +136,7 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     #           Parameters for wavefront
     # ============================================================================
-    nframes = 10,                       # number of frames to crop the input data
+    nframes = 100,                      # number of frames to crop the input data
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
     nframes_avg = 10,                   # number of frames averaged for off-axis psf
 
