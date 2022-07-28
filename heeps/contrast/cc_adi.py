@@ -13,8 +13,8 @@ import warnings
 def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
-        savepsf=False, starphot=1e11, cpu_count=None, savefits=False,
-        verbose=False, **conf):
+        savepsf=False, starphot=1e11, duration=3600, cpu_count=None,
+        savefits=False, verbose=False, **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -84,9 +84,9 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if verbose is True:
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)
-        print('   mode=%s, band=%s'%(mode, band))
+        print('   mode=%s, band=%s, pscale=%s mas'%(mode, band, pscale))
         print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
-        print('   pscale=%s mas, dit=%s s'%(pscale, dit))
+        print('   duration=%s, dit=%s s'%(duration, dit))
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
         conf.update(mode=mode, dit=dit, mag=mag)
@@ -96,7 +96,7 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if 'APP' in mode:
         psf_OFF *= app_strehl
     # parallactic angle in deg
-    pa = paralang(psf_ON.shape[0], dec, lat)
+    pa = paralang(psf_ON.shape[0], dec, lat, duration=duration)
     # get off-axis transmission
     if 'VC' in mode and f_oat is not None:
         OAT = fits.getdata(f_oat)

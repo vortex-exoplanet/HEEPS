@@ -80,8 +80,7 @@ def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3,
         psf_ON += np.random.normal(0, np.sqrt(psf_ON))
 
     if verbose is True:
-        print('   thruput=%.4f, mask_trans=%.4f,'%(thruput, mask_trans))
-        print('   mag=%s, dit=%.3f'%(mag, dit))
+        print('   mag=%s, thruput=%.4f, mask_trans=%.4f,'%(mag, thruput, mask_trans))
         print('   star_signal=%.2e, bckg_noise=%.2e'%(star_signal, bckg_noise))
 
     return psf_ON, psf_OFF

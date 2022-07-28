@@ -26,9 +26,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     if verbose is True:
         print('Raw contrast curve:')
         print('\u203e'*19)
-        print('   mode=%s, band=%s'%(mode, band))
-        print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
-        print('   pscale=%s mas\n'%(pscale))
+        print('   mode=%s, band=%s, pscale=%s mas'%(mode, band, pscale))
+        print('   ncube=%s, ndet=%s\n'%(psf_ON.shape[0], psf_ON.shape[1]))
     # average
     psf_ON_avg = np.mean(psf_ON, 0)
     # image radius
@@ -40,6 +39,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     raw = get_radial_profile(psf_ON_avg, (rim,rim), 1)[:-1]
     # normalize by the peak of the off-axis PSF radial profile
     raw /= np.max(off)
+    # tag
+    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, raw]), 'cc_%s%s%s'%('raw', '_%s_%s', tag),
