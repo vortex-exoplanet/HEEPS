@@ -8,19 +8,18 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
         pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, pscale=5.47, 
         hfov=1, ravc_calc=False, ravc_t=0.8 ,ravc_r=0.6, saveconf=False, 
         verbose=False, **conf):
+    """Updates some configuration parameters before running the end-to-end 
+    simulation.
     
-    '''
-    
-    Update config parameters. The following parameters will be updated to match 
-    the selected spectral band:
+    The following parameters are updated to match the selected spectral band:
         lam, pscale, flux_star, flux_bckg, npupil, diam_norm, beam_ratio, ndet,
         hfov, hfov_lamD
-    For the RAVC mode, the following parameters will be updated:
+    For the RAVC mode, the following parameters are also updated:
         r_obstr, ravc_t, ravc_r 
     
     Returns: conf (updated and sorted)
 
-    '''
+    """
     
     if verbose is True:
         print('Simulation config: band=%s, mode=%s'%(band, mode))

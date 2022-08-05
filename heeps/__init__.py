@@ -1,6 +1,6 @@
 from __future__ import (absolute_import)
 
-__version__ = "0.1.1"
+__version__ = "1.0.0"
 
 from . import config
 from . import wavefront

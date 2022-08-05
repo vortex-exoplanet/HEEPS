@@ -1,5 +1,4 @@
 from .create_pupil import create_pupil
-from .create_petal import create_petal
 from heeps.util.img_processing import resize_img, pad_img
 from heeps.util.save2fits import save2fits
 import proper
@@ -14,11 +13,9 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10],
         seg_missing=[], norm_I=True, savefits=False, verbose=False, **conf):
-    
-    ''' Create a wavefront object at the entrance pupil plane. 
+    """Creates a wavefront object at the entrance pupil plane. 
     The pupil is either loaded from a fits file, or created using 
     pupil parameters.
-    Can also select only one petal and mask the others.
 
     Args:
         dir_output (str):
@@ -55,7 +52,8 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
             number of hexagonal segments per column (from left to right)
         seg_missing: list of tupples
             coordinates of missing segments
-    '''
+    
+    """
 
     if verbose is True:
         print("Entrance pupil:", end=' ')

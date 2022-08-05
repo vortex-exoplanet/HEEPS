@@ -7,9 +7,18 @@ proper.print_it = False
 
 
 def read_config(verbose=False, **update_conf):
-    """Creates a configuration dictionary 
+    """Creates a configuration dictionary with all useful parameters
+    set to their default values. The user can specify different values 
+    either by editing the read_config file, or by passing a dictionary 
+    as argument.
 
     Args:
+        update_conf:
+            user specified values
+
+    Returns:
+        conf (dict):
+            configuration dictionary for end-to-end simulation 
 
     """
 
