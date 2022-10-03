@@ -104,7 +104,7 @@ def read_config(verbose=False, **update_conf):
     vc_chrom_leak = 2e-3,               # vortex chromatic leakage
     add_cl_vort = False,                # add chromatic leakage at the vortex plane
     add_cl_det = False,                 # add chromatic leakage at the detector plane
-    ravc_calc = False,                   # calculate RAP params (Mawet2013)
+    ravc_calc = False,                  # calculate RAP params (Mawet2013)
     ravc_t = 0.7909,                    # (calc=False) RAP amplitude trans
     ravc_r = 0.5190,                    # (calc=False) RAP radius wrt allglass
     apo_misalign = None,                # constant apodizer misalignment
@@ -114,9 +114,9 @@ def read_config(verbose=False, **update_conf):
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
     f_app_amp = 'optics/app/METIS_IMG_L_amp_ROF.fits', # APP amplitude
     f_app_phase = 'optics/app/METIS_IMG_L_phase_ROF.fits', # APP phase
-    app_strehl = 0.6,                    # APP Strehl ratio
-    app_single_psf = 0.48,               # APP single PSF (4% leakage)
-    student_distrib = True,              # use Student's distribution instead of Gaussian
+    app_strehl = 0.6,                   # APP Strehl ratio
+    app_single_psf = 0.48,              # APP single PSF (4% leakage)
+    student_distrib = True,             # use Student's distribution instead of Gaussian
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],
     band_specs = {
@@ -151,9 +151,9 @@ def read_config(verbose=False, **update_conf):
     # =============================================================================
     #           Parameters for wavefront
     # ============================================================================
-    nframes = 100,                      # number of frames to crop the input data
+    nframes = 4,                      # number of frames to crop the input data
     nstep = 1,                          # take 1 frame every nstep (cubesize = nframes/nstep)
-    nframes_avg = 10,                   # number of frames averaged for off-axis psf
+    nframes_avg = 2,                   # number of frames averaged for off-axis psf
 
     add_phase = True,                   # phase screens (SCAO residuals, NCPA, petal piston)
     f_phase = 'wavefront/COMPASS_201810_RandomWind_100screens_meters.fits',
