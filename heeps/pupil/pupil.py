@@ -9,7 +9,7 @@ from astropy.io import fits
 
 def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285, 
         pupil_img_size=40, diam_ext=37, diam_int=11, spi_width=0.54, 
-        spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
+        spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_ptv=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10],
         seg_missing=[], norm_I=True, savefits=False, verbose=False, **conf):
@@ -46,8 +46,8 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
             segment width in m
         seg_gap: float
             gap between segments in m
-        seg_rms: float
-            rms of the reflectivity of all segments
+        seg_ptv: float
+            ptv uniform segment intensity loss
         seg_ny: list of int
             number of hexagonal segments per column (from left to right)
         seg_missing: list of tupples
@@ -77,8 +77,8 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
     # case 3: create a pupil
     else:
         if verbose is True:
-            print("spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_rms=%s"\
-                %(spi_width, seg_width, seg_gap, seg_rms))
+            print("spi_width=%s m, seg_width=%s m, seg_gap=%s m, seg_ptv=%s"\
+                %(spi_width, seg_width, seg_gap, seg_ptv))
         conf.update(npupil=npupil,
                     pupil_img_size=pupil_img_size, 
                     diam_ext=diam_ext, 
@@ -89,7 +89,7 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
                     seg_gap=seg_gap, 
                     seg_ny=seg_ny, 
                     seg_missing=seg_missing,
-                    seg_rms=seg_rms)
+                    seg_ptv=seg_ptv)
         pup = create_pupil(**conf)
 
     # normalize the entrance pupil intensity (total flux = 1)

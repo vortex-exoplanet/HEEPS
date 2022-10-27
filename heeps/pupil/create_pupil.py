@@ -5,7 +5,7 @@ import numpy as np
 
 
 def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int=11, 
-        spi_width=0.54, spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_rms=0, 
+        spi_width=0.54, spi_angles=[0,60,120], seg_width=0, seg_gap=0, seg_ptv=0, 
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
         seg_missing=[], dx=0, dy=0, seed=123456, **conf):
@@ -31,8 +31,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int
             segment width in m
         seg_gap: float
             gap between segments in m
-        seg_rms: float
-            rms of the reflectivity of all segments
+        seg_ptv: float
+            ptv uniform segment intensity loss
         seg_ny: list of int
             number of hexagonal segments per column (from left to right)
         seg_missing: list of tupples
@@ -92,8 +92,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, diam_int
                 else:
                     # creates one hexagonal segment at x, y position in meters
                     segment = create_hexagon(nhr, seg_r, seg_y, seg_x, sampling)
-                    # calculate segment reflectivities in amplitude (seg_rms=intensity)
-                    seg_refl = np.random.normal(1, seg_rms)**0.5
+                    # calculate segment reflectivities in amplitude (seg_ptv=intensity)
+                    seg_refl = np.random.uniform(1-seg_ptv, 1)**0.5
                     # multiply, then add segment to segments
                     segments += segment*seg_refl
                     seg_y += seg_d
