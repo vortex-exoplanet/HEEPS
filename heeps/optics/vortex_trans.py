@@ -1,12 +1,9 @@
 import numpy as np
 
-def vortex_trans(lam=3.8e-6, vc_thick=0.03, vc_index=2.38, vc_refl=0.06, 
-        ar_refl=0.01, **conf):
+def vortex_trans(lam=3.8e-6, vc_thick=0.03, vc_refl=0.06, ar_refl=0.01, **conf):
     '''
     vc_thick:
         vortex substrate thickness in cm
-    vc_index:
-        vortex refractive index (over range 2-25 µm)
     vc_refl:
         vortex side reflection (AGPM worst case. over whole band)
     ar_refl = 0.01

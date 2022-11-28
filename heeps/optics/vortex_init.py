@@ -7,8 +7,8 @@ import proper
 from copy import deepcopy
 
 def vortex_init(vortex_calib='', dir_temp='', ngrid=1024, beam_ratio=0.26, 
-        diam_norm=1.08, focal=660, vc_charge=2, ramp_oversamp=11, 
-        verbose=False, **conf):
+        diam_norm=1.08, focal=660, vc_charge=2, ramp_oversamp=11, ofst=0,
+        ramp_sign=1, verbose=False, **conf):
 
     '''
     
@@ -65,16 +65,12 @@ def vortex_init(vortex_calib='', dir_temp='', ngrid=1024, beam_ratio=0.26,
             prod = np.outer(Vref, Vp)
             phiPan = np.angle(prod + 1j*prod.T)
             # vortex phase ramp exp(ilphi)
-            ofst = 0
-            ramp_sign = 1
             vvc_tmp = np.exp(1j*(ramp_sign*vc_charge*phiPan + ofst))
+            # resize to ngrid
             vvc = np.array(impro.resize_img(vvc_tmp.real, ngrid), dtype=complex)
             vvc.imag = impro.resize_img(vvc_tmp.imag, ngrid)
-            phase_ramp = np.angle(vvc)
             # theoretical vortex field
-            vvc_complex = np.array(np.zeros((ngrid, ngrid)), dtype=complex)
-            vvc_complex.imag = phase_ramp
-            vvc = np.exp(vvc_complex)
+            vvc = np.exp(1j*np.angle(vvc))
             # apply vortex
             proper.prop_multiply(wf_tmp, vvc)
             # null the amplitude inside the Lyot Stop, and back propagate
