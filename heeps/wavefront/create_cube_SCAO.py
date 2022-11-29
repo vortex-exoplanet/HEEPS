@@ -11,7 +11,7 @@ conf = dict(send_to = 'cdelacroix@uliege.be',
 
 # useful inputs
 os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files')))
-tag = 'Cfull_20220512'#'Cfull_20220225'#'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
+tag = 'Cfull_20220929'#'Cfull_20220512'#'Cfull_20220225'#'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
 prefix = 'Residual_phase_screen_'#'tarPhase_1hr_100ms_'
 suffix = 'ms'
 duration = 3600#600#
@@ -21,7 +21,7 @@ nimg = 720
 band = 'L'
 npupil = 285#720#
 pad_frame = False
-savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s_%s.fits'%(tag, duration, samp, band, npupil)
+savename = 'cube_%s_%ss_%sms_scao_only_%s_%s.fits'%(tag, duration, samp, band, npupil)
 #savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s_WV.fits'%(tag, duration, samp, npupil)
 
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cbasic_2020-10-16T10:25:14/residualPhaseScreens'
@@ -32,7 +32,8 @@ savename = 'cube_%s_%ss_%sms_0piston_meters_scao_only_%s_%s.fits'%(tag, duration
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_noWtt_2021-10-04T12:28:42/residualPhaseScreens'
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_K10mag_2022-01-24T11:47:12/residualPhaseScreens'
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_phasescreen_only_p1..6_2022-02-25T14:03:22/residualPhaseScreens'
-input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_1hr_2022-05-12T02:19:28/residualPhaseScreens'
+#input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_1hr_2022-05-12T02:19:28/residualPhaseScreens'
+input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_FDR_1hr_2022-09-29T12:46:22/residualPhaseScreens'
 output_folder = 'wavefront/cfull'
 cpu_count = None
 
