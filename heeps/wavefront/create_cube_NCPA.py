@@ -25,8 +25,8 @@ dt = 300#100#       # in ms
 npetals = 6
 f_scao_screens = 'wavefront/cfull/cube_%s_%ss_%sms_0piston_meters_%s_%s_%s.fits'
 f_mask = 'wavefront/cfull/mask_%s_%s_%s.fits'
-f_ncpa_frame = 'wavefront/ncpa/DIFF_LM_20211122_fullM1.fits'
-f_ncpa_screens = 'wavefront/ncpa/ncpa_fullM1_%s_%scpp_%s_%s.fits'
+f_ncpa_frame = 'wavefront/cbw/20221006/ncpa_LM_rep_6_field_24.fits'
+f_ncpa_screens = 'wavefront/cbw/20221006/ncpa_LM_%scpp_%s.fits'
 f_petal_screens = 'wavefront/petal/cube_petal_piston_%s_seed=%s_%s_%s.fits'
 
 # calculate cube size
@@ -37,27 +37,27 @@ mask = fits.getdata(f_mask%(tag, band, npupil)) > 0.5
 
 # create ncpa maps (spatial frequencies)
 try:
-    ncpa_allSF = fits.getdata(f_ncpa_screens%('allSF', cpp, band, npupil))
-    ncpa_LSF = fits.getdata(f_ncpa_screens%('LSF', cpp, band, npupil))
-    ncpa_HSF = fits.getdata(f_ncpa_screens%('HSF', cpp, band, npupil))
+    ncpa_allSF = fits.getdata(f_ncpa_screens%(cpp, 'allSF'))
+    ncpa_LSF = fits.getdata(f_ncpa_screens%(cpp, 'LSF'))
+    ncpa_HSF = fits.getdata(f_ncpa_screens%(cpp, 'HSF'))
     print('NCPA spatial files loaded.')
 except FileNotFoundError:
     print('Creating NCPA spatial files...')
-    ncpa_frame = fits.getdata(f_ncpa_frame)
+    ncpa_nm = fits.getdata(f_ncpa_frame)*1e9
     nkernel = nimg*diam_nominal/pupil_img_size
     kernel = conv_kernel(nkernel, cpp)
-    ncpa_allSF, ncpa_LSF, ncpa_HSF = spatial(ncpa_frame, kernel, npupil=npupil, norm=True, verbose=True)
+    ncpa_allSF, ncpa_LSF, ncpa_HSF = spatial(ncpa_nm, kernel, npupil=npupil, norm=True, verbose=True)
     # mask at L band, and save
     ncpa_allSF *= mask
     ncpa_LSF *= mask
     ncpa_HSF *= mask
-    fits.writeto(f_ncpa_screens%('allSF', cpp, band, npupil), ncpa_allSF)
-    fits.writeto(f_ncpa_screens%('LSF', cpp, band, npupil), ncpa_LSF)
-    fits.writeto(f_ncpa_screens%('HSF', cpp, band, npupil), ncpa_HSF)
+    fits.writeto(f_ncpa_screens%(cpp, 'allSF'), ncpa_allSF)
+    fits.writeto(f_ncpa_screens%(cpp, 'LSF'), ncpa_LSF)
+    fits.writeto(f_ncpa_screens%(cpp, 'HSF'), ncpa_HSF)
 finally:
-    LTF1 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_%sx1rms_seed=832404.fits'%nframes)
-    LTF2 = fits.getdata('wavefront/ncpa/time_series_LTF_0-0.01Hz_%sx1rms_seed=523364.fits'%nframes)
-    HTF1 = fits.getdata('wavefront/ncpa/time_series_HTF_0.01-1Hz_%sx1rms_seed=832404.fits'%nframes)
+    LTF1 = fits.getdata('wavefront/ts/time_series_LTF_0-0.01Hz_%sx1rms_seed=832404.fits'%nframes)
+    LTF2 = fits.getdata('wavefront/ts/time_series_LTF_0-0.01Hz_%sx1rms_seed=523364.fits'%nframes)
+    HTF1 = fits.getdata('wavefront/ts/time_series_HTF_0.01-1Hz_%sx1rms_seed=832404.fits'%nframes)
     ncpa_STA = np.array([ncpa_HSF]*nframes)
     ncpa_QLSF = np.array([x*ncpa_LSF for x in LTF1])
     ncpa_QHSF = np.array([x*ncpa_HSF for x in LTF2])
@@ -107,13 +107,14 @@ ncpa_piston_ALL = ncpa_STA*36e-9 + ncpa_QLSF*20e-9 + ncpa_QHSF*20e-9 + ncpa_DYN*
 
 # TOTAL PHASE SCREENS
 lamL = update_config(**dict(read_config(), band='L'))['lam']
-for band in ['L', 'M', 'N1', 'N2']:
+for band in ['L']:#, 'M', 'N1', 'N2']:
     conf = update_config(**dict(read_config(), band=band))
     scaling = 1
     #scaling = conf['lam']/lamL
     #print(scaling, conf['npupil'])
-    f_out = f_scao_screens%(tag, t_max, dt, 'scao_only', band, conf['npupil'])
-    fits.writeto(f_out, resize_cube(scao, conf['npupil']), overwrite=True)
-    f_out = f_scao_screens%(tag, t_max, dt, 'all_ncpa', band, conf['npupil'])
+    if band is not 'L':
+        f_out = f_scao_screens%(tag, t_max, dt, 'scao_only', band, conf['npupil'])
+        fits.writeto(f_out, resize_cube(scao, conf['npupil']), overwrite=True)
+    f_out = f_scao_screens%(tag, t_max, dt, 'ncpa_req', band, conf['npupil'])
     fits.writeto(f_out, resize_cube(scao + ncpa_piston_ALL*scaling, conf['npupil']), overwrite=True)
     print('%s created'%f_out)
