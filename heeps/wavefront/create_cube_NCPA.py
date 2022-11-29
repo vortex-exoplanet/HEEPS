@@ -107,14 +107,17 @@ ncpa_piston_ALL = ncpa_STA*36e-9 + ncpa_QLSF*20e-9 + ncpa_QHSF*20e-9 + ncpa_DYN*
 
 # TOTAL PHASE SCREENS
 lamL = update_config(**dict(read_config(), band='L'))['lam']
-for band in ['L']:#, 'M', 'N1', 'N2']:
+scaling = 1
+for band in ['L', 'M', 'N1', 'N2']:
     conf = update_config(**dict(read_config(), band=band))
-    scaling = 1
-    #scaling = conf['lam']/lamL
-    #print(scaling, conf['npupil'])
-    if band is not 'L':
+    if False: # use scaling
+        scaling = conf['lam']/lamL
+        print(scaling, conf['npupil'])
+    if False: # create SCAO only cubes at all bands
         f_out = f_scao_screens%(tag, t_max, dt, 'scao_only', band, conf['npupil'])
         fits.writeto(f_out, resize_cube(scao, conf['npupil']), overwrite=True)
-    f_out = f_scao_screens%(tag, t_max, dt, 'ncpa_req', band, conf['npupil'])
-    fits.writeto(f_out, resize_cube(scao + ncpa_piston_ALL*scaling, conf['npupil']), overwrite=True)
-    print('%s created'%f_out)
+        print('%s created'%f_out)
+    if True: # create SCAO + NCPA at all bands
+        f_out = f_scao_screens%(tag, t_max, dt, 'ncpa_req', band, conf['npupil'])
+        fits.writeto(f_out, resize_cube(scao + ncpa_piston_ALL*scaling, conf['npupil']), overwrite=True)
+        print('%s created'%f_out)
