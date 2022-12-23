@@ -32,8 +32,8 @@ def show_wf(wf, plane, npupil=None, margin=0, log=False, savefits=False):
     if log is True:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore") # divide by zero encountered in log10
-            plt.imshow(np.log10(img), origin='lower'); plt.colorbar()
+            plt.figure(); plt.imshow(np.log10(img), origin='lower'); plt.colorbar()
     else:
-        plt.imshow(img, origin='lower'); plt.colorbar()
+        plt.figure(); plt.imshow(img, origin='lower'); plt.colorbar()
 
     return img

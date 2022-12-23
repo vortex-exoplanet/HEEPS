@@ -39,13 +39,15 @@ def read_config(verbose=False, **update_conf):
     dir_temp = 'temp_files',
 
     # =============================================================================
-    #           Parameters for telescope
+    #           Parameters for telescope and optics
     # =============================================================================
     focal = 658.6,                      # focal distance in m
     pupil_img_size = 39.9988,           # pupil image in m (for PROPER)
     diam_nominal = 38.542,              # nominal diameter (for LS oversizing)
     diam_ext = 36.905,                  # effective outer circular aperture in m
     diam_int = 11.213,                  # effective central obscuration in m
+    diam_vpm = 16.273,                  # vortex phase mask (19/45*diam_nominal)
+    diam_lom = 16.273,                  # lyot occulting mask (19/45*diam_nominal)
     f_pupil = 'pupil/ELT_fullM1.fits',  # entrance pupil file
     spi_width = 0.54,                   # spider width in m
     spi_angles = [0, 60, 120],          # spider angles in deg
@@ -97,11 +99,13 @@ def read_config(verbose=False, **update_conf):
     ls_ext_circ = False,                # circular LS external diameter
     ls_int_circ = False,                # circular LS internal diameter
     ls_misalign = None,                 # constant lyot stop misalignment
-    lt_dist = 0,                        # lith trap distance in m (36.67)
-    lt_diam = 0,                        # lith trap norm diameter (0.3837)
     vc_charge = 2,                      # vortex topological charge
     vc_zoffset = 0,                     # vortex defocus in m (z axis)
     vc_chrom_leak = 2e-3,               # vortex chromatic leakage
+    lt_dist_start = 0,                  # light trap downstream of VPM
+    lt_diam_start = 0,                  # e.g. dist=188e-3, diam=80e-3
+    lt_dist_end = 0,                    # light trap upstream of LS
+    lt_diam_end = 0,                    # e.g. dist=36.5e-3, diam=50e-3
     add_cl_vort = False,                # add chromatic leakage at the vortex plane
     add_cl_det = False,                 # add chromatic leakage at the detector plane
     ravc_calc = False,                  # calculate RAP params (Mawet2013)

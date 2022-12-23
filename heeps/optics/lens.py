@@ -13,9 +13,9 @@ def lens(wf, focal=660, zoffset_before=0, zoffset_after=0,
         # add light trap
         proper.prop_propagate(wf, dist_start)
         if type(diam_start) is tuple:
-            proper.prop_rectangular_aperture(wf, diam_start[0], diam_start[1], 0, 0, NORM=True)
+            proper.prop_rectangular_aperture(wf, diam_start[0], diam_start[1], 0, 0, NORM=False)
         else:
-            proper.prop_circular_aperture(wf, diam_start, 0, 0, NORM=True)
+            proper.prop_circular_aperture(wf, diam_start/2, 0, 0, NORM=False)
         if lt_write_name is not None:
             fits.writeto(lt_write_name, proper.prop_get_amplitude(wf), overwrite=True)
         proper.prop_propagate(wf, focal - dist_start + zoffset_after)
@@ -31,9 +31,9 @@ def lens(wf, focal=660, zoffset_before=0, zoffset_after=0,
         # add light trap
         proper.prop_propagate(wf, focal - dist_end)
         if type(diam_end) is tuple:
-            proper.prop_rectangular_aperture(wf, diam_end[0], diam_end[1], 0, 0, NORM=True)
+            proper.prop_rectangular_aperture(wf, diam_end[0], diam_end[1], 0, 0, NORM=False)
         else:
-            proper.prop_circular_aperture(wf, diam_end, 0, 0, NORM=True)
+            proper.prop_circular_aperture(wf, diam_end/2, 0, 0, NORM=False)
         if lt_write_name is not None:
             fits.writeto(lt_write_name, proper.prop_get_amplitude(wf), overwrite=True)
         proper.prop_propagate(wf, dist_end + zoffset_before)
