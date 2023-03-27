@@ -78,6 +78,17 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         amp_screens = np.array([None]*nscreens)
 
     # load pointing errors (in mas)
+    if conf['disp'] is True:
+        dispersion = os.path.join(conf['dir_temp'], 'dispersion_vals.fits')
+        disp = np.array(fits.getdata(dispersion), ndmin= 2)
+        if len(disp) > 1: # cube
+            disp = disp[:nframes][::nstep]
+        if verbose is True:
+            print("Load dispersion values '%s'"%os.path.basename(dispersion))
+            print('   nscreens=%s'%(len(disp)))
+    else:
+        disp = np.zeros((nscreens,2))#np.array([None]*nscreens)
+
     if add_point_err is True:
         tiptilts = np.array(fits.getdata(f_point_err), ndmin= 2)
         if len(tiptilts) > 1: # cube
@@ -88,7 +99,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
             print("Load pointing errors from '%s'"%os.path.basename(f_point_err))
             print('   nscreens=%s'%(len(tiptilts)))
     else:
-        tiptilts = np.array([None]*nscreens)
+        tiptilts = np.zeros((nscreens,2))#np.array([None]*nscreens)
 
     # load apodizer drift
     if add_apo_drift is True and 'RAVC' in conf['mode']:
@@ -110,4 +121,4 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
     else:
         ls_misaligns = np.array([ls_misalign]*nscreens)     # constant misalignment
 
-    return phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns
+    return phase_screens, amp_screens, tiptilts+disp, apo_misaligns, ls_misaligns
