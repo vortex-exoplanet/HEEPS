@@ -50,7 +50,7 @@ def read_config(verbose=False, **update_conf):
     diam_lom = 16.273,                  # lyot occulting mask (19/45*diam_nominal)
     f_pupil = 'pupil/ELT_fullM1.fits',  # entrance pupil file
     spi_width = 0.54,                   # spider width in m
-    spi_angles = [0, 60, 120],          # spider angles in deg
+    spi_angles = [0,60,120,180,240,300],# spider angles in deg
     # if no valid pupil file, pupil will be created with the following params:
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
