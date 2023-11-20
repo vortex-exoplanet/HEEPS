@@ -6,6 +6,7 @@ import numpy as np
 
 def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, 
         pupil_img_size=40, diam_nominal=38, spi_width=0.54, seg_width=1.45,
+        spi_angles=[0,60,120,180,240,300], spi_angles_thick=[0,60], dRspi_thick=0,
         misalign_x=0, misalign_y=0, circ_ext=True, circ_int=True, **conf):
     '''
     Margins are calculated wrt nominal diameter, and applied (added/subtracted) 
@@ -15,16 +16,23 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285,
     dx = misalign_x*diam_nominal/pupil_img_size
     dy = misalign_y*diam_nominal/pupil_img_size
     # create spider stop
-    conf = dict(
+    conf_spi = dict(
         npupil = nhr,               # high res
         pupil_img_size = pupil_img_size, 
         diam_ext = 2*pupil_img_size,# no circular aperture
         diam_int = 0,               # no central obscuration
         seg_width = 0,              # no segments
+        spi_angles = spi_angles,
         spi_width = spi_width + dRspi*diam_nominal,
         dx = dx,
         dy = dy)
-    mask_spi = create_pupil(**conf)
+    mask_spi = create_pupil(**conf_spi)
+    # create thicker spiders
+    if dRspi_thick > 0:
+        conf_spi.update(
+            spi_angles = spi_angles_thick,
+            spi_width = spi_width + dRspi_thick*diam_nominal)
+        mask_spi *= create_pupil(**conf_spi)
     # calculate dodecagonal (outer) diameter
     if circ_ext == False:
         alpha = np.arcsin(seg_width/d_ext)
