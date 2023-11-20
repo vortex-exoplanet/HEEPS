@@ -11,13 +11,13 @@ conf = dict(send_to = 'cdelacroix@uliege.be',
 
 # useful inputs
 os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files')))
-tag = 'Cfull_20220929'#'Cfull_20220512'#'Cfull_20220225'#'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
+tag = 'Cfull_20230412_r0_15.7_tau0_5.35'#'Cfull_20220929'#'Cfull_20220512'#'Cfull_20220225'#'Cfull_20211004'#'Cfull_20211007'#'Cbasic_20201130'
 prefix = 'Residual_phase_screen_'#'tarPhase_1hr_100ms_'
 suffix = 'ms'
-duration = 3600#600#
-samp = 300#100#
-start = 2101#101#
-nimg = 720
+duration = 600#3600#600#
+samp = 10#300#100#
+start = 4011#2101#101#   4011ms to 60401ms
+nimg = 720#592#
 band = 'L'
 npupil = 285#720#
 pad_frame = False
@@ -33,19 +33,27 @@ savename = 'cube_%s_%ss_%sms_scao_only_%s_%s.fits'%(tag, duration, samp, band, n
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_K10mag_2022-01-24T11:47:12/residualPhaseScreens'
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_baseline_Cfull_phasescreen_only_p1..6_2022-02-25T14:03:22/residualPhaseScreens'
 #input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_1hr_2022-05-12T02:19:28/residualPhaseScreens'
-input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_FDR_1hr_2022-09-29T12:46:22/residualPhaseScreens'
-output_folder = 'wavefront/cfull'
+#input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/gorban_metis_Cfull_FDR_1hr_2022-09-29T12:46:22/residualPhaseScreens'
+#input_folder = '/mnt/disk4tb/METIS/COMPASS_20181219_60s_2ms/phase_screens'
+input_folder = '/mnt/disk4tb/METIS/METIS_COMPASS_RAW_PRODUCTS/ccantero/gorban_metis_carles_2023-04-12/residualPhaseScreens'
+output_folder = 'wavefront/ccantero'
 cpu_count = None
 
 # mask
 mask = fits.getdata(os.path.join(input_folder, 'Telescope_Pupil.fits'))
 mask = crop_img(mask, nimg)
+
+###
+#mask = crop_img(mask, 720)
+#mask = resize_img(mask, npupil)
+###
+
 mask_pupil = np.rot90(resize_img(mask, npupil))
 fits.writeto(os.path.join(output_folder, 'mask_%s_%s_%s.fits'%(tag, band, npupil)), np.float32(mask_pupil), overwrite=True)
 
 # filenames
 nframes = len([name for name in os.listdir(input_folder) if name.startswith(prefix)])
-#nframes = 12000
+#nframes = 60000#12000
 print('%s frames'%nframes)
 frames = [str(frame).zfill(6) if pad_frame is True else str(frame) \
     for frame in range(start, start + nframes*samp, samp)]
