@@ -11,7 +11,7 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
 
     """ Add a Lyot stop, in the case of a focal plane mask. """
 
-    if mode in ['CVC', 'RAVC', 'CLC']:
+    if mode in ['CVC', 'RAVC', 'CLC', 'IMG', 'LMS']:
 
         # case 1: mask already preloaded
         if ls_mask is not None:
