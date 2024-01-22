@@ -59,7 +59,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
     if saveconf is True:
         save2pkl('conf', **conf)
     # load vortex back-propagation fitsfiles
-    if mode in ['RAVC', 'CVC']:
+    if 'VC' in mode:
         conf = vortex_init(verbose=verbose, **conf)
 
     if verbose is True:

@@ -6,7 +6,7 @@ import os.path
 from astropy.io import fits 
 
 def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
-        f_app_amp='', f_app_phase='', f_ravc_amp='', f_ravc_phase='',
+        f_app_amp='', f_app_phase='', f_ravc_amp='', f_ravc_phase='', f_spp_amp='', 
         apo_misalign=None, onaxis=True, verbose=False, save_ring=False, **conf):
 
     ''' Create a wavefront object at the entrance pupil plane.
@@ -32,6 +32,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
     f_ravc_amp: str
     f_ravc_phase: str 
         ring apodizer files (optional)
+    f_spp_amp: str
+        shaped pupil plate files
     apo_misalign: list of float
         apodizer misalignment
 
@@ -102,5 +104,22 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         
         # multiply the loaded APP
         proper.prop_multiply(wf, APP_amp*np.exp(1j*APP_phase))
+
+    # case 3: Shaped Pupil Plate
+    elif 'SPP' in mode:
+        # get amplitude data
+        if os.path.isfile(f_spp_amp) and onaxis == True:
+            if verbose is True:
+                print("   apply SPP amplitude from '%s'"%os.path.basename(f_spp_amp))
+            SPP_amp = fits.getdata(f_spp_amp)
+        else:
+            SPP_amp = np.ones((npupil, npupil))
+        # resize to npupil
+        SPP_amp = impro.resize_img(SPP_amp, npupil)
+        # pad with zeros to match PROPER ngrid
+        SPP_amp = impro.pad_img(SPP_amp, ngrid, 0)
+        
+        # multiply the loaded APP
+        proper.prop_multiply(wf, SPP_amp)
 
     return wf

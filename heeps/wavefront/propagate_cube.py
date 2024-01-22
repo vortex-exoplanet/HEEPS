@@ -42,7 +42,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
 
     # preload apodizer when no drift
     conf['apo_loaded'] = False
-    if ('APP' in mode) or ('RAVC' in mode):
+    if ('APP' in mode) or ('RAVC' in mode) or ('SPP' in mode):
         if np.all(apo_misaligns[:-1] == apo_misaligns[1:]):
             wf1 = apodizer(wf1, verbose=verbose, **conf)
             conf['apo_loaded'] = True

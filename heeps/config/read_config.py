@@ -118,6 +118,7 @@ def read_config(verbose=False, **update_conf):
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
     f_app_amp = 'optics/app/METIS_IMG_L_amp_ROF.fits', # APP amplitude
     f_app_phase = 'optics/app/METIS_IMG_L_phase_ROF.fits', # APP phase
+    f_spp_amp = 'optics/spp/IWA=3.0_CST=0.05_THR=0.23.fits', # Shaped Pupil Plate
     app_strehl = 0.6,                   # APP Strehl ratio
     app_single_psf = 0.48,              # APP single PSF (4% leakage)
     student_distrib = True,             # use Student's distribution instead of Gaussian
@@ -150,7 +151,7 @@ def read_config(verbose=False, **update_conf):
             'flux_bckg': 2.142e+08}
         },
     # Multiple HCI modes
-    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'ELT'],
+    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
 
     # =============================================================================
     #           Parameters for wavefront
@@ -210,7 +211,7 @@ def read_config(verbose=False, **update_conf):
     
     # create paths to fits files
     for filename in ['f_pupil', 'f_phase', 'f_amp', 'f_point_err', 'f_lyot_stop',
-            'f_oat', 'f_vc_trans', 'f_app_trans', 'f_app_amp', 'f_app_phase']:
+            'f_oat', 'f_vc_trans', 'f_app_trans', 'f_app_amp', 'f_app_phase', 'f_spp_amp']:
         conf[filename] = os.path.join(conf['dir_input'], conf[filename])
     
     # downloading input files from Google Drive
