@@ -71,8 +71,9 @@ def read_config(verbose=False, **update_conf):
     #    1. mode = 'RAVC' for Ring Apodized Vortex Coronagraph
     #    2. mode = 'CVC'  for Classical Vortex Coronagraph
     #    3. mode = 'APP'  for Apodizing Phase Plate
-    #    4. mode = 'CLC'  for Classical Lyot Coronagraph
-    #    5. mode = 'ELT'  for no coronagraph (only telescope)
+    #    4. mode = 'SPP'  for Shaped Pupil Plate
+    #    5. mode = 'CLC'  for Classical Lyot Coronagraph
+    #    6. mode = 'ELT'  for no coronagraph (only telescope)
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
     band = 'L',                         # spectral band

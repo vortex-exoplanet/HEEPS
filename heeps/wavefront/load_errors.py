@@ -7,7 +7,7 @@ import numpy as np
 def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         add_amp=False, f_amp='', add_point_err=False, f_point_err='', dit=0.3,
         add_apo_drift=False, apo_drift=0.02, apo_misalign=None, 
-        add_ls_drift=False, ls_drift=0.02, ls_misalign=None,
+        add_ls_drift=False, ls_drift=0.02, ls_misalign=None, add_disp=False,
         verbose=False, **conf):
 
     ''' Load wavefront errors.
@@ -78,7 +78,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         amp_screens = np.array([None]*nscreens)
 
     # load pointing errors (in mas)
-    if conf['disp'] is True:
+    if add_disp is True:
         dispersion = os.path.join(conf['dir_temp'], 'dispersion_vals.fits')
         disp = np.array(fits.getdata(dispersion), ndmin= 2)
         if len(disp) > 1: # cube
