@@ -21,6 +21,7 @@ Currently, the simulator includes four coronagraphs:
 ## References
 - [Delacroix, Absil, Orban de Xivry, et al. 2022](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12187/121870F/The-High-contrast-End-to-End-Performance-Simulator-HEEPS/10.1117/12.2630341.short), The High-contrast End-to-End Performance Simulator (HEEPS): influence of ELT/METIS instrumental effects
 - [Absil, Delacroix, Orban de Xivry, et al. 2022](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12185/1218511/Impact-of-water-vapor-seeing-on-mid-infrared-high-contrast/10.1117/12.2627972.short), Impact of water vapor seeing on mid-infrared high-contrast imaging at ELT scale
+- [Shinde, Delacroix, Orban de Xivry, et al. 2022](https://nanolithography.spiedigitallibrary.org/conference-proceedings-of-spie/12187/121870E/Modeling-the-vortex-center-glow-in-the-ELT-METIS-vortex/10.1117/12.2629855.short), Modeling the vortex center glow in the ELT/METIS vortex coronagraph
 - [Bowens, Meyer, Delacroix, et al. 2021](https://www.aanda.org/articles/aa/full_html/2021/09/aa41109-21/aa41109-21.html), Exoplanets with ELT-METIS: I. Estimating the direct imaging exoplanet yield around stars within 6.5 parsecs
 - [Carlomagno, Delacroix, Absil, et al. 2020](https://www.spiedigitallibrary.org/journals/Journal-of-Astronomical-Telescopes-Instruments-and-Systems/volume-6/issue-3/035005/METIS-high-contrast-imaging-design-and-expected-performance/10.1117/1.JATIS.6.3.035005.full), METIS high-contrast imaging: design and expected performance
 
