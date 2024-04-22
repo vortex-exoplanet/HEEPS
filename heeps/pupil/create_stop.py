@@ -1,4 +1,4 @@
-from .create_pupil import create_pupil
+from heeps.pupil import create_pupil
 from heeps.util.coord import cart_coord, polar_coord
 from heeps.util.img_processing import resize_img
 import numpy as np
@@ -6,12 +6,16 @@ import numpy as np
 
 def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, 
         pupil_img_size=40, diam_nominal=38, spi_width=0.54, seg_width=1.45,
-        spi_angles=[0,60,120,180,240,300], spi_angles_thick=[0,60], dRspi_thick=0,
-        misalign_x=0, misalign_y=0, circ_ext=True, circ_int=True, **conf):
+        spi_angles=[0,60,120,180,240,300], AP_width=0, AP_angles=[0], 
+        AP_center=0.5, misalign_x=0, misalign_y=0, circ_ext=True, 
+        circ_int=True, **conf):
     '''
     Margins are calculated wrt nominal diameter, and applied (added/subtracted) 
     to the external/internal diameters, and spider width.
     '''
+    # nhr must be >= npupil
+    if nhr < npupil:
+        nhr = 10*npupil-1 # odd
     # misalignments
     dx = misalign_x*diam_nominal/pupil_img_size
     dy = misalign_y*diam_nominal/pupil_img_size
@@ -27,11 +31,12 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285,
         dx = dx,
         dy = dy)
     mask_spi = create_pupil(**conf_spi)
-    # create thicker spiders
-    if dRspi_thick > 0:
+    # create thicker spiders for asym pupil (AP)
+    if AP_width > 0:
         conf_spi.update(
-            spi_angles = spi_angles_thick,
-            spi_width = spi_width + dRspi_thick*diam_nominal)
+            spi_angles = AP_angles,
+            spi_width = AP_width,
+            spi_norm_center = AP_center)
         mask_spi *= create_pupil(**conf_spi)
     # calculate dodecagonal (outer) diameter
     if circ_ext == False:

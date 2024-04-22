@@ -1,4 +1,4 @@
-from .create_hexagon import create_hexagon
+from heeps.pupil import create_hexagon
 from heeps.util.img_processing import resize_img
 import proper
 import numpy as np
@@ -6,7 +6,7 @@ import numpy as np
 
 def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37, 
         diam_int=11, spi_width=0.54, spi_angles=[0,60,120,180,240,300], 
-        seg_width=0, seg_gap=0, seg_ptv=0, 
+        spi_norm_center=0.5, seg_width=0, seg_gap=0, seg_ptv=0,
         seg_ny=[10,13,16,19,22,23,24,25,26,27,28,29,30,31,30,31,
         30,31,30,31,30,31,30,29,28,27,26,25,24,23,22,19,16,13,10], 
         seg_missing=[], dx=0, dy=0, seed=123456, **conf):
@@ -28,6 +28,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
             spider width in m
         spi_angles: list of float
             spider angles in deg
+        spi_norm_center: float
+            spider normalized center wrt pupil radius (for AP)
         seg_width: float
             segment width in m
         seg_gap: float
@@ -61,8 +63,12 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
     if spi_width > 0:
         for angle_deg in spi_angles:
             angle_rad = np.radians(angle_deg)
-            proper.prop_rectangular_obscuration(wf_tmp, 2*spi_width/diam_ext, 1,
-                np.sin(angle_rad)/2 + dx, -np.cos(angle_rad)/2 + dy,
+            # IMPORTANT: in prop_rectangular_obscuration NORM mode, 
+            # 'width' is relative to the radius (diam_ext/2), while
+            # 'height', 'xc', 'yc' are relative to the diam_ext...
+            proper.prop_rectangular_obscuration(wf_tmp, spi_width/(diam_ext/2), 1/2,
+                np.sin(angle_rad)*spi_norm_center/2 + dx,
+                -np.cos(angle_rad)*spi_norm_center/2 + dy,
                 ROTATION=angle_deg, NORM=True)
     pup = proper.prop_get_amplitude(wf_tmp)
     # crop the pupil to odd size (nhr-1), and resize to npupil
