@@ -2,9 +2,9 @@ from heeps.pupil import create_pupil
 from heeps.util.coord import cart_coord, polar_coord
 from heeps.util.img_processing import resize_img
 import numpy as np
+import proper
 
-
-def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, 
+def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, ngrid=1024,
         pupil_img_size=40, diam_nominal=38, spi_width=0.54, seg_width=1.45,
         spi_angles=[0,60,120,180,240,300], AP_width=0, AP_angles=[0], 
         AP_center=0.5, misalign_x=0, misalign_y=0, circ_ext=True, 
@@ -13,6 +13,8 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285,
     Margins are calculated wrt nominal diameter, and applied (added/subtracted) 
     to the external/internal diameters, and spider width.
     '''
+    # save/store PROPER ngrid value
+    ntmp = proper.n
     # nhr must be >= npupil
     if nhr < npupil:
         nhr = 10*npupil-1 # odd
@@ -57,7 +59,8 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285,
                          else 1 - hexagon(r_int, nhr, dx=dx, dy=dy)
     # resize
     mask = resize_img(mask_ext*mask_int*mask_spi, npupil)
-    # pupil stop
+    # reload PROPER saved ngrid value
+    proper.n = ntmp
     return mask
 
 def dodecagon(r_ext, npupil, dx=0, dy=0):
