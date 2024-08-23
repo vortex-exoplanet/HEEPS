@@ -1,4 +1,4 @@
-from heeps.pupil import create_hexagon
+from .create_hexagon import create_hexagon
 from heeps.util.img_processing import resize_img
 import proper
 import numpy as np
