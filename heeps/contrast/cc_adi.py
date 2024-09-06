@@ -85,8 +85,7 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)
         print('   mode=%s, band=%s, pscale=%s mas'%(mode, band, pscale))
-        print('   ncube=%s, ndet=%s'%(psf_ON.shape[0], psf_ON.shape[1]))
-        print('   duration=%s, dit=%s s'%(duration, dit))
+        print('   ncube=%s, ndet=%s, duration=%s s'%(psf_ON.shape[0], psf_ON.shape[1], duration))
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
         conf.update(mode=mode, dit=dit, mag=mag)
