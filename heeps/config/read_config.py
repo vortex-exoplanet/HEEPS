@@ -122,6 +122,7 @@ def read_config(verbose=False, **update_conf):
     f_spp_amp = 'optics/spp/IWA=3.0_CST=0.05_THR=0.23.fits', # Shaped Pupil Plate
     app_strehl = 0.6,                   # APP Strehl ratio
     app_single_psf = 0.48,              # APP single PSF (4% leakage)
+    app_phase_ramp_params = {"offset": 0, "angle": 0},    # units [lambda/D] and [deg]
     student_distrib = True,             # use Student's distribution instead of Gaussian
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],

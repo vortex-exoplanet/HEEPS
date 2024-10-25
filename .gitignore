@@ -3,6 +3,7 @@ input_files/
 output_files/
 temp_files/
 
+.idea/
 # jupyter notebook
 .ipynb_checkpoints
 
