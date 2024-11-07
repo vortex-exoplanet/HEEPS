@@ -44,7 +44,7 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, ngrid=1
     if circ_ext == False:
         alpha = np.arcsin(seg_width/d_ext)
         d_ext *= np.cos(alpha)
-    # calculate dodecagonal (inner) diameter
+    # calculate hexagonal (inner) diameter
     if circ_int == False:
         beta = np.pi/6 - np.arcsin(seg_width*np.sin(np.pi/6)/d_int)
         d_int *= np.cos(beta)

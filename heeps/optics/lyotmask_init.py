@@ -40,16 +40,17 @@ def lyotmask_init(lyotmask_calib='', dir_temp='', clc_diam=80, pscale=5.47,
         else:
             if verbose is True:
                 print("   writing lyot mask")
-            # calculate the size (in pixels) of the lyot mask, 
-            # rounded up to an odd value
-            nmask = int(np.ceil(clc_diam/pscale))
+            # calculate the size (in pixels) of the lyot mask
+            rmask = clc_diam/pscale
+            # calculate the size of the region to inject in ngrid
+            # = add pixels margin, then round up to an odd value
+            nmask = int(np.ceil(rmask + 2))
             nmask += 1 - nmask % 2
             # create a magnified lyot mask
-            rmask = clc_diam/pscale/nmask
             r, t = polar_coord(nmask*magnification)
             lyotmask = np.zeros(np.shape(r))
-            lyotmask[r > rmask] = 1
-            # resize and pad with ones to amtch ngrid
+            lyotmask[r > rmask/nmask] = 1
+            # resize and pad with ones to match ngrid
             lyotmask = pad_img(resize_img(lyotmask, nmask), ngrid, 1)
             # save as fits file
             fits.writeto(os.path.join(dir_temp, filename), np.float32(lyotmask), overwrite=True)
