@@ -39,7 +39,7 @@ You can use this tool to check all versions: [check_versions.ipynb](https://gith
 [![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
 [![Skimage](https://img.shields.io/badge/Skimage-0.18.3-brightgreen.svg)]()
 
-## Installation instructions
+## Installation instructions compatible with ScopeSim
 
 - Install python 3.10.4
 - Install pip
