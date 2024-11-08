@@ -41,9 +41,9 @@ You can use this tool to check all versions: [check_versions.ipynb](https://gith
 
 ## Installation instructions
 
-Install python 3.10.4
-Install pip
-pip install astropy==5.3.4 scopesim==0.8.4 vip_hci==1.0.3 numpy==1.26.4 photutils==0.7.2
+- Install python 3.10.4
+- Install pip
+- pip install astropy==5.3.4 scopesim==0.8.4 vip_hci==1.0.3 numpy==1.26.4 photutils==0.7.2
 
 
 ## Quick start
