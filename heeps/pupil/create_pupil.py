@@ -56,19 +56,16 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
     # create pupil using PROPER tools
     wf_tmp = proper.prop_begin(1, 1, nhr, diam_ext/nhr_size) 
     if diam_ext > 0:
-        proper.prop_circular_aperture(wf_tmp, 1, dx, dy, NORM=True)
+        proper.prop_circular_aperture(wf_tmp, 1, dx, dy, NORM=True) # NORM radius = 1
     if diam_int > 0:
-        proper.prop_circular_obscuration(wf_tmp, diam_int/diam_ext, dx, 
-            dy, NORM=True)
+        proper.prop_circular_obscuration(wf_tmp, (diam_int/2) / (diam_ext/2), # NORM radius = 1
+                                        dx, dy, NORM=True)
     if spi_width > 0:
         for angle_deg in spi_angles:
             angle_rad = np.radians(angle_deg)
-            # IMPORTANT: in prop_rectangular_obscuration NORM mode, 
-            # 'width' is relative to the radius (diam_ext/2), while
-            # 'height', 'xc', 'yc' are relative to the diam_ext...
-            proper.prop_rectangular_obscuration(wf_tmp, spi_width/(diam_ext/2), 1/2,
-                np.sin(angle_rad)*spi_norm_center/2 + dx,
-                -np.cos(angle_rad)*spi_norm_center/2 + dy,
+            proper.prop_rectangular_obscuration(wf_tmp, spi_width/(diam_ext/2), 1, # NORM radius = 1
+                np.sin(angle_rad)*spi_norm_center + dx,
+                -np.cos(angle_rad)*spi_norm_center + dy,
                 ROTATION=angle_deg, NORM=True)
     pup = proper.prop_get_amplitude(wf_tmp)
     # crop the pupil to odd size (nhr-1), and resize to npupil
