@@ -53,6 +53,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
     while nhr < npupil + 1:
         nhr *= 2
     nhr_size = pupil_img_size*nhr/(nhr-1)
+    # store PROPER ngrid value
+    ntmp = proper.n
     # create pupil using PROPER tools
     wf_tmp = proper.prop_begin(1, 1, nhr, diam_ext/nhr_size) 
     if diam_ext > 0:
@@ -68,6 +70,8 @@ def create_pupil(nhr=2**10, npupil=285, pupil_img_size=40, diam_ext=37,
                 -np.cos(angle_rad)*spi_norm_center + dy,
                 ROTATION=angle_deg, NORM=True)
     pup = proper.prop_get_amplitude(wf_tmp)
+    # reload PROPER saved ngrid value
+    proper.n = ntmp
     # crop the pupil to odd size (nhr-1), and resize to npupil
     pup = pup[1:,1:]
     pup = resize_img(pup, npupil)

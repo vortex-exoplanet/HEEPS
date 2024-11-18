@@ -13,8 +13,6 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, ngrid=1
     Margins are calculated wrt nominal diameter, and applied (added/subtracted) 
     to the external/internal diameters, and spider width.
     '''
-    # save/store PROPER ngrid value
-    ntmp = proper.n
     # nhr must be >= npupil
     if nhr < npupil:
         nhr = 10*npupil-1 # odd
@@ -59,8 +57,6 @@ def create_stop(d_ext, d_int, dRext, dRint, dRspi, nhr=1023, npupil=285, ngrid=1
                          else 1 - hexagon(r_int, nhr, dx=dx, dy=dy)
     # resize
     mask = resize_img(mask_ext*mask_int*mask_spi, npupil)
-    # reload PROPER saved ngrid value
-    proper.n = ntmp
     return mask
 
 def dodecagon(r_ext, npupil, dx=0, dy=0):
