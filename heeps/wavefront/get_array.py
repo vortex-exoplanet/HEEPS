@@ -18,10 +18,9 @@ def get_wf(wf, plane, npupil=None, margin=0, savefits=False):
     start = int((ngrid - npupil + npupil%2)/2 - margin)
     start = 0 if start < 0 else start
     end = ngrid - start + npupil%2
-    img = img[start:end,start:end]
+    img = np.float32(img[start:end,start:end])
     if savefits is True:
-        fits.writeto('%s_npupil=%s_margin=%s.fits'%(plane, npupil, margin),
-            np.float32(img), overwrite=True)
+        fits.writeto('%s_npupil=%s_margin=%s.fits'%(plane, npupil, margin), img, overwrite=True)
     
     return img
 
