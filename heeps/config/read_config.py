@@ -49,20 +49,25 @@ def read_config(verbose=False, **update_conf):
     diam_vpm = 16.273,                  # vortex phase mask (19/45*diam_nominal)
     diam_lom = 16.273,                  # lyot occulting mask (19/45*diam_nominal)
     f_pupil = 'pupil/ELT_fullM1.fits',  # entrance pupil file
-    spi_width = 0.54,                   # spider width in m
-    spi_angles = [0,60,120,180,240,300],# spider angles in deg
     # if no valid pupil file, pupil will be created with the following params:
+    spi_angles = [0,60,120,180,240,300],# regular spider angles in deg
+    spi_width = 0.54,                   # regular spider width in m
+    AP_angles = [],                     # Asymetric Pupil spider angles in deg
+    AP_width = 0.54,                    # AP spider width in m (AP_width > spi_width)
+    AP_center = 1,                      # AP spider normalized center wrt pupil radius
+    AP_length = 2,                      # AP spider normalized length wrt pupil radius
+    add_seg = False,                    # if Tue, will add segments
+    # number of hexagonal segments per column (from left to right)
+    seg_ny = np.array([10, 13, 16, 19, 22, 23, 24, 25, 26, 27, 28, 29, \
+                       30, 31, 30, 31, 30, 31, 30, 31, 30, 31, 30, 29, \
+                       28, 27, 26, 25, 24, 23, 22, 19, 16, 13, 10]),
+    seg_missing = [],                   # missing segments coord, e.g. [(-2,5),(-2,6)]
+    seg_rint = 4.01,                    # number of black segments accross the central obstruction radius
     seg_width = 1.45,                   # segment width in m
     seg_gap = 0.004,                    # gap between segments in m
     seg_ptv = 0,                        # ptv uniform segment intensity loss
     select_petal = None,
     npetals = 6,                        # number of petals
-    # number of hexagonal segments per column (from left to right)
-    seg_ny = np.array([10, 13, 16, 19, 22, 23, 24, 25, 26, 27, 28, 29, \
-                       30, 31, 30, 31, 30, 31, 30, 31, 30, 31, 30, 29, \
-                       28, 27, 26, 25, 24, 23, 22, 19, 16, 13, 10]),
-    # coordinates of missing segments
-    seg_missing = [], #[(-2,5),(-2,6),(-3,4),(-3,5),(-3,6),(-4,5),(-4,6)],
     
     # =============================================================================
     #           Parameters for observing modes and bands
@@ -119,7 +124,7 @@ def read_config(verbose=False, **update_conf):
     f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
     f_app_amp = 'optics/app/METIS_IMG_L_amp_ROF.fits', # APP amplitude
     f_app_phase = 'optics/app/METIS_IMG_L_phase_ROF.fits', # APP phase
-    f_spp_amp = 'optics/spp/IWA=3.0_CST=0.05_THR=0.23.fits', # Shaped Pupil Plate
+    f_spp_amp = 'optics/spp/SP_AP2_masked_rot_bin.fits', # Shaped Pupil Plate
     app_strehl = 0.6,                   # APP Strehl ratio
     app_single_psf = 0.48,              # APP single PSF (4% leakage)
     app_phase_ramp_params = {"offset": 0, "angle": 0},    # units [lambda/D] and [deg]

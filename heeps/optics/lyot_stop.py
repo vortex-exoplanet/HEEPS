@@ -28,16 +28,17 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
         # case 3: create a lyot stop mask
         else:
             # load params
-            d_ext = diam_ext
-            d_int = ravc_r*diam_ext if 'RAVC' in mode else diam_int
             circ_ext = ls_ext_circ
-            circ_int = True         if 'RAVC' in mode else ls_int_circ
-            misalign_x , misalign_y = [0, 0] if ls_misalign is None \
-                                            else list(ls_misalign)[0:2]
+            circ_int = ls_int_circ
+            if 'RAVC' in mode:
+                diam_int = ravc_r*diam_ext
+                circ_int = True
+            dx , dy = [0, 0] if ls_misalign is None else list(ls_misalign)[0:2]
             # create Lyot stop
-            ls_mask = create_stop(d_ext, d_int, ls_dRext, ls_dRint, ls_dRspi,
-                npupil=npupil, misalign_x=misalign_x, misalign_y=misalign_y,
-                circ_ext=circ_ext, circ_int=circ_int, **conf)
+            ls_mask = create_stop(diam_ext=diam_ext, diam_int=diam_int,
+                dRext=ls_dRext, dRint=ls_dRint, dRspi=ls_dRspi,
+                circ_ext=circ_ext, circ_int=circ_int, dx=dx, dy=dy,
+                npupil=npupil, **conf)
             if verbose is True:
                 print('   apply Lyot stop: circ_ext/int=%s'%[circ_ext, circ_int]
                     + ', ls_dRext/int/spi=%s'%[ls_dRext, ls_dRint, ls_dRspi]
