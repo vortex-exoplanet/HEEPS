@@ -39,5 +39,12 @@ You can use this tool to check all versions: [check_versions.ipynb](https://gith
 [![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
 [![Skimage](https://img.shields.io/badge/Skimage-0.18.3-brightgreen.svg)]()
 
+## Installation instructions compatible with ScopeSim
+
+- Install python 3.10.4
+- Install pip
+- pip install astropy==5.3.4 scopesim==0.8.4 vip_hci==1.0.3 numpy==1.26.4 photutils==0.7.2
+
+
 ## Quick start
 This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/demo.ipynb)
