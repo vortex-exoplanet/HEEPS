@@ -30,7 +30,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
                 print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # preload amp screen if only one frame
-    if np.any(amp_screens) != None:
+    if np.any(amp_screens != None):
         if len(amp_screens) == 1:
             proper.prop_multiply(wf1, pad_img(amp_screens[0], ngrid))
             # then create a cube of None values

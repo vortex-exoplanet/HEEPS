@@ -5,7 +5,7 @@ import proper
 import numpy as np
 
 
-def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
+def create_stop(ngrid=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
         diam_ext=37, diam_int=11, spi_angles=[0,60,120,180,240,300],
         spi_width=0.54, AP_angles=[], AP_width=0, AP_center=1, AP_length=2,
         dRext=0, dRint=0, dRspi=0, dx=0, dy=0,
@@ -18,8 +18,8 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
     ''' Create a pupil.
     
     Args:
-        nhr: int
-            high resolution grid
+        ngrid: int
+            number of pixels of the wavefront array
         npupil: int
             number of pixels of the pupil
         pupil_img_size: float
@@ -75,11 +75,11 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
     ntmp = proper.n
 
     # create a high res pupil with PROPER
-    nhr += nhr % 2 # nhr must be even
-    while nhr < (npupil+1):
-        nhr *= 2
-    # one row and column will be removed later: pupil_img_size => (nhr-1)
-    wf_tmp = proper.prop_begin(1, 1, nhr, (diam_nominal/pupil_img_size) * (nhr-1)/nhr) 
+    ngrid += ngrid % 2 # ngrid must be even
+    while ngrid < npupil:
+        ngrid *= 2
+    # one row and column will be removed later: pupil_img_size => (ngrid-1)
+    wf_tmp = proper.prop_begin(1, 1, ngrid, (diam_nominal/pupil_img_size) * (ngrid-1)/ngrid) 
 
     # external aperture
     if diam_ext > 0:
@@ -90,9 +90,9 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
             alpha = np.arcsin(seg_width/diam_ext)
             diam_ext *= np.cos(alpha) # small corrrection for diam_ext
             r_ext = (diam_ext - dRext*diam_nominal) / pupil_img_size
-            mask_ext =  1 - dodecagon(r_ext, nhr-1, dx=dx, dy=dy)
+            mask_ext =  1 - dodecagon(r_ext, ngrid-1, dx=dx, dy=dy)
             # add one extra row and column of zeros
-            mask_ext = np.hstack([np.zeros((nhr, 1)), np.vstack([np.zeros((1, nhr-1)), mask_ext])])
+            mask_ext = np.hstack([np.zeros((ngrid, 1)), np.vstack([np.zeros((1, ngrid-1)), mask_ext])])
             proper.prop_multiply(wf_tmp, mask_ext)
 
     # central obscuration
@@ -104,9 +104,9 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
             beta = np.pi/6 - np.arcsin(seg_width*np.sin(np.pi/6)/diam_int)
             diam_int *= np.cos(beta) # small corrrection for diam_int
             r_int = (diam_int + dRint*diam_nominal) / pupil_img_size
-            mask_int =  1 - hexagon(r_int, nhr-1, dx=dx, dy=dy)
+            mask_int =  1 - hexagon(r_int, ngrid-1, dx=dx, dy=dy)
             # add one extra row and column of zeros
-            mask_int = np.hstack([np.zeros((nhr, 1)), np.vstack([np.zeros((1, nhr-1)), mask_int])])
+            mask_int = np.hstack([np.zeros((ngrid, 1)), np.vstack([np.zeros((1, ngrid-1)), mask_int])])
             proper.prop_multiply(wf_tmp, mask_int)
 
     # regular spiders
@@ -126,16 +126,16 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
                 np.sin(angle_rad)*AP_center + dx, -np.cos(angle_rad)*AP_center + dy,
                 ROTATION=angle_deg, NORM=True) # NORM: nominal radius = 1
 
-    # crop the pupil to pupil_img_size => (nhr-1)
+    # crop the pupil to pupil_img_size => (ngrid-1)
     pup = proper.prop_get_amplitude(wf_tmp)[1:,1:]
     # resize to npupil
     pup = resize_img(pup, npupil)
 
     # add segments
     if add_seg is True:
-        segments = np.zeros((nhr, nhr))
+        segments = np.zeros((ngrid, ngrid))
         # sampling in meters/pixel
-        sampling = pupil_img_size/nhr
+        sampling = pupil_img_size/ngrid
         # dist between center of two segments, side by side
         seg_d = seg_width*np.cos(np.pi/6) + seg_gap
         # segment radius
@@ -157,7 +157,7 @@ def create_stop(nhr=2**10, npupil=285, pupil_img_size=40, diam_nominal=38,
                     pass
                 else:
                     # creates one hexagonal segment at x, y position in meters
-                    segment = create_hexagon(nhr, seg_r, seg_y, seg_x, sampling)
+                    segment = create_hexagon(ngrid, seg_r, seg_y, seg_x, sampling)
                     # calculate segment reflectivities in amplitude (seg_ptv=intensity)
                     seg_refl = np.random.uniform(1-seg_ptv, 1)**0.5
                     # multiply, then add segment to segments
