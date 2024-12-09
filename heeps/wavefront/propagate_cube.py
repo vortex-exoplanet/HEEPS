@@ -23,11 +23,6 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
 
     if verbose is True:
         print('Create %s-axis PSF cube'%{True:'on',False:'off'}[onaxis])
-        if 'VC' in mode and onaxis is True:
-            if add_cl_det is True:
-                print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
-            if add_cl_vort is True:
-                print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
 
     # preload amp screen if only one frame
     if np.any(amp_screens != None):
@@ -48,6 +43,17 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
             conf['apo_loaded'] = True
         elif verbose is True:
             print('   %s apodizer not preloaded: len(apo_misalign)=%s'%(mode, len(apo_misaligns)))
+
+    # printing fp_mask verbose
+    if verbose is True and onaxis is True:
+        if 'VC' in mode:
+            print('   apply vortex phase mask')
+            if add_cl_det is True:
+                print('   adding chromatic leakage at detector plane: %s'%vc_chrom_leak)
+            if add_cl_vort is True:
+                print('   adding chromatic leakage at vortex plane: %s'%vc_chrom_leak)
+        elif 'CLC' in mode:
+            print('   apply classical lyot mask')
 
     # preload Lyot stop when no drift
     if mode in ['CVC', 'RAVC', 'CLC', 'IMG', 'LMS']:

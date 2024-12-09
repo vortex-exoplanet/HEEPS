@@ -58,7 +58,7 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
         conf.update(npupil=npupil,
                     pupil_img_size=pupil_img_size,
                     diam_nominal=diam_nominal)
-        pup = create_stop(**conf)
+        pup = create_stop(verbose=True, **conf)
 
     # normalize the entrance pupil intensity (total flux = 1)
     if norm_I is True:
