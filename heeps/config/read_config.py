@@ -31,7 +31,7 @@ def read_config(verbose=False, **update_conf):
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
-    gdrive_id = '1-9__ouRj0rT8__nbSJ0CRi2-0MFGmg3B', # Google Drive ID
+    gdrive_id = '1Rm-eOqm4p-7MreMINgvdk4CKAAGL2ZcE', # Google Drive ID
     # required directories for data (e.g. fits files)
     dir_current = '$HOME/heeps_metis',
     dir_input = 'input_files',
