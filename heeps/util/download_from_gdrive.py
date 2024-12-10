@@ -62,8 +62,6 @@ def extract_confirmation_token(html_content):
     else:
         download_url = "https://docs.google.com/uc?export=download"
 
-    print(f"Confirmation token: {token}")
-    print(f"Download URL: {download_url}")
     return token, download_url
 
 def save_response_content(response, my_file, chunk_size=32768):

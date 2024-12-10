@@ -31,7 +31,7 @@ def read_config(verbose=False, **update_conf):
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
-    gdrive_id = '1Rm-eOqm4p-7MreMINgvdk4CKAAGL2ZcE', # Google Drive ID
+    gdrive_id = '1eEpEM862b0u8L4_AtR9NGlLKSUI0euPb', # Google Drive ID
     # required directories for data (e.g. fits files)
     dir_current = '$HOME/heeps_metis',
     dir_input = 'input_files',
@@ -119,11 +119,11 @@ def read_config(verbose=False, **update_conf):
     ravc_r = 0.5190,                    # (calc=False) RAP radius wrt allglass
     apo_misalign = None,                # constant apodizer misalignment
     clc_diam = 80,                      # CLC occulter diam in mas
-    f_oat = 'optics/oat_L_RAVC.fits',   # vortex off-axis transmission
-    f_vc_trans = 'optics/agpm_trans.fits', # vortex transmittance
-    f_app_trans = 'optics/metis_gvapp_tx.fits', # APP transmittance
-    f_app_amp = 'optics/app/METIS_IMG_L_amp_ROF.fits', # APP amplitude
-    f_app_phase = 'optics/app/METIS_IMG_L_phase_ROF.fits', # APP phase
+    f_oat = 'optics/vc/oat_L_RAVC.fits',   # vortex off-axis transmission
+    f_vc_trans = 'optics/vc/agpm_trans.fits', # vortex transmittance
+    f_app_trans = 'optics/app/metis_gvapp_tx.fits', # APP transmittance
+    f_app_amp = 'optics/app/METIS_IMG_aper_rot.fits', # APP amplitude
+    f_app_phase = 'optics/app/METIS_IMG_gvAPP_final_rot.fits', # APP phase
     f_spp_amp = 'optics/spp/SP_AP2_masked_rot_bin.fits', # Shaped Pupil Plate
     app_strehl = 0.6,                   # APP Strehl ratio
     app_single_psf = 0.48,              # APP single PSF (4% leakage)

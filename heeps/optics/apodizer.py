@@ -95,19 +95,21 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
             if verbose is True:
                 print("   apply APP phase from '%s'" % os.path.basename(
                     f_app_phase))
+            APP_phase = fits.getdata(f_app_phase)
 
-            # Add a phase ramp to offset the PSF core from the centre
-            # offset is in units of [lambda/D], angle is in [deg]
-            dx = app_phase_ramp_params["offset"]
-            dang = app_phase_ramp_params["angle"]
-            psf_centre_offset = rotate(
-                np.repeat((np.arange(npupil) / (npupil - 1) *
-                           2 * np.pi * dx)[np.newaxis, :],
-                          repeats=npupil, axis=0),
-                angle=dang, order=1, reshape=False
-            )
-            APP_phase = fits.getdata(f_app_phase) + psf_centre_offset
-
+            # # Add a phase ramp to offset the PSF core from the centre
+            # # offset is in units of [lambda/D], angle is in [deg]
+            # ntmp = np.shape(APP_phase)[-1]
+            # dx = app_phase_ramp_params["offset"]
+            # dang = app_phase_ramp_params["angle"]
+            # psf_centre_offset = rotate(
+            #     np.repeat((np.arange(ntmp) / (ntmp - 1) *
+            #                2 * np.pi * dx)[np.newaxis, :],
+            #               repeats=ntmp, axis=0),
+            #     angle=dang, order=1, reshape=False
+            # )
+            # APP_phase += psf_centre_offset
+            
         else:
             APP_phase = np.zeros((npupil, npupil))
         # resize to npupil
@@ -115,7 +117,6 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
         APP_phase = impro.resize_img(APP_phase, npupil)
         # rotate for negative PSF
         if 'neg' in mode:
-
             APP_phase *= -1
         # pad with zeros to match PROPER ngrid
         APP_amp = impro.pad_img(APP_amp, ngrid, 0)
