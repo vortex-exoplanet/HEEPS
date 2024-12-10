@@ -9,6 +9,9 @@ import numpy as np
 from astropy.io import fits
 import os.path
 import warnings
+from packaging import version
+
+vvip = vip_hci.__version__
 
 def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
@@ -99,7 +102,10 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # get off-axis transmission
     if 'VC' in mode and f_oat is not None:
         OAT = fits.getdata(f_oat)
-        OAT = (OAT[1], OAT[0])
+        if version.parse(vvip) < version.parse("1.3.0"):
+            OAT = (OAT[1], OAT[0])
+        else:
+            pass
         if verbose is True:
             print("   load vortex off-axis transmission from '%s'"%os.path.basename(f_oat))
     else:
@@ -116,7 +122,10 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if cpu_count == None:
         cpu_count = mpro.cpu_count()
     algo_dict = dict(nproc=cpu_count)
-    algo = vip_hci.medsub.median_sub
+    if version.parse(vvip) <= version.parse("1.0.3"):
+        algo = vip_hci.medsub.median_sub
+    else:
+        algo = vip_hci.psfsub.median_sub    
     # contrast curve after post-processing (pscale in arcsec)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore") # for AstropyDeprecationWarning
