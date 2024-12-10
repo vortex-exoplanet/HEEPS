@@ -31,7 +31,7 @@ def read_config(verbose=False, **update_conf):
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
-    gdrive_id = '1ko9KX9ljizwfoVfKfGWxFrQMbsHWryym', # Google Drive ID
+    gdrive_id = '1-9__ouRj0rT8__nbSJ0CRi2-0MFGmg3B', # Google Drive ID
     # required directories for data (e.g. fits files)
     dir_current = '$HOME/heeps_metis',
     dir_input = 'input_files',
@@ -48,7 +48,7 @@ def read_config(verbose=False, **update_conf):
     diam_int = 11.213,                  # effective central obscuration in m
     diam_vpm = 16.273,                  # vortex phase mask (19/45*diam_nominal)
     diam_lom = 16.273,                  # lyot occulting mask (19/45*diam_nominal)
-    f_pupil = 'pupil/ELT_fullM1.fits',  # entrance pupil file
+    f_pupil = 'pupil/ELT_fullM1_nov2024.fits',  # entrance pupil file
     # if no valid pupil file, pupil will be created with the following params:
     spi_angles = [0,60,120,180,240,300],# regular spider angles in deg
     spi_width = 0.54,                   # regular spider width in m
