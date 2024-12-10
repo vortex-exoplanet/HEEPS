@@ -2,6 +2,7 @@ import os.path
 import zipfile
 import requests
 import socket
+from bs4 import BeautifulSoup
 
 '''Downloads files from google drive'''
 
@@ -24,7 +25,7 @@ def download(googleID, destination, filename,
         assert check_internet(), \
                 "HEEPS can't download input files. Check your internet connection."
         response = session.get(url, params={'id':googleID}, stream=True)
-        token = get_confirm_token(response)
+        token, url = extract_confirmation_token(response.text)
         if token:
             response = session.get(url, params={'id':googleID, \
                     'confirm':token}, stream=True)
@@ -44,11 +45,26 @@ def check_internet(host="8.8.8.8", port=53, timeout=3):
         print('OSError [%s]: %s.'%err.args[:2])
         return False
 
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
+def extract_confirmation_token(html_content):
+    """
+    Extracts the confirmation token and download URL from the HTML content for large file downloads.
+    """
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Locate the confirmation token
+    token_input = soup.find('input', {'name': 'confirm'})
+    token = token_input['value'] if token_input else None
+
+    # Locate the form's action URL
+    form = soup.find('form', {'id': 'download-form'})
+    if form:
+        download_url = form['action']
+    else:
+        download_url = "https://docs.google.com/uc?export=download"
+
+    print(f"Confirmation token: {token}")
+    print(f"Download URL: {download_url}")
+    return token, download_url
 
 def save_response_content(response, my_file, chunk_size=32768):
     with open(my_file, "wb") as f:
