@@ -99,7 +99,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
             print("Load pointing errors from '%s'"%os.path.basename(f_point_err))
             print('   nscreens=%s'%(len(tiptilts)))
     else:
-        tiptilts = np.zeros((nscreens,2))#np.array([None]*nscreens)
+        tiptilts = np.array([None]*nscreens)#np.zeros((nscreens,2))#
 
     # load apodizer drift
     if add_apo_drift is True and 'RAVC' in conf['mode']:
@@ -107,7 +107,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
             for x in np.linspace(-apo_drift/2, apo_drift/2,
                                 int(3600/dit))])[:nframes][::nstep]
         if verbose is True:
-            print('Load apodizer drift=%s %% ptv'%apo_drift)
+            print('Load apodizer drift=%s ptv'%apo_drift)
     else:
         apo_misaligns = np.array([apo_misalign]*nscreens)   # constant misalignment
 
@@ -117,8 +117,9 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
             for x in np.linspace(-ls_drift/2, ls_drift/2,
                                 int(3600/dit))])[:nframes][::nstep]
         if verbose is True:
-            print('Load Lyot stop drift=%s %% ptv'%ls_drift)
+            print('Load Lyot stop drift=%s ptv'%ls_drift)
     else:
         ls_misaligns = np.array([ls_misalign]*nscreens)     # constant misalignment
 
-    return phase_screens, amp_screens, tiptilts+disp, apo_misaligns, ls_misaligns
+    return phase_screens, amp_screens, tiptilts, apo_misaligns, ls_misaligns
+    #return phase_screens, amp_screens, tiptilts+disp, apo_misaligns, ls_misaligns
