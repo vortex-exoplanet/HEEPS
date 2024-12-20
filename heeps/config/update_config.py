@@ -67,7 +67,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
             print('   ravc_calc=%s, ravc_t=%3.4f, ravc_r=%3.4f'
                 %(ravc_calc, ravc_t, ravc_r))
         print('   npupil=%s, pscale=%.4f mas, lam=%3.4E m'%(npupil, pscale, lam))
-        print('   hfov=%s arcsec (-> ndet=%s, %s lam/D)\n'
-            %(round(hfov, 2), ndet, round(hfov_lamD, 2)))
+        print('   hfov=%s arcsec (-> %s lam/D)'%(round(hfov, 2), round(hfov_lamD, 2)))
+        print('   detector size (ndet)=%s (%s lam/D)\n'%(ndet, round(hfov_lamD*2, 2)))
 
     return conf
