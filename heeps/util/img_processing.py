@@ -22,6 +22,13 @@ def get_rms(cube, verbose=False):
         return np.mean(multiCPU(get_rms, posvars=[cube], 
                                 case='get rms', verbose=verbose))
 
+def get_var(cube, verbose=False):
+    if cube.ndim < 3:
+        return np.var(cube[cube!=0])
+    else:
+        return np.mean(multiCPU(get_var, posvars=[cube], 
+                                case='get var', verbose=verbose))
+    
 def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
         anti_aliasing=True, cpu_count=None, verbose=False):
     posvars = [cube, [new_size]*len(cube)]

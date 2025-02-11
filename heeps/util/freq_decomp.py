@@ -1,4 +1,4 @@
-from heeps.util.img_processing import resize_cube, get_rms
+from heeps.util.img_processing import resize_cube, get_rms, get_var
 from heeps.util.multiCPU import multiCPU
 import astropy.convolution as astroconv
 from astropy.io import fits
@@ -95,11 +95,12 @@ def temporal(t_max, dt, fc1, fc2, seed=123456):
     ys1 = np.real(ys[:N])
     return ys1
 
-def fit_zer(pup, rad, nzer, cube):
+def fit_zer(pup, rad, nzer, cube, cobs=0):
     # pup should NOT have NANs for prop_fit_zernikes
-    return proper.prop_fit_zernikes(cube, pup, rad, nzer, eps=0, fit=True)
+    return proper.prop_fit_zernikes(cube, pup, rad, nzer, fit=True,
+                                    OBSCURATION_RATIO=cobs)
 
-def get_zernike(cube_name, pup, nzer):
+def get_zernike(cube_name, pup, nzer, cobs=0):
     zpols_name = cube_name[:-5] + '_zpols_%s.fits'%nzer
     try:
         zpols = fits.getdata(zpols_name)
@@ -110,7 +111,7 @@ def get_zernike(cube_name, pup, nzer):
         nimg = cube.shape[-1]
         pup = resize_cube(pup, nimg)
         zpols = multiCPU(fit_zer, posargs=[pup, nimg/2, nzer], 
-                posvars=[cube], case='get zpols')
+                posvars=[cube], kwargs={'cobs': cobs}, case='get zpols')
         fits.writeto(zpols_name, np.float32(zpols))
     return zpols
 
@@ -136,17 +137,19 @@ def psd_spatial_zernike(cube_name, pup, zpols, nzer, ncube):
         wf = proper.prop_begin(1, 1, nimg, 1) # initial wavefront
         LSFs = np.empty((nzer, ncube, nimg, nimg))
         HSFs = np.empty((nzer, ncube, nimg, nimg))
-        HSFs_rms = []
+        HSFs_var = []
         for z in np.arange(nzer) + 1:
             verbose = True if z == 1 else False
             LSF, HSF = multiCPU(remove_zernike, posargs=[deepcopy(wf), pup],
                         posvars=[cube, zpols[:,:z]], case='remove zernike', 
                         multi_out=True, verbose=verbose)
             LSFs[z-1], HSFs[z-1] = LSF, HSF
-            HSFs_rms.append(get_rms(HSF, verbose=verbose))
+            # HSFs_rms.append(get_rms(HSF, verbose=verbose))
+            HSFs_var.append(get_var(HSF, verbose=verbose)) # replacing rms by var
             print(z, end=', ')
-        spsd = [rms**2 for rms in HSFs_rms]
-        spsd = [spsd[0]] + spsd
+        # spsd = [rms**2 for rms in HSFs_rms]
+        spsd = [var for var in HSFs_var]
+        # spsd = [spsd[0]] + spsd  # -> not clear to me why the first value is doubled...
         fits.writeto(spsd_name%'spsd', np.float32(spsd))
         fits.writeto(spsd_name%'LSFs', np.float32(LSFs))
         fits.writeto(spsd_name%'HSFs', np.float32(HSFs))
