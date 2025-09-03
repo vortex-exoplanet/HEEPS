@@ -26,18 +26,23 @@ Currently, the simulator includes four coronagraphs:
 - [Carlomagno, Delacroix, Absil, et al. 2020](https://www.spiedigitallibrary.org/journals/Journal-of-Astronomical-Telescopes-Instruments-and-Systems/volume-6/issue-3/035005/METIS-high-contrast-imaging-design-and-expected-performance/10.1117/1.JATIS.6.3.035005.full), METIS high-contrast imaging: design and expected performance
 
 ## Dependencies
-You can use this tool to check all versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/check_versions.ipynb)
+HEEPS depends on existing packages from the Python ecosystem, such as ``numpy``, ``scipy``, ``matplotlib``, ``astropy``, ``photutils``, ``skimage``.
+It also relies on more specific package: [VIP](https://github.com/vortex-exoplanet/VIP) for HCI image processing and [PROPER](https://sourceforge.net/projects/proper-library/files/) for optical propagation
 
-[![Python](https://img.shields.io/badge/Python-3.7.0-brightgreen.svg)]()  
-[![Proper](https://img.shields.io/badge/Proper-3.2.6a-brightgreen.svg)]() --> [download](https://sourceforge.net/projects/proper-library/files/)  
-[![Scopesim](https://img.shields.io/badge/Scopesim-0.1.1-brightgreen.svg)]()  
-[![Numpy](https://img.shields.io/badge/Numpy-1.21.2-brightgreen.svg)]()
-[![Scipy](https://img.shields.io/badge/Scipy-1.1.0-brightgreen.svg)]()
-[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.3.0-brightgreen.svg)]()  
-[![Vip-hci](https://img.shields.io/badge/Vip_hci-1.0.0-brightgreen.svg)]()
-[![Photutils](https://img.shields.io/badge/Photutils-0.7.2-brightgreen.svg)]()
-[![Astropy](https://img.shields.io/badge/Astropy-3.2.3-brightgreen.svg)]()
-[![Skimage](https://img.shields.io/badge/Skimage-0.18.3-brightgreen.svg)]()
+The versions under which the code is currently maintained are
+
+[![Python](https://img.shields.io/badge/Python-3.12.7-brightgreen.svg)]()  
+[![Proper](https://img.shields.io/badge/Proper-3.3.3-brightgreen.svg)]()
+[![Scopesim](https://img.shields.io/badge/Scopesim-0.10.0-brightgreen.svg)]()  
+[![Numpy](https://img.shields.io/badge/Numpy-1.26.4-brightgreen.svg)]()
+[![Scipy](https://img.shields.io/badge/Scipy-1.15.0-brightgreen.svg)]()
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.10.6-brightgreen.svg)]()  
+[![Vip-hci](https://img.shields.io/badge/Vip_hci-1.6.2-brightgreen.svg)]()
+[![Photutils](https://img.shields.io/badge/Photutils-2.1.0-brightgreen.svg)]()
+[![Astropy](https://img.shields.io/badge/Astropy-6.1.7-brightgreen.svg)]()
+[![Skimage](https://img.shields.io/badge/Skimage-0.24.0-brightgreen.svg)]()
+
+You can use a HEEPS tool to check all corresponding versions: [check_versions.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/check_versions.ipynb)
 
 ## Quick start
 This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/demo.ipynb)
