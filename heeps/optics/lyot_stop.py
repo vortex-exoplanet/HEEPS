@@ -3,13 +3,61 @@ from heeps.pupil.create_stop import create_stop
 import proper
 from astropy.io import fits
 import os.path
+import numpy as np
 
-def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285, 
+def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
+              ngrid=1024, npupil=285, 
         mode='RAVC', ravc_r=0.6, ls_dRext=0.03, ls_dRint=0.05, ls_dRspi=0.04, 
         diam_ext=37, diam_int=11, ls_ext_circ=True, ls_int_circ=True, 
         ls_misalign=None, apply_ls=True, verbose=False, **conf):
 
-    """ Add a Lyot stop, in the case of a focal plane mask. """
+    """
+    Apply a Lyot stop, in the case of a focal plane mask. 
+
+    Parameters
+    ----------
+    wf : obj
+        Wavefront object, as returned by `proper.prop_init`.
+    ls_mask : array, optional
+        Preloaded Lyot stop mask (overrides other options).
+    f_lyot_stop : str, optional
+        File from which to load Lyot stop mask.
+    f_lyot_stop_phase : str, optional
+        File from which to load Lyot stop phase.
+    ngrid : int, optional
+        Size of wavefront grid.
+    npupil : int, optional
+        Size of pupil.
+    mode : str, optional
+        Mode of operation. Options are 'RAVC', 'CVC', 'CLC', 'IMG', 'LMS'.
+    ravc_r : float, optional
+        Radius of apodizer in RAVC mode.
+    ls_dRext : float, optional
+        LS Rext undersize (fraction of diam_ext).
+    ls_dRint : float, optional
+        LS Rint oversize (fraction of diam_ext).
+    ls_dRspi : float, optional
+        LS Rspi oversize (fraction of diam_ext).
+    diam_ext : float, optional
+        effective outer circular aperture in m
+    diam_int : float, optional
+        effective central obscuration in m
+    ls_ext_circ : bool, optional
+        If True, make outer ring of Lyot stop circular.
+    ls_int_circ : bool, optional
+        If True, make inner ring of Lyot stop circular.
+    ls_misalign : list, optional
+        Misalignment of Lyot stop (dx, dy).
+    apply_ls : bool, optional
+        If False, return Lyot stop mask instead of applying to wavefront.
+    verbose : bool, optional
+        If True, print out what's happening.
+
+    Returns
+    -------
+    wf : obj
+        Modified wavefront object.
+    """
 
     if mode in ['CVC', 'RAVC', 'CLC', 'IMG', 'LMS']:
 
@@ -45,11 +93,24 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', ngrid=1024, npupil=285,
                     + ', ls_misalign=%s'%ls_misalign)
             # zero-pad
             ls_mask = pad_img(ls_mask, ngrid)
+        
+        if os.path.isfile(f_lyot_stop_phase):
+            ls_phase = resize_img(fits.getdata(f_lyot_stop_phase), npupil)
+            ls_phase = pad_img(ls_phase, ngrid)
+        else:
+            ls_phase = None
 
         # optional: can return lyot stop array, instead of applying to wavefront
-        if not apply_ls:
-            return ls_mask
+
+        if ls_phase is not None:
+            if not apply_ls:
+                return ls_mask * np.exp(1j* 2*np.pi/wf.lamda * ls_phase)
+            else:
+                proper.prop_multiply(wf, ls_mask * np.exp(1j* 2*np.pi/wf.lamda * ls_phase))
         else:
-            proper.prop_multiply(wf, ls_mask)
+            if not apply_ls:
+                return ls_mask
+            else:
+                proper.prop_multiply(wf, ls_mask)
 
     return wf
