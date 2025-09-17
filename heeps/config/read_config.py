@@ -79,6 +79,8 @@ def read_config(verbose=False, **update_conf):
     #    4. mode = 'SPP'  for Shaped Pupil Plate
     #    5. mode = 'CLC'  for Classical Lyot Coronagraph
     #    6. mode = 'ELT'  for no coronagraph (only telescope)
+        # Multiple HCI modes
+    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
     band = 'L',                         # spectral band
@@ -98,6 +100,11 @@ def read_config(verbose=False, **update_conf):
     dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
+    
+    # TODO explain the logical sequence
+    auto_select_lyot = False,           # True if automatically select lyot stop from definition_lyotstop
+    select_lyot_stop = 'CLS-LM-b',      # leave empty if auto_select_lyot = True or custom lyot parameters
+
     f_lyot_stop = '',                   # lyot stop file
     ls_dRext = 0.0477,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.04,                    # LS Rint oversize (% diam ext)
@@ -158,8 +165,7 @@ def read_config(verbose=False, **update_conf):
             'flux_star': 2.823e+10,                 # Aquarius N2
             'flux_bckg': 2.142e+08}
         },
-    # Multiple HCI modes
-    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
+
 
     # =============================================================================
     #           Parameters for wavefront

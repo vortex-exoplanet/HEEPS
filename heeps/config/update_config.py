@@ -3,6 +3,8 @@ from heeps.util.round2 import round2odd
 from heeps.util.save2pkl import save2pkl
 import astropy.units as u
 import numpy as np
+import os
+from heeps.config.definition_lyotstops import STOPS_LM, STOPS_N
 
 def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6, 
         pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, pscale=5.47, 
@@ -69,5 +71,47 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
         print('   npupil=%s, pscale=%.4f mas, lam=%3.4E m'%(npupil, pscale, lam))
         print('   hfov=%s arcsec (-> %s lam/D)'%(round(hfov, 2), round(hfov_lamD, 2)))
         print('   detector size (ndet)=%s (%s lam/D)\n'%(ndet, round(hfov_lamD*2, 2)))
+
+    # [GOX] auto-select Lyot stop
+    if conf['auto_select_lyot']:
+        print(' Auto-selection Lyot stop from definition')
+        # TODO capture LMS simulation cases
+        # TODO include backup modes !?
+        if band in ['L', 'M']:
+            if conf['mode'] in ['RAVC']:
+                conf['f_lyot_stop'] = os.path.join(conf['f_lyot_stop'],
+                                                   STOPS_LM['RLS-LM']['f_lyot_stop'])
+            # elif conf['mode'] in ['CVC']:
+            #     # see also backup stop CLS-LM-b
+            #     conf['f_lyot_stop'] = STOPS_LM['CLS-LM']['f_lyot_stop']
+            # elif conf['mode'] in ['CLC']:
+            #     conf['f_lyot_stop'] = STOPS_LM['ULS-LM']['f_lyot_stop']
+            # elif conf['mode'] in ['ELT']:
+            #     conf['f_lyot_stop'] = STOPS_LM['SPM-LM']['f_lyot_stop']
+            # else:
+            #     print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
+        elif band in ['N1', 'N2']:
+            print('   [ WARNING ] N-band Not yet supported)
+            # if conf['mode'] in ['CVC']:
+            #     # see also backup stop CLS-N-b
+            #     conf['f_lyot_stop'] = STOPS_LM['CLS-N']['f_lyot_stop']
+            # elif conf['mode'] in ['CLC']:
+            #     conf['f_lyot_stop'] = STOPS_LM['ULS-N']['f_lyot_stop']
+            # elif conf['mode'] in ['ELT']:
+            #     # see also backup stop SPM-N-b
+            #     conf['f_lyot_stop'] = STOPS_LM['SPM-N']['f_lyot_stop']
+        else:
+                print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
+
+        if conf['f_lyot_stop'] == '':
+            print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
+
+        if not(os.path.isfile(conf['f_lyot_stop'])):
+            print('   [ WARNING ] auto-selected Lyot stop not found at %s'%conf['f_lyot_stop'])
+
+    elif conf['select_lyot_stop']:
+        pass
+        if conf['f_lyot_stop'] != '':
+            print(' WARNING ')
 
     return conf

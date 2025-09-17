@@ -1,4 +1,6 @@
 from heeps.util.img_processing import resize_img, pad_img
+from heeps.util.compressed_file import read_compressed_fits
+from pathlib import Path
 from heeps.pupil.create_stop import create_stop
 import proper
 from astropy.io import fits
@@ -70,9 +72,16 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
         elif os.path.isfile(f_lyot_stop):
             if verbose is True:
                 print("   apply lyot stop from '%s'"%os.path.basename(f_lyot_stop))
-            ls_mask = resize_img(fits.getdata(f_lyot_stop), npupil)
+            file_path = Path(f_lyot_stop)
+            extension = "".join(file_path.suffixes)
+            if extension == '.fits':
+                lyot_array = fits.getdata(f_lyot_stop)
+            elif extension == '.fits.tar.gz':
+                lyot_array = read_compressed_fits(f_lyot_stop)
+            else:
+                raise ValueError('Lyot stop file must be in FITS format (.fits or .fits.tar.gz)')          
+            ls_mask = resize_img(lyot_array, npupil)
             ls_mask = pad_img(ls_mask, ngrid)
-
         # case 3: create a lyot stop mask
         else:
             # load params
