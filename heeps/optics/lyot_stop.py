@@ -4,7 +4,6 @@ from pathlib import Path
 from heeps.pupil.create_stop import create_stop
 import proper
 from astropy.io import fits
-import os.path
 import numpy as np
 
 def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
@@ -69,9 +68,9 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
                 print("   apply preloaded lyot stop")
 
         # case 2: load mask from file
-        elif os.path.isfile(f_lyot_stop):
+        elif Path(f_lyot_stop).is_file():
             if verbose is True:
-                print("   apply lyot stop from '%s'"%os.path.basename(f_lyot_stop))
+                print("   apply lyot stop from '%s'"%Path(f_lyot_stop).name)
             file_path = Path(f_lyot_stop)
             extension = "".join(file_path.suffixes)
             if extension == '.fits':
@@ -103,7 +102,7 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
             # zero-pad
             ls_mask = pad_img(ls_mask, ngrid)
         
-        if os.path.isfile(f_lyot_stop_phase):
+        if Path(f_lyot_stop_phase).is_file():
             ls_phase = resize_img(fits.getdata(f_lyot_stop_phase), npupil)
             ls_phase = pad_img(ls_phase, ngrid)
         else:

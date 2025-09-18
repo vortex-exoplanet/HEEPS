@@ -1,9 +1,10 @@
 from .create_stop import create_stop
 from heeps.util.img_processing import resize_img, pad_img
+from heeps.util.compressed_file import read_compressed_fits
 from heeps.util.save2fits import save2fits
+from pathlib import Path
 import proper
 import numpy as np
-import os.path
 from astropy.io import fits 
 
 
@@ -46,10 +47,20 @@ def pupil(pup=None, f_pupil='', lam=3.8e-6, ngrid=1024, npupil=285,
         pup = resize_img(pup, npupil)
 
     # case 2: load pupil from file
-    elif os.path.isfile(f_pupil):
+    elif Path(f_pupil).is_file():
         if verbose is True:
-            print("loaded from '%s'"%os.path.basename(f_pupil))
-        pup = resize_img(fits.getdata(f_pupil), npupil)
+            print("loaded from '%s'"%Path(f_pupil).name)
+        file_path = Path(f_pupil)
+        extension = "".join(file_path.suffixes)
+        if extension == '.fits':
+            pupil_array = fits.getdata(f_pupil)
+        elif extension == '.fits.tar.gz':
+            pupil_array = read_compressed_fits(f_pupil)
+        else:
+            raise ValueError('Lyot stop file must be in FITS format (.fits or .fits.tar.gz)')   
+            
+        # pup = resize_img(fits.getdata(f_pupil), npupil)
+        pup = resize_img(pupil_array, npupil)
     
     # case 3: create a pupil
     else:

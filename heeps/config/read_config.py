@@ -31,7 +31,7 @@ def read_config(verbose=False, **update_conf):
     send_to = None,                     # user's email, for notifications
     prefix = '',                        # for saved files: e.g. 'test_'
     headless = False,                   # true if running on a headless server
-    gdrive_id = '1eEpEM862b0u8L4_AtR9NGlLKSUI0euPb', # Google Drive ID
+    gdrive_id = '1LKkDZMEVtAxF82QExsf8CsQvqqSRnRWa', # Google Drive ID September 2025 -- previously:'1eEpEM862b0u8L4_AtR9NGlLKSUI0euPb'
     # required directories for data (e.g. fits files)
     dir_current = '$HOME/heeps_metis',
     dir_input = 'input_files',
@@ -48,7 +48,7 @@ def read_config(verbose=False, **update_conf):
     diam_int = 11.213,                  # effective central obscuration in m
     diam_vpm = 16.273,                  # vortex phase mask (19/45*diam_nominal)
     diam_lom = 16.273,                  # lyot occulting mask (19/45*diam_nominal)
-    f_pupil = 'pupil/ELT_fullM1_feb2025.fits',   # entrance pupil file
+    f_pupil = 'pupil/ELT_fullM1_feb2025.fits.tar.gz',   # entrance pupil file
     # if no valid pupil file, pupil will be created with the following params:
     spi_angles = [0,60,120,180,240,300], # regular spider angles in deg
     spi_width = 0.202,                   # regular spider width in m
@@ -79,7 +79,7 @@ def read_config(verbose=False, **update_conf):
     #    4. mode = 'SPP'  for Shaped Pupil Plate
     #    5. mode = 'CLC'  for Classical Lyot Coronagraph
     #    6. mode = 'ELT'  for no coronagraph (only telescope)
-        # Multiple HCI modes
+    # Multiple HCI modes
     modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
@@ -100,12 +100,10 @@ def read_config(verbose=False, **update_conf):
     dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
-    
-    # TODO explain the logical sequence
-    auto_select_lyot = False,           # True if automatically select lyot stop from definition_lyotstop
-    select_lyot_stop = 'CLS-LM-b',      # leave empty if auto_select_lyot = True or custom lyot parameters
-
-    f_lyot_stop = '',                   # lyot stop file
+    # Lyot stop: 1. auto_select_lyot based on mode and band. 2. lyot_stop_name. 3. f_lyot_stop. 4. Provide parameter to build Lyot stop
+    auto_select_lyot = True,            # True if automatically select lyot stop from definition_lyotstop
+    lyot_stop_name = '',                # leave empty if auto_select_lyot=True. Otherwise, see definition_lyotstops for list of available stops
+    f_lyot_stop = '',                   # lyot stop file. Only if auto_select_lyot=False and lyot_stop_name is empty.
     ls_dRext = 0.0477,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.04,                    # LS Rint oversize (% diam ext)
     ls_dRspi = 0.0275,                  # LS spider oversize (% diam ext)

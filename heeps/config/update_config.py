@@ -3,8 +3,8 @@ from heeps.util.round2 import round2odd
 from heeps.util.save2pkl import save2pkl
 import astropy.units as u
 import numpy as np
-import os
-from heeps.config.definition_lyotstops import STOPS_LM, STOPS_N
+from pathlib import Path
+from heeps.config.definition_lyotstops import COLD_STOPS
 
 def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6, 
         pupil_img_size=40, diam_ext=37, diam_int=11, ngrid=1024, pscale=5.47, 
@@ -70,48 +70,57 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
                 %(ravc_calc, ravc_t, ravc_r))
         print('   npupil=%s, pscale=%.4f mas, lam=%3.4E m'%(npupil, pscale, lam))
         print('   hfov=%s arcsec (-> %s lam/D)'%(round(hfov, 2), round(hfov_lamD, 2)))
-        print('   detector size (ndet)=%s (%s lam/D)\n'%(ndet, round(hfov_lamD*2, 2)))
+        print('   detector size (ndet)=%s (%s lam/D)'%(ndet, round(hfov_lamD*2, 2)))
 
-    # [GOX] auto-select Lyot stop
+    # Auto-selection of Lyot stop for METIS
     if conf['auto_select_lyot']:
-        print(' Auto-selection Lyot stop from definition')
-        # TODO capture LMS simulation cases
-        # TODO include backup modes !?
+        print('\n   Auto-selection Lyot stop from definition')
+        if conf['lyot_stop_name']:
+            print('   [ WARNING ] auto_select_lyot is True and lyot_stop_name is not empty. Using auto select Lyot')
+
         if band in ['L', 'M']:
             if conf['mode'] in ['RAVC']:
-                conf['f_lyot_stop'] = os.path.join(conf['f_lyot_stop'],
-                                                   STOPS_LM['RLS-LM']['f_lyot_stop'])
-            # elif conf['mode'] in ['CVC']:
-            #     # see also backup stop CLS-LM-b
-            #     conf['f_lyot_stop'] = STOPS_LM['CLS-LM']['f_lyot_stop']
-            # elif conf['mode'] in ['CLC']:
-            #     conf['f_lyot_stop'] = STOPS_LM['ULS-LM']['f_lyot_stop']
-            # elif conf['mode'] in ['ELT']:
-            #     conf['f_lyot_stop'] = STOPS_LM['SPM-LM']['f_lyot_stop']
-            # else:
-            #     print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) /\
+                     COLD_STOPS['RLS-LM']['f_lyot_stop']
+
+            elif conf['mode'] in ['CVC']:
+                # see also backup stop CLS-LM-b
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) /\
+                    COLD_STOPS['CLS-LM']['f_lyot_stop']
+            elif conf['mode'] in ['CLC']:
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+                    COLD_STOPS['ULS-LM']['f_lyot_stop']
+            elif conf['mode'] in ['ELT']:
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+                    COLD_STOPS['SPM-LM']['f_lyot_stop']
+            else:
+                print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
         elif band in ['N1', 'N2']:
-            print('   [ WARNING ] N-band Not yet supported)
-            # if conf['mode'] in ['CVC']:
-            #     # see also backup stop CLS-N-b
-            #     conf['f_lyot_stop'] = STOPS_LM['CLS-N']['f_lyot_stop']
-            # elif conf['mode'] in ['CLC']:
-            #     conf['f_lyot_stop'] = STOPS_LM['ULS-N']['f_lyot_stop']
-            # elif conf['mode'] in ['ELT']:
-            #     # see also backup stop SPM-N-b
-            #     conf['f_lyot_stop'] = STOPS_LM['SPM-N']['f_lyot_stop']
+            print('   [ WARNING ] N-band Not yet supported')
+            if conf['mode'] in ['CVC']:
+                # see also backup stop CLS-N-b
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+                    COLD_STOPS['CLS-N']['f_lyot_stop']
+            elif conf['mode'] in ['CLC']:
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+                    COLD_STOPS['ULS-N']['f_lyot_stop']
+            elif conf['mode'] in ['ELT']:
+                # see also backup stop SPM-N-b
+                conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+                    COLD_STOPS['SPM-N']['f_lyot_stop']
         else:
                 print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
 
-        if conf['f_lyot_stop'] == '':
-            print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
+        if not(Path(conf['f_lyot_stop']).is_file()):
+            print('   [ WARNING ] no file for auto-select Lyot stop not found at %s'%conf['f_lyot_stop'])
 
-        if not(os.path.isfile(conf['f_lyot_stop'])):
-            print('   [ WARNING ] auto-selected Lyot stop not found at %s'%conf['f_lyot_stop'])
+    elif conf['lyot_stop_name']:
+        print(f'\n   Selecting Lyot stop name {conf['lyot_stop_name']}')
+        if Path(conf['f_lyot_stop']).is_file():
+            print(f' [ WARNING ] Lyot stop name is set and f_lyot_stop file ({conf['f_lyot_stop']})is found. Using Lyot stop name.')
 
-    elif conf['select_lyot_stop']:
-        pass
-        if conf['f_lyot_stop'] != '':
-            print(' WARNING ')
+        conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
+            COLD_STOPS[conf['lyot_stop_name']]['f_lyot_stop']
 
+    print('\n')
     return conf
