@@ -100,9 +100,12 @@ def read_config(verbose=False, **update_conf):
     dit = 0.3,                          # detector integration time in s
     lat = -24.59,                       # telescope latitude in deg (Armazones=-24.59 ,Paranal -24.63)
     dec = -5,                           # star declination in deg (e.g. 51 Eri -2.47)
-    # Lyot stop: 1. auto_select_lyot based on mode and band. 2. lyot_stop_name. 3. f_lyot_stop. 4. Provide parameter to build Lyot stop
-    auto_select_lyot = True,            # True if automatically select lyot stop from definition_lyotstop
-    lyot_stop_name = '',                # leave empty if auto_select_lyot=True. Otherwise, see definition_lyotstops for list of available stops
+    # Lyot stop configuration 
+    #   1. select_lyot : select a METIS cold stop.  Default: `auto` or use a lyot stop key given in `definition_lyotstops`
+    #   2. f_lyot_stop : filename of the Lyot stop. Only if select_lyot=''
+    #   3. create lyot stop based on parameters (ls_dRext, ls_dRint, ls_dRspi, force_sym, ls_ext_circ, ls_int_circ, ls_misalign). 
+    #       Only if select_lyot='' and f_lyot_stop=''.
+    select_lyot = 'auto',               # Default: `auto` to automatically select lyot stop (other options, e.g. 'CLS-LM', see definition_lyotstops.py)
     f_lyot_stop = '',                   # lyot stop file. Only if auto_select_lyot=False and lyot_stop_name is empty.
     ls_dRext = 0.0477,                  # LS Rext undersize (% diam ext)
     ls_dRint = 0.04,                    # LS Rint oversize (% diam ext)

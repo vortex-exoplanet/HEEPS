@@ -73,10 +73,8 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
         print('   detector size (ndet)=%s (%s lam/D)'%(ndet, round(hfov_lamD*2, 2)))
 
     # Auto-selection of Lyot stop for METIS
-    if conf['auto_select_lyot']:
+    if conf['select_lyot'] == 'auto':
         print('\n   Auto-selection Lyot stop from definition')
-        if conf['lyot_stop_name']:
-            print('   [ WARNING ] auto_select_lyot is True and lyot_stop_name is not empty. Using auto select Lyot')
 
         if band in ['L', 'M']:
             if conf['mode'] in ['RAVC']:
@@ -114,13 +112,13 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
         if not(Path(conf['f_lyot_stop']).is_file()):
             print('   [ WARNING ] no file for auto-select Lyot stop not found at %s'%conf['f_lyot_stop'])
 
-    elif conf['lyot_stop_name']:
-        print(f'\n   Selecting Lyot stop name {conf['lyot_stop_name']}')
+    elif conf['select_lyot'] != '': # string is not empty
+        print(f'\n   Selecting Lyot stop name {conf['select_lyot']}')
         if Path(conf['f_lyot_stop']).is_file():
-            print(f' [ WARNING ] Lyot stop name is set and f_lyot_stop file ({conf['f_lyot_stop']})is found. Using Lyot stop name.')
+            print(f' [ WARNING ] Lyot stop name is set via select_lyot and f_lyot_stop file ({conf['f_lyot_stop']})is also found. Using select_lyot.')
 
         conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
-            COLD_STOPS[conf['lyot_stop_name']]['f_lyot_stop']
+            COLD_STOPS[conf['select_lyot']]['f_lyot_stop']
 
     print('\n')
     return conf
