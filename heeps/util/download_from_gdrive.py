@@ -56,6 +56,8 @@ def download(googleID, destination, filename,
             response = session.get(url, params={'id':googleID, \
                     'confirm':token}, stream=True)
         save_response_content(response, my_file)
+    else:
+        print('[ WARNING ] File (temp.zip) already exists. Skipping download.')
 
 def check_internet(host="8.8.8.8", port=53, timeout=3):
     """
