@@ -94,7 +94,6 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
             else:
                 print('   no auto-selected Lyot stop for mode=%s'%conf['mode'])
         elif band in ['N1', 'N2']:
-            print('   [ WARNING ] N-band Not yet supported')
             if conf['mode'] in ['CVC']:
                 # see also backup stop CLS-N-b
                 conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
