@@ -143,20 +143,20 @@ def read_config(verbose=False, **update_conf):
     band_specs = {
         'L': {'lam': 3.81e-6,
             'pscale': 5.47,
-            'flux_star': 8.999e+10,                 # HCI-L long
-            'flux_bckg': 8.878e+04},
+            'flux_star': 7.570e+10,                 # HCI-L long
+            'flux_bckg': 9.565e+04},
         'M': {'lam': 4.79e-6,
             'pscale': 5.47,
-            'flux_star': 2.452e+10,                 # CO ref
-            'flux_bckg': 6.714e+05},
+            'flux_star': 1.882e+10,                 # CO ref
+            'flux_bckg': 7.8317e+05},
         'N1': {'lam': 8.70e-6,
             'pscale': 6.79,
-            'flux_star': 3.684e+10,                 # GeoSnap N1
-            'flux_bckg': 4.725e+07},
+            'flux_star': 3.139e+10,                 # GeoSnap N1
+            'flux_bckg': 4.677e+07},
         'N2': {'lam': 11.33e-6, 
             'pscale': 6.79,
-            'flux_star': 3.695e+10,                 # GeoSnap N2
-            'flux_bckg': 1.122e+08},
+            'flux_star': 3.145e+10,                 # GeoSnap N2
+            'flux_bckg': 1.1309e+08},
         'N1a': {'lam': 8.67e-6, 
             'pscale': 10.78,
             'flux_star': 2.979e+10,                 # Aquarius N1
