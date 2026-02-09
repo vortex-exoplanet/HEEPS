@@ -11,7 +11,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     """
 
     # load PSFs: on-axis (star) and off-axis (planet)
-    loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
+    tag = '' if tag is None else '%s_'%tag
+    loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag, '%s', band, mode))
     psf_OFF = fits.getdata(loadname%'offaxis')
     psf_ON = fits.getdata(loadname%'onaxis')
     assert psf_ON.ndim in [2, 3], "on-axis PSF can be 2- or 3-dimensional"

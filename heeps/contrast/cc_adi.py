@@ -73,7 +73,8 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     """
 
     # load PSFs: on-axis (star) and off-axis (planet)
-    loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
+    tag = '' if tag is None else '%s_'%tag
+    loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag,'%s', band, mode))
     psf_OFF = fits.getdata(loadname%'offaxis')
     psf_ON = fits.getdata(loadname%'onaxis')
     header_ON = fits.getheader(loadname%'onaxis')
