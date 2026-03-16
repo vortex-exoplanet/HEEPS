@@ -154,7 +154,7 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
-        _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
+        _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False, imlib=imlib)
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
             dir_output=dir_output, band=band, mode=mode)
 
