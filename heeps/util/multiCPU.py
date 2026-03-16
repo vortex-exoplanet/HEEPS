@@ -4,8 +4,23 @@ from functools import partial
 from sys import platform
 import time
 
+import atexit
+# cache for persistent Pools to avoid repeated forking
+_pool_cache = {}
+def _close_pools():
+    for key, pool in list(_pool_cache.items()):
+        try:
+            pool.close()
+            pool.join()
+        except Exception:
+            pass
+
+
+atexit.register(_close_pools)
+
 def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
-        estimate_time=False, case=None, cpu_count=None, verbose=True):
+        estimate_time=False, case=None, cpu_count=None, verbose=True,
+        reuse_pool=True):
 
     assert type(posargs)==list, 'posargs must be a list [] of positionnal arguments'
     assert type(posvars)==list, 'posvars must be a list [] of positionnal variables for multiprocessing'
@@ -34,13 +49,29 @@ def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
             if estimate_time is True:
                 texp = t1*np.ceil(nsim/cpu_count)
                 print('   expected time to complete: %s seconds'%np.round(texp, 2))
-        p = mpro.Pool(cpu_count)
-        func = partial(f, *posargs, **kwargs)
-        res_multi = np.array(p.starmap(func, zip(*posvars)))
-        if multi_out is True:
-            res_multi = tuple(np.array(x) for x in res_multi.swapaxes(0, 1))
-        p.close()
-        p.join()
+        
+        method_name = mpro.get_start_method()
+        pool_key = (cpu_count, method_name)
+        if reuse_pool:
+            if pool_key in _pool_cache:
+                p = _pool_cache[pool_key]
+            else:
+                p = mpro.Pool(cpu_count)
+                _pool_cache[pool_key] = p
+            # p = pool.Pool(cpu_count)
+            func = partial(f, *posargs, **kwargs)
+            res_multi = np.array(p.starmap(func, zip(*posvars)))
+            if multi_out is True:
+                res_multi = tuple(np.array(x) for x in res_multi.swapaxes(0, 1))
+        else:
+            p = mpro.Pool(cpu_count)
+            func = partial(f, *posargs, **kwargs)
+            res_multi = np.array(p.starmap(func, zip(*posvars)))
+            if multi_out is True:
+                res_multi = tuple(np.array(x) for x in res_multi.swapaxes(0, 1))
+            p.close()
+            # p.terminate()
+            p.join()
 
     # run singlecore
     else:
