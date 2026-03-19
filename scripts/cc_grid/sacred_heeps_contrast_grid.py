@@ -23,31 +23,16 @@ ex.observers.append(FileStorageObserver(db_path,
                                         priority=31))
 
 # --- Define Ingredients ---
-atmosphere_ingredient = Ingredient("atmosphere")
-scao_ingredient = Ingredient("scao")
 ncpa_ingredient = Ingredient("ncpa")
 
 # Add ingredients to the experiment
 ex.ingredients = [
-    atmosphere_ingredient,
-    scao_ingredient,
     ncpa_ingredient,
 ]
 
 
 
 # --- Default Configurations for Ingredients ---
-@atmosphere_ingredient.config
-def default_atmosphere():
-    '''
-    Percentile Q1, Q2, Q3, Q4 = [12.5%, 37.5%, 62.5%, 87.5%]
-    '''
-    seeing = "Q2"
-    zenith_angle = 30.0  # degrees
-
-@scao_ingredient.config
-def default_scao():
-    K = 6  # Default SCAO K value
 
 @ncpa_ingredient.config
 def default_ncpa():
@@ -107,7 +92,7 @@ NCPA_MAG_THRES = {
 NCPA_FREQ_FALLBACK = 1  # Hz
 
 # SCAO K-magnitude step-up thresholds: list of (mag_threshold, K) in descending order.
-# First threshold that magnitude meets or exceeds wins; falls back to scao['K']=6.
+# First threshold that magnitude meets or exceeds wins; falls back to default K=6.
 SCAO_K_THRES = [(8.5, 9), (7.5, 8)]
 
 
@@ -145,6 +130,12 @@ def default_config():
     dir_input = os.path.join(dir_current, 'input_files')
 
     cpu_count=10
+    
+    # Atmosphere parameters
+    seeing = "Q2"  # Percentile Q1, Q2, Q3, Q4 = [12.5%, 37.5%, 62.5%, 87.5%]
+    
+    # SCAO configuration
+    scao_K = 6  # Default SCAO mode (overridden based on magnitude in derived_config)
 
     # Other HEEPS specific variables
     nstep=1
@@ -165,24 +156,22 @@ def default_config():
 
 # --- Derived Configuration (logged per-run by Sacred) ---
 @ex.config
-def derived_config(band, magnitude, mode, atmosphere, scao, ncpa, do_f_phase,
-                   duration, dit, dir_current):
+def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
+                   duration, dit, dir_current, scao_K):
     """
     Compute all derived scalars and input file paths from the base config and
     ingredient configs.  Everything assigned here is automatically recorded in
     Sacred's config.json for each run, making the grid fully reproducible.
     """
-    _seeing = atmosphere['seeing']
 
-    # SCAO K-magnitude (brightness-dependent, per SCAO_K_THRES)
-    scao_K = scao['K']
+    # SCAO K-magnitude: override default (6) if magnitude crosses thresholds
     for _thresh, _k in SCAO_K_THRES:
         if magnitude >= _thresh:
             scao_K = _k
             break
 
     # RMS water-vapour OPD [nm]
-    wv_rms = WV_TABLE[band][_seeing]
+    wv_rms = WV_TABLE[band][seeing]
 
     # NCPA AO-loop frequency [Hz]
     ncpa_freq = ncpa['frequency'] if magnitude <= NCPA_MAG_THRES[band][mode] else NCPA_FREQ_FALLBACK
@@ -196,30 +185,30 @@ def derived_config(band, magnitude, mode, atmosphere, scao, ncpa, do_f_phase,
     f_otf    = OTF_DIR    + f'oat_{band}_{mode}.fits'
     f_wv     = (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
                           + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
-    f_scao   = (PHASE_DIR + f'cube_Dfull_20260123_{_seeing}_3600_100ms'
+    f_scao   = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
                           + f'_Kmag{scao_K}_0piston_meters_scao_only_{npupil}.fits')
     # For f_phase, the magnitude is floored to the minimum magnitude available in
     # the ALF sensor-noise files, so that bright stars share a single phase cube
     # with the faintest star for which ALF data exists.
     _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq)
     fphase_mag   = max(magnitude, _min_alf_mag)
-    f_phase  = (PHASE_DIR + f'cube_Dfull_20260123_{_seeing}_3600_100ms'
+    f_phase  = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
                           + f'_Kmag{scao_K}_{band}mag{fphase_mag}_all_{npupil}.fits')
 
     # PSF output directory: uses fphase_mag (not magnitude) because the PSF
     # is shared by all stars brighter than the ALF grid boundary.
     dir_output_psf = (f'output_files/2026_grid/'
-                      f'{band}_{mode}_s={_seeing}_mag={fphase_mag}'
+                      f'{band}_{mode}_s={seeing}_mag={fphase_mag}'
                       f'_{duration}s_{dit*1e3:.0f}ms/')
 
     dir_output = (f'output_files/2026_grid/'
-                  f'{band}_{mode}_s={_seeing}_mag={magnitude}'
+                  f'{band}_{mode}_s={seeing}_mag={magnitude}'
                   f'_{duration}s_{dit*1e3:.0f}ms/')
 
     dir_output_psf=os.path.join(dir_current, dir_output_psf)
     dir_output=os.path.join(dir_current, dir_output)
 
-    # WFE noise scalars — only computed (and logged) when do_f_phase is True
+    # WFE noise scalars — computed based on NCPA parameters
     sigLF = None
     sigHF = None
     if do_f_phase:
@@ -258,7 +247,7 @@ def get_wfe_tip_tilt(band):
 
 
 def get_min_alf_magnitude(band, mode, fr,
-                 data_dir='/home/gorban/python_scripts/alf/results_data/'):
+                 data_dir='/home/gorban/heeps_metis/alf/'):
     """
     Return the minimum stellar magnitude available in the ALF sensor-noise
     FITS file for the given band, mask, and frame rate.
@@ -317,7 +306,6 @@ def get_wfe_higher_order(band, magnitude, mode, fr,
         Does not include piston, tip, or tilt (as of 11/6/2026).
     data_dir : str, optional
         Directory containing the ALF sensor-noise FITS files.
-        TODO: move to a shared location and update this default.
     min_clip : bool, optional
         If True, clip the interpolated noise to the minimum tabulated value
         (prevents unphysical extrapolation at bright magnitudes).
@@ -358,19 +346,114 @@ def get_wfe_higher_order(band, magnitude, mode, fr,
 @ex.automain # immediately calls ex.run_commandline(), and then if __name__=='__main__'
 # @ex.main
 def run_simulation(mode, band, magnitude, duration, dit,
-                   atmosphere, scao, ncpa,
+                   seeing, ncpa,
                    scao_K, wv_rms, ncpa_freq, sigLF, sigHF,
                    fphase_mag, dir_output, dir_output_psf,
                    f_phase, f_wv, f_cbw, f_scao, f_talbot, f_otf, f_pupil,
                    do_f_phase, do_propagation, do_contrast_curves,
                    dry_run,
                    _config, _run):
-    '''
-    TODO check other necessary HEEPS parameters
-    TODO implement a dry-run  [DONE: use dry_run=True in config_updates]
-    TODO add VIP last commit info to fingerprint
-
-    '''
+    """
+    Main Sacred experiment function for HEEPS contrast curve simulation.
+    
+    This function orchestrates a complete end-to-end HCI simulation including:
+    1. Environment fingerprinting (HEEPS + VIP git info, package versions)
+    2. Combined phase cube generation (SCAO + WV + NCPA with closed-loop correction)
+    3. HEEPS wavefront propagation (pupil, on-axis and off-axis PSFs)
+    4. Contrast curve computation (raw and post-processed with/without photon noise)
+    5. Visualization and artifact logging to Sacred FileStorageObserver
+    
+    All parameters are provided automatically by Sacred from the experiment config
+    (default_config, derived_config, and ingredient configs) and any command-line
+    or programmatic overrides via config_updates.
+    
+    Parameters
+    ----------
+    mode : str
+        HCI mode, one of 'CVC', 'RAVC', 'APP', 'SPP', 'CLC', 'ELT'.
+    band : str
+        Observing band, one of 'L', 'M', 'N1', 'N2'.
+    magnitude : float
+        Stellar magnitude in the observing band.
+    duration : float
+        Total ADI sequence duration [s].
+    dit : float
+        Detector integration time [s].
+    seeing : str
+        Atmospheric seeing percentile: 'Q1', 'Q2', 'Q3', or 'Q4'.
+    ncpa : dict
+        NCPA ingredient config with keys 'frequency' (Hz), 'lag' (frames),
+        'gain_I' (float), 'nmodes' (int).
+    scao_K : int
+        SCAO K-magnitude (brightness-dependent, derived from magnitude and SCAO_K_THRES).
+    wv_rms : float
+        RMS water-vapour OPD [nm] (derived from band and seeing via WV_TABLE).
+    ncpa_freq : float
+        NCPA correction loop frequency [Hz] (derived from magnitude and NCPA_MAG_THRES).
+    sigLF : float
+        Tip-tilt WFE [nm rms] from QACITS centering error (derived in main config).
+    sigHF : float
+        Higher-order WFE per mode [nm rms] from ALF sensor noise (derived in main config).
+    fphase_mag : float
+        Magnitude label for phase cube filename (floored to min ALF magnitude).
+    dir_output : str
+        Output directory for this specific magnitude run.
+    dir_output_psf : str
+        Shared PSF output directory (magnitude-independent for caching).
+    f_phase : str
+        Combined phase cube filename (SCAO + WV + NCPA).
+    f_wv : str
+        Water-vapour phase cube filename.
+    f_cbw : str
+        CBW NCPA phase cube filename.
+    f_scao : str
+        SCAO residual phase cube filename.
+    f_talbot : str
+        Talbot effect (amplitude screen) filename.
+    f_otf : str
+        Vortex off-axis transmission filename.
+    f_pupil : str
+        Entrance pupil mask filename.
+    do_f_phase : bool
+        If True, (re-)generate the combined phase cube if it doesn't exist.
+    do_propagation : bool
+        If True, run HEEPS wavefront propagation.
+    do_contrast_curves : bool
+        If True, compute contrast curves.
+    dry_run : bool
+        If True, skip all heavy computation (phase cube, propagation, contrast curves).
+    _config : dict
+        Sacred's complete configuration dictionary for this run.
+    _run : sacred.run.Run
+        Sacred Run object for adding artifacts and logging.
+    
+    Returns
+    -------
+    None
+        All outputs are saved to disk and logged as Sacred artifacts:
+        - fingerprint.txt: environment info
+        - conf_{band}_{mode}.pkl: HEEPS configuration
+        - cc_raw_{band}_{mode}.fits: raw contrast curve
+        - cc_adi_bckg0_{band}_{mode}.fits: post-processed contrast (no photon noise)
+        - cc_adi_bckg1_{band}_{mode}.fits: post-processed contrast (with photon noise)
+        - contrast_curve.png: visualization (not logged to reduce redundancy)
+    
+    Notes
+    -----
+    - PSF files (pupil, onaxis_PSF, offaxis_PSF) are shared across magnitudes
+      brighter than the ALF magnitude boundary and stored in dir_output_psf.
+      Magnitude-specific runs create symlinks to these shared files.
+    - If output files already exist, they are reused (cached) to avoid redundant
+      computation.
+    - The function is decorated with @ex.automain, so running the script directly
+      executes one Sacred run with default/CLI config, then any __main__ block runs.
+    
+    See Also
+    --------
+    PhaseCubeGenerator : Generates combined phase cubes with NCPA correction.
+    get_wfe_tip_tilt : Computes tip-tilt WFE from QACITS error.
+    get_wfe_higher_order : Computes higher-order WFE from ALF sensor noise.
+    """
 
     # print('*** TOTO DEBUG ***', flush=True)
 
@@ -382,7 +465,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     print(f"""
     Running simulation:
     - Mode: {mode}, Band: {band}, Magnitude: {magnitude}
-    - Atmosphere (seeing, zenith): {atmosphere['seeing']}, {atmosphere['zenith_angle']}
+    - Seeing: {seeing}
     - Water vapor: {wv_rms} nm rms
     - SCAO K-mag: {scao_K}
     - NCPA : lag={ncpa['lag']}, nmodes={ncpa['nmodes']}, {ncpa_freq} Hz
@@ -574,7 +657,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
 #             grid_configs.append({
 #                 "band": band,
 #                 "magnitude": magnitude,
-#                 "atmosphere.seeing": seeing,
+#                 "seeing": seeing,
 #                 "dry_run":False
 #             })
 
