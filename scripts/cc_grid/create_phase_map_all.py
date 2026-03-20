@@ -92,6 +92,9 @@ class PhaseCubeGenerator():
         str
             Path of the (new or existing) output FITS file.
         """
+        # sigLF and sigHF need to be in units of meter rms for load_zpols_integ
+        sigLF *= 1e-9
+        sigHF *= 1e-9
         if os.path.isfile(self.phase_filename):
             print('file already exists: ' + self.phase_filename)
             return self.phase_filename
@@ -158,9 +161,9 @@ class PhaseCubeGenerator():
         Parameters
         ----------
         sigLF : float
-            Tip-tilt sensor noise passed to ``run`` [nm rms].
+            Tip-tilt sensor noise (converted to [m rms] in ``run``).
         sigHF : float
-            Higher-order sensor noise passed to ``run`` [nm rms].
+            Higher-order sensor noise (converted to [m rms] in ``run``).
         """
         hdr = fits.Header()
         entries = {
@@ -173,8 +176,8 @@ class PhaseCubeGenerator():
             'GAIN_I':  (self.gain_I,                        'integrator gain'),
             'NCPAFREQ':(self.ncpa_freq,                     'NCPA loop frequency [Hz]'),
             'NDECIM':  (self.n_decim,                       'decim. factor (phase frames per corr step)'),
-            'SIGLF':   (np.round(sigLF, decimals=1),        'tip-tilt sensor noise [nm rms]'),
-            'SIGHF':   (np.round(sigHF, decimals=1),        'higher-order sensor noise [nm rms]'),
+            'SIGLF':   (np.round(sigLF*1e9, decimals=1),        'tip-tilt sensor noise [nm rms]'),
+            'SIGHF':   (np.round(sigHF*1e9, decimals=1),        'higher-order sensor noise [nm rms]'),
             'F_SCAO':  (os.path.basename(self.scao_filename), 'SCAO phase cube filename'),
             'F_WV':    (os.path.basename(self.wv_filename),   'water-vapour phase cube filename'),
             'F_CBW':   (os.path.basename(self.cbw_filename),  'CBW NCPA phase cube filename'),
@@ -237,8 +240,8 @@ class PhaseCubeGenerator():
         ----------
         pup   : ndarray  – binary pupil mask
         ncpa  : ndarray  – combined phase cube
-        sigLF : float    – tip-tilt sensor noise [nm rms]
-        sigHF : float    – higher-order sensor noise [nm rms]
+        sigLF : float    – tip-tilt sensor noise [m rms]
+        sigHF : float    – higher-order sensor noise [m rms]
 
         Returns
         -------
@@ -280,19 +283,3 @@ class PhaseCubeGenerator():
         fits.writeto(zpols_integ_name, np.float32(zpols_integ))
         return zpols_integ
 
-
-
-
-if __name__=='__main__':
-    os.chdir(os.path.normpath(os.path.expandvars('$HOME/heeps_metis/input_files/wavefront/')))
-    nzer = 20
-    samp = 100
-    lag  = 2    # 2 frames at 100ms -> 200ms
-    G    = 0.33
-
-
-
-# case='all'
-# band='N2'
-# save_ncpa_cube(case, band, lag, 1, 1,
-#                nzer=nzer+3, gain_I=0.33)

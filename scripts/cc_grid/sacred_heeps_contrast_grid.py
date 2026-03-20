@@ -13,6 +13,16 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from create_phase_map_all import PhaseCubeGenerator
 from fingerprint import writeToFile, getFingerprint
 
+# import os
+# os.environ["OPENBLAS_NUM_THREADS"] = "1"
+# os.environ["OMP_NUM_THREADS"] = "1"
+# os.environ["MKL_NUM_THREADS"] = "1"
+# os.environ["NUMEXPR_NUM_THREADS"] = "1"
+
+import threadpoolctl
+threadpoolctl.threadpool_limits(limits=1, user_api='blas')
+print(threadpoolctl.threadpool_info())
+
 # Initialize the experiment
 # ex = Experiment("contrast_curve_simulation")
 ex_name = "2026_contrast_curve_tests"
@@ -31,8 +41,6 @@ ncpa_ingredient = Ingredient("ncpa")
 ex.ingredients = [
     ncpa_ingredient,
 ]
-
-
 
 # --- Default Configurations for Ingredients ---
 
@@ -159,7 +167,7 @@ def default_config():
 # --- Derived Configuration (logged per-run by Sacred) ---
 @ex.config
 def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
-                   duration, dit, dir_current, scao_K):
+                   duration, dit, dir_input, dir_current, scao_K):
     """
     Compute all derived scalars and input file paths from the base config and
     ingredient configs.  Everything assigned here is automatically recorded in
@@ -192,7 +200,8 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     # For f_phase, the magnitude is floored to the minimum magnitude available in
     # the ALF sensor-noise files, so that bright stars share a single phase cube
     # with the faintest star for which ALF data exists.
-    _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq)
+    _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq,
+                                         data_dir=dir_input+'/wavefront/alf/')
     fphase_mag   = max(magnitude, _min_alf_mag)
     f_phase  = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
                           + f'_Kmag{scao_K}_{band}mag{fphase_mag}_all_{npupil}.fits')
@@ -211,12 +220,13 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     dir_output=os.path.join(dir_current, dir_output)
 
     # WFE noise scalars — computed based on NCPA parameters
-    sigLF = None
-    sigHF = None
+    sigLF = None    # in nm rms 
+    sigHF = None    # in nm rms 
     if do_f_phase:
-        sigLF = get_wfe_tip_tilt(band)
+        sigLF = get_wfe_tip_tilt(band) # in nm rms 
         sigHF = get_wfe_higher_order(band, magnitude, mode, ncpa_freq,
-                                     nzern=ncpa['nmodes'])
+                                     nzern=ncpa['nmodes'],
+                                     data_dir=dir_input+'/wavefront/alf/') # in nm rms 
 
 def get_wfe_tip_tilt(band):
     """
@@ -249,7 +259,7 @@ def get_wfe_tip_tilt(band):
 
 
 def get_min_alf_magnitude(band, mode, fr,
-                 data_dir='/home/gorban/heeps_metis/alf/'):
+                 data_dir='/home/gorban/python_scripts/alf/results/'):
     """
     Return the minimum stellar magnitude available in the ALF sensor-noise
     FITS file for the given band, mask, and frame rate.
@@ -351,7 +361,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
                    seeing, ncpa,
                    scao_K, wv_rms, ncpa_freq, sigLF, sigHF,
                    fphase_mag, dir_output, dir_output_psf,
-                   f_phase, f_wv, f_cbw, f_scao, f_talbot, f_otf, f_pupil,
+                   f_phase, f_wv, f_cbw, f_scao, f_talbot, f_oat, f_pupil,
                    do_f_phase, do_propagation, do_contrast_curves,
                    dry_run,
                    _config, _run):
@@ -412,7 +422,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
         SCAO residual phase cube filename.
     f_talbot : str
         Talbot effect (amplitude screen) filename.
-    f_otf : str
+    f_oat : str
         Vortex off-axis transmission filename.
     f_pupil : str
         Entrance pupil mask filename.
@@ -480,7 +490,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     - f_wv     : {f_wv}
     - f_cbw    : {f_cbw}
     - f_talbot : {f_talbot}
-    - f_otf    : {f_otf}
+    - f_oat    : {f_oat}
 
 
     """)
