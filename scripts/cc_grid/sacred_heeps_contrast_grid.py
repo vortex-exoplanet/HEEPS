@@ -5,6 +5,8 @@ import time
 import os
 import heeps
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use non-interactive backend for headless environments
 import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -49,7 +51,7 @@ HFOV = {'L': 0.8, 'M': 0.8, 'N1': 1.3, 'N2': 1.3}
 
 PHASE_DIR  = 'wavefront/dfull/2026_grid/'
 WV_DIR     = 'wavefront/wv/2026_grid/'
-OTF_DIR    = 'optics/vc/'
+OAT_DIR    = 'optics/vc/'
 
 _ncpa_dir   = 'wavefront/cbw/20260127/ncpa/'
 CBW_FILENAMES = {
@@ -182,7 +184,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     f_pupil  = PUP_FILENAMES[band]
     f_cbw    = CBW_FILENAMES[band]
     f_talbot = TALBOT_FILENAMES[band]
-    f_otf    = OTF_DIR    + f'oat_{band}_{mode}.fits'
+    f_oat    = OAT_DIR    + f'oat_{band}_{mode}.fits'
     f_wv     = (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
                           + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
     f_scao   = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'

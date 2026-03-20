@@ -41,7 +41,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     # normalize by the peak of the off-axis PSF radial profile
     raw /= np.max(off)
     # tag
-    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, raw]), 'cc_%s%s%s'%('raw', '_%s_%s', tag),

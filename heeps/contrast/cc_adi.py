@@ -147,7 +147,8 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     else:
         name = 'adi_bckg%s'%int(add_bckg)
     # tag
-    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, adi]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
