@@ -13,15 +13,23 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from create_phase_map_all import PhaseCubeGenerator
 from fingerprint import writeToFile, getFingerprint
 
-# import os
-# os.environ["OPENBLAS_NUM_THREADS"] = "1"
-# os.environ["OMP_NUM_THREADS"] = "1"
-# os.environ["MKL_NUM_THREADS"] = "1"
-# os.environ["NUMEXPR_NUM_THREADS"] = "1"
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 import threadpoolctl
 threadpoolctl.threadpool_limits(limits=1, user_api='blas')
 print(threadpoolctl.threadpool_info())
+
+import multiprocessing as mpro
+try:
+    mpro.set_start_method('forkserver')
+except RuntimeError:
+    print('[WARN] context has already been set')
+
+HOMEDIR='/home/ulg/PSILab/gorban/'
 
 # Initialize the experiment
 # ex = Experiment("contrast_curve_simulation")
@@ -30,7 +38,9 @@ ex = Experiment("2026_contrast_curve_tests")
 
 # ex.observers.append(FileStorageObserver.create("runs"))  # Save runs to a local directory
 # db_path = os.path.dirname(__file__) + '/sacred_db/'
-db_path='/mnt/disk20tb/METIS/DATABASE_SACRED/' + ex_name + '/'
+
+# db_path='/mnt/disk20tb/METIS/DATABASE_SACRED/' + ex_name + '/'
+db_path='/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/' + ex_name + '/'
 ex.observers.append(FileStorageObserver(db_path,
                                         priority=31))
 
@@ -136,7 +146,7 @@ def default_config():
     do_propagation = True       # whether to run HEEPS wavefront propagation
     do_contrast_curves = True   # whether to compute contrast curves
 
-    dir_current = '/home/gorban/heeps_metis/'
+    dir_current = HOMEDIR+'heeps_metis/' #'/home/gorban/heeps_metis/'
     dir_input = os.path.join(dir_current, 'input_files')
 
     cpu_count=10

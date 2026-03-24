@@ -44,7 +44,7 @@ def _getVipGitInfo():
 def _getPackageVersions():
     from platform import python_version
     import proper as pr
-    import scopesim as ss
+    # import scopesim as ss
     import numpy as np
     import scipy as sp
     import matplotlib as ml
@@ -54,7 +54,7 @@ def _getPackageVersions():
     import skimage as si
 
     log = '----------\nPackage info: \n' + 'python v%s'%python_version() + '\n'
-    for module in [pr, ss, np, sp, ml, vh, pu, ap, si]:
+    for module in [pr, np, sp, ml, vh, pu, ap, si]:
         log += '%s v%s'%(module.__name__, module.__version__) + '\n'
 
     return log
