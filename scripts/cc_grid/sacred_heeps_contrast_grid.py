@@ -204,7 +204,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
                                          data_dir=dir_input+'/wavefront/alf/')
     fphase_mag   = max(magnitude, _min_alf_mag)
     f_phase  = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
-                          + f'_Kmag{scao_K}_{band}mag{fphase_mag}_all_{npupil}.fits')
+                          + f'_Kmag{scao_K}_{band}mag{fphase_mag}_{mode}_all_{npupil}.fits')
 
     # PSF output directory: uses fphase_mag (not magnitude) because the PSF
     # is shared by all stars brighter than the ALF grid boundary.
@@ -598,7 +598,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
 
         # Post-processed contrast with star flux + background + photon noise
         conf['add_bckg'] = True
-        cc_adi_bckg_file = os.path.join(dir_output, f'cc_adi_bckg1_{band}_{mode}.fits')
+        cc_adi_bckg_file = os.path.join(dir_output, f'cc_adi_bckg1_mag{magnitude}_{band}_{mode}.fits')
         if os.path.isfile(cc_adi_bckg_file):
             print(' -- Post-processed contrast (with photon noise): loading existing file --')
             cc_adi_bckg_data = fits.getdata(cc_adi_bckg_file)
@@ -619,7 +619,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
         fig.subplots(2, 1, sharex=True)
         fig.subplots_adjust(hspace=0.02)
         axes = fig.axes
-        axes[0].set_ylim(1e-7, 1e-2)
+        axes[0].set_ylim(1e-6, 1e-2)
         axes[1].set_ylim(1e-8, 1e-3)
         axes[1].set_xlabel(xlabel)
         for j, (ax, ylabel) in enumerate(zip(axes, [ylabel_raw, ylabel_adi])):
@@ -627,12 +627,18 @@ def run_simulation(mode, band, magnitude, duration, dit,
             ax.grid(True), ax.grid(which='minor', linestyle=':')
             ax.loglog()
             ax.xaxis.set_major_formatter(plt.ScalarFormatter())
-            ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])  # N-band
-            ax.set_xlim(0.06, 1.2)
+            # ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])  # N-band
+            # ax.set_xlim(0.06, 1.2)
+            if band=='N2' or band=='N1':
+                ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2]) # N-band
+                ax.set_xlim(0.06, 1.2)
+            else:
+                ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
+                ax.set_xlim(0.02, 0.8)
 
         axes[0].plot(sep, raw, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
         axes[0].legend()
-        axes[0].set_title(f'HCI modes; scao only + WV; star mag {band} = {magnitude}')
+        axes[0].set_title(f'{mode} {band}-mag = {magnitude}')
         axes[1].plot(sep1, adi1, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
         axes[1].plot(sep2, adi2, ':C0', label='background', marker='d', markevery=0.12, markersize=4)
         axes[1].legend(ncol=2, loc='upper right')
@@ -654,7 +660,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
 #         # "L": np.arange(-1.5, 9+dmag, dmag),  # Example: L-band magnitudes
 #         # "M": np.arange(-1.5, 7+dmag, dmag),       # Example: M-band magnitudes
 #         # "N1": np.arange(-1.5, 3+dmag, dmag),        # Example: N-band magnitudes
-#         # "N1": np.arange(-1.5, 3+dmag, dmag)        # Example: N-band magnitudes
+#         # "N2": np.arange(-1.5, 3+dmag, dmag)        # Example: N-band magnitudes
 #         "L": [6],  # Example: L-band magnitudes
 #     }
 
