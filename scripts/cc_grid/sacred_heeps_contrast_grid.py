@@ -25,7 +25,7 @@ print(threadpoolctl.threadpool_info())
 
 import multiprocessing as mpro
 try:
-    mpro.set_start_method('forkserver')
+    mpro.set_start_method('fork')
 except RuntimeError:
     print('[WARN] context has already been set')
 
@@ -201,7 +201,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     hfov     = HFOV[band]
     f_pupil  = PUP_FILENAMES[band]
     f_cbw    = CBW_FILENAMES[band]
-    f_talbot = TALBOT_FILENAMES[band]
+    f_amp = TALBOT_FILENAMES[band]
     f_oat    = OAT_DIR    + f'oat_{band}_{mode}.fits'
     f_wv     = (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
                           + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
@@ -371,7 +371,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
                    seeing, ncpa,
                    scao_K, wv_rms, ncpa_freq, sigLF, sigHF,
                    fphase_mag, dir_output, dir_output_psf,
-                   f_phase, f_wv, f_cbw, f_scao, f_talbot, f_oat, f_pupil,
+                   f_phase, f_wv, f_cbw, f_scao, f_amp, f_oat, f_pupil,
                    do_f_phase, do_propagation, do_contrast_curves,
                    dry_run,
                    _config, _run):
@@ -430,7 +430,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
         CBW NCPA phase cube filename.
     f_scao : str
         SCAO residual phase cube filename.
-    f_talbot : str
+    f_amp : str
         Talbot effect (amplitude screen) filename.
     f_oat : str
         Vortex off-axis transmission filename.
@@ -499,7 +499,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     - f_scao   : {f_scao}
     - f_wv     : {f_wv}
     - f_cbw    : {f_cbw}
-    - f_talbot : {f_talbot}
+    - f_amp    : {f_amp}
     - f_oat    : {f_oat}
 
 
