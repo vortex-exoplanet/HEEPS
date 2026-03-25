@@ -30,19 +30,33 @@ except RuntimeError:
     print('[WARN] context has already been set')
 
 import gc
+import socket
+from pathlib import Path
 
-HOMEDIR='/home/ulg/PSILab/gorban/'
+# Generic homedir definition
+HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-# ex = Experiment("contrast_curve_simulation")
 ex_name = "2026_contrast_curve_tests"
-ex = Experiment("2026_contrast_curve_tests")
+ex = Experiment(ex_name)
 
-# ex.observers.append(FileStorageObserver.create("runs"))  # Save runs to a local directory
-# db_path = os.path.dirname(__file__) + '/sacred_db/'
 
-# db_path='/mnt/disk20tb/METIS/DATABASE_SACRED/' + ex_name + '/'
-db_path='/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/' + ex_name + '/'
+# More robust db path definition across machines
+def get_db_path(ex_name):
+    hostname = socket.gethostname()
+    machine_paths = {
+        'ago-fenrir': '/mnt/disk20tb/METIS/DATABASE_SACRED/',
+        'lm4': '/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/'
+    }
+
+    for machine, base_path in machine_paths.items():
+        if machine == hostname or machine in hostname:
+            return Path(base_path) / ex_name 
+
+    print(f"[WARN] Machine '{hostname}' unknown, setting db_path to current folder")
+    return Path('.') / ex_name 
+
+db_path=get_db_path(ex_name)
 ex.observers.append(FileStorageObserver(db_path,
                                         priority=31))
 
