@@ -37,7 +37,9 @@ from pathlib import Path
 HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-ex_name = "2026_contrast_curve_tests"
+# ex_name = "2026_contrast_curve_tests"
+ex_name = "2026_contrast_curve_grid"
+
 ex = Experiment(ex_name)
 
 
@@ -221,7 +223,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     f_oat    = OAT_DIR    + f'oat_{band}_{mode}.fits'
     f_wv     = (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
                           + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
-    f_scao   = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
+    f_scao   = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
                           + f'_Kmag{scao_K}_0piston_meters_scao_only_{npupil}.fits')
     # For f_phase, the magnitude is floored to the minimum magnitude available in
     # the ALF sensor-noise files, so that bright stars share a single phase cube
@@ -229,7 +231,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq,
                                          data_dir=dir_input+'/wavefront/alf/')
     fphase_mag   = max(magnitude, _min_alf_mag)
-    f_phase  = (PHASE_DIR + f'cube_Dfull_20260123_{seeing}_3600_100ms'
+    f_phase  = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
                           + f'_Kmag{scao_K}_{band}mag{fphase_mag}_{mode}_all_{npupil}.fits')
 
     # PSF output directory: uses fphase_mag (not magnitude) because the PSF
