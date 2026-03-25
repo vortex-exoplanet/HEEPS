@@ -84,7 +84,11 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        psf_ON = crop_cube(psf_ON, ndet)
+        # setting cpu_count in crop_cube to avoid hidden use of max number cores 
+        #   - safety when used on HPC servers
+        # if cpu_count is 1, defaulting to 10 core for cropping
+        ncpu_crop = 10 if cpu_count==1 else cpu_count
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=ncpu_crop)
     if verbose is True:
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)

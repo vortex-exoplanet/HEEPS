@@ -29,6 +29,8 @@ try:
 except RuntimeError:
     print('[WARN] context has already been set')
 
+import gc
+
 HOMEDIR='/home/ulg/PSILab/gorban/'
 
 # Initialize the experiment
@@ -523,7 +525,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         generator.run(sigLF, sigHF)
     else:
         print('--- SKIPPING creation of f_phase ---')
-
+    print(' Collecting garbage 1')
+    gc.collect()
     # ------------------------------------ #
     # Run HEEPS contrast curve calculation
     print('\n *** HEEPS simulation ***')
@@ -576,6 +579,9 @@ def run_simulation(mode, band, magnitude, duration, dit,
     else:
         print('--- SKIPPING PROPAGATION (do_propagation = False) ---')
 
+    print(' Collecting garbage 2')
+    gc.collect()
+
     if do_contrast_curves:
         print('---- CONTRAST CURVES ---')
         
@@ -589,6 +595,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         else:
             print(' -- Raw contrast: computing --')
             sep, raw = heeps.contrast.cc_raw(savefits=True, verbose=True, **conf)
+            print(' Collecting garbage (cc_raw)')
+            gc.collect()
         _run.add_artifact(cc_raw_file, name='cc_raw.fits')
 
         # Post-processed 5-sigma contrast curve (without photon noise)
@@ -604,6 +612,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         else:
             print(' -- Post-processed contrast (w/o photon noise): computing --')
             sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
+            print(' Collecting garbage (cc_adi 1)')
+            gc.collect()
         _run.add_artifact(cc_adi_file, name='cc_adi.fits')
 
         # Post-processed contrast with star flux + background + photon noise
@@ -617,6 +627,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         else:
             print(' -- Post-processed contrast (with photon noise): computing --')
             sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
+            print(' Collecting garbage (cc_adi 2)')
+            gc.collect()
         _run.add_artifact(cc_adi_bckg_file, name='cc_adi_bckg.fits')
 
         # Create figure

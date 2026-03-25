@@ -252,7 +252,7 @@ class PhaseCubeGenerator():
             self.phase_filename.replace('.fits', '')
             + f'_zpols_{self.nzern}_nLF_{nLF}_nHF_{nHF}'
             + f'_G_{self.gain_I}_lag_{self.lag}'
-            + f'_sigLF_{sigLF:.1f}_sigHF_{sigHF:.1f}.fits'
+            + f'_sigLF_{sigLF*1e9:.0f}_sigHF_{sigHF*1e9:.0f}.fits'
         )
 
         if os.path.isfile(zpols_integ_name):
