@@ -23,7 +23,7 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        psf_ON = crop_cube(psf_ON, ndet)
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=conf['cpu_count'])
     if verbose is True:
         print('Raw contrast curve:')
         print('\u203e'*19)

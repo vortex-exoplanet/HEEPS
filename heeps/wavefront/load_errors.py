@@ -54,7 +54,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
             "'f_phase' must be a valid fits file."
         phase_screens = fits.getdata(f_phase)[:nframes][::nstep] # in meters
         phase_screens = np.nan_to_num(phase_screens)
-        phase_screens = resize_cube(phase_screens, npupil)
+        phase_screens = resize_cube(phase_screens, npupil, cpu_count=conf['cpu_count'])
         if verbose is True:
             print("Load phase screens from '%s'"%os.path.basename(f_phase))
             print('   nscreens=%s (nframes=%s, nstep=%s)'
@@ -70,7 +70,7 @@ def load_errors(nframes=20, nstep=1, npupil=285, add_phase=True, f_phase='',
         if len(amp_screens) > 1: # cube
             amp_screens = amp_screens[:nframes][::nstep]
         amp_screens = np.nan_to_num(amp_screens)
-        amp_screens = resize_cube(amp_screens, npupil)
+        amp_screens = resize_cube(amp_screens, npupil, cpu_count=conf['cpu_count'])
         if verbose is True:
             print("Load amp screens from '%s'"%os.path.basename(f_amp))
             print('   nscreens=%s'%(len(amp_screens)))

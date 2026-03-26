@@ -21,13 +21,19 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 
 import threadpoolctl
 threadpoolctl.threadpool_limits(limits=1, user_api='blas')
-print(threadpoolctl.threadpool_info())
 
 import multiprocessing as mpro
 try:
+    # if using 'fork', make sure to reuse the pool of worker to not generate memory alloacation errors
+    # using forkserver is significantly slower on lemaitre4 with 10cpus (~3x)
     mpro.set_start_method('fork')
 except RuntimeError:
-    print('[WARN] context has already been set')
+    pass  # context has already been set
+
+# Only print in main process to avoid spam when using forkserver
+if mpro.current_process().name == 'MainProcess':
+    print(threadpoolctl.threadpool_info())
+    print(f'[INFO] Multiprocessing start method: {mpro.get_start_method()}')
 
 import gc
 import socket
@@ -527,7 +533,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     # -- Fingerprint
     print(getFingerprint())
 
-    tmp_fname = 'temp_fingerprint.txt'
+    tmp_fname = f'temp_fingerprint_{os.getpid()}.txt'
     writeToFile('./', tmp_fname)
     # adding the file to the run artifact (stored by FileStorageObserver)
     _run.add_artifact(tmp_fname, name='fingerprint.txt')
