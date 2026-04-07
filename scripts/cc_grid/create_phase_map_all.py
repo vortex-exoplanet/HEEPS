@@ -74,7 +74,7 @@ class PhaseCubeGenerator():
         self.cpu_count=config['cpu_count']
 
     # ------------------------------------------------------------------
-    def run(self, sigLF, sigHF):
+    def run(self, sigLF, sigHF, apply_correction=True, add_wv=True, add_cbw=True):
         """
         Build the combined phase cube and write it to ``self.phase_filename``.
 
@@ -100,7 +100,11 @@ class PhaseCubeGenerator():
             return self.phase_filename
 
         print('write to ' + self.phase_filename)
-        pup, ncpa = self.build_all_phase()
+        pup, ncpa = self.build_all_phase(add_wv, add_cbw)
+        if apply_correction is False:
+            hdr = self._build_fits_header(sigLF, sigHF)
+            fits.writeto(self.phase_filename, ncpa, hdr)
+            return self.phase_filename
 
         zpols_integ = self.load_zpols_integ(pup, ncpa, sigLF, sigHF)
 
@@ -121,7 +125,7 @@ class PhaseCubeGenerator():
 
 
     # ------------------------------------------------------------------
-    def build_all_phase(self):
+    def build_all_phase(self, add_wv=True, add_cbw=True):
         """
         Load and combine SCAO, water-vapour, and CBW-NCPA phase cubes.
 
@@ -143,12 +147,25 @@ class PhaseCubeGenerator():
             nframes = cbw.shape[0] - scao.shape[0]
             print(f'Warning: trimming cbw ncpa by {nframes} frames')
             cbw = cbw[:-nframes]
+        if cbw.shape[0] < scao.shape[0]:
+            print(f'Warning: cbw ncpa has only {cbw.shape[0]} frames')
+            nrepeat = scao.shape[0] //cbw.shape[0]  
+            print(f'     repeating {nrepeat} times')
+            cbw = np.repeat(cbw, repeats=nrepeat, axis=0)
+
+
 
         pup = fits.getdata(self.pup_filename)
         pup[pup <= 0.5] = 0
 
         wv   = wv_unscaled * self.wv_rms / self.TEMPORAL_RMS_REF
-        ncpa = scao + wv + cbw
+
+        if add_wv is True and add_cbw is True:
+            ncpa = scao + wv+ cbw
+        elif add_wv is True and add_cbw is False:
+            ncpa = scao + wv
+        elif add_wv is False and add_cbw is True:
+            ncpa = scao +  cbw
 
         return pup, ncpa
 
@@ -283,3 +300,61 @@ class PhaseCubeGenerator():
         fits.writeto(zpols_integ_name, np.float32(zpols_integ))
         return zpols_integ
 
+
+
+
+if __name__=='__main__':
+        HOMEDIR = os.environ["HOME"] + '/'
+        PHASE_DIR  = 'wavefront/dfull/2026_grid/'
+        WV_DIR     = 'wavefront/wv/2026_grid/'
+        _ncpa_dir   = 'wavefront/cbw/20260127/ncpa/'
+
+        seeing='Q2'
+        npupil=119
+        scao_K=6
+        band='N2'
+        WV_TABLE = {
+            'L':  {'Q1': 14,  'Q2': 21,  'Q3': 29,  'Q4':  40, 'median':  24},
+            'M':  {'Q1': 42,  'Q2': 60,  'Q3': 83,  'Q4': 115, 'median':  71},
+            'N1': {'Q1': 79,  'Q2': 114, 'Q3': 158, 'Q4': 220, 'median': 136},
+            'N2': {'Q1': 178, 'Q2': 257, 'Q3': 356, 'Q4': 495, 'median': 305},
+        }
+        CBW_FILENAMES = {
+            'L':  _ncpa_dir + 'L_rep_1.fits',
+            'M':  _ncpa_dir + 'M_rep_1.fits',
+            'N1': _ncpa_dir + 'N1_rep_1.fits',
+            'N2': _ncpa_dir + 'N2_rep_1.fits',
+        }
+        
+        config={'dir_input': HOMEDIR+'heeps_metis/'+'input_files',
+                'f_scao': (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                          + f'_Kmag{scao_K}_0piston_meters_scao_only_{npupil}.fits'),
+                # 'f_cbw': CBW_FILENAMES[band],
+                'f_cbw': 'wavefront/cbw/20221006/ncpa/N_rep_5_-0h30.fits',
+                'f_pupil':PHASE_DIR + f'mask4heeps_Telescope_Pupil_{npupil}.fits',
+                # 'f_phase':(PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                #           + f'_Kmag{scao_K}_{band}_all_uncorrected_{npupil}.fits'),
+                'f_phase':(PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                          + f'_Kmag{scao_K}_{band}_scao+cbw2022_no_noise_lag0_gain1_{npupil}.fits'),
+                'f_wv': (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
+                          + f'Kmag2_0piston_meters_scao_only_{npupil}.fits'),
+                'band': band,
+                'npupil': npupil,
+                'wv_rms': WV_TABLE[band][seeing],
+                'ncpa':{'nmodes':20, 'lag':0, 'gain_I':1},
+                # 'ncpa':{'nmodes':20, 'lag':2, 'gain_I':0.33},
+                'ncpa_freq':10, 
+                'cpu_count':12}
+                # 'ncpa':{'nmodes':0, 'lag':0, 'gain_I':0},
+                # 'ncpa_freq':-1, 
+                # 'cpu_count':12}
+
+        # L-band Q2
+        # config['band']= 'L'
+        # config['npupil']= 119
+        # config['wv_rms']= 21
+        # config['f_pupil']=''
+        # config['f_cbw']=''
+
+        gen = PhaseCubeGenerator(config)
+        gen.run(0, 0, apply_correction=True, add_wv=False, add_cbw=True)
