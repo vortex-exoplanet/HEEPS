@@ -18,6 +18,9 @@ os.environ["OPENBLAS_NUM_THREADS"] = "1"
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
+# Reduce memory fragmentation in glibc malloc (critical for fork-based multiprocessing)
+os.environ["MALLOC_ARENA_MAX"] = "2"  # Limit number of malloc arenas (reduces fragmentation)
+os.environ["MALLOC_TRIM_THRESHOLD_"] = "134217728"  # Return memory to OS after 128MB freed
 
 import threadpoolctl
 threadpoolctl.threadpool_limits(limits=1, user_api='blas')
@@ -43,8 +46,8 @@ from pathlib import Path
 HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-# ex_name = "2026_contrast_curve_tests"
-ex_name = "2026_contrast_curve_grid"
+ex_name = "2026_contrast_curve_tests"
+# ex_name = "2026_contrast_curve_grid"
 
 ex = Experiment(ex_name)
 
@@ -545,10 +548,12 @@ def run_simulation(mode, band, magnitude, duration, dit,
     if do_f_phase and not os.path.isfile(f_phase):
         generator = PhaseCubeGenerator(_config)
         generator.run(sigLF, sigHF)
+        del generator  # Explicit deletion
     else:
         print('--- SKIPPING creation of f_phase ---')
     print(' Collecting garbage 1')
     gc.collect()
+    gc.collect()  # Second pass to clear cyclic references
     # ------------------------------------ #
     # Run HEEPS contrast curve calculation
     print('\n *** HEEPS simulation ***')
@@ -582,6 +587,20 @@ def run_simulation(mode, band, magnitude, duration, dit,
             # Create off-axis PSF
             heeps.wavefront.propagate(wf, onaxis=False, avg=True, savefits=True, verbose=True, **conf)
 
+            # Aggressive memory management before on-axis propagation to prevent fork() fragmentation
+            print('  aggressive memory cleanup before on-axis propagation')
+            gc.collect()
+            gc.collect()
+            # Trim malloc memory pools to reduce fragmentation
+            try:
+                import ctypes
+                import ctypes.util
+                libc = ctypes.CDLL(ctypes.util.find_library('c'))
+                libc.malloc_trim(0)  # Release unused memory back to OS
+                print('  malloc_trim() completed')
+            except Exception as e:
+                print(f'  malloc_trim() failed (non-critical): {e}')
+            
             # Create on-axis PSF --- computationally intensive !
             heeps.wavefront.propagate(wf, onaxis=True, savefits=True, verbose=True, **conf)
 
@@ -648,7 +667,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
             adi2 = cc_adi_bckg_data[1]
         else:
             print(' -- Post-processed contrast (with photon noise): computing --')
-            sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
+            sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savebckg=True, savefits=True,
+                                               verbose=True, **conf)
             print(' Collecting garbage (cc_adi 2)')
             gc.collect()
         _run.add_artifact(cc_adi_bckg_file, name='cc_adi_bckg.fits')
