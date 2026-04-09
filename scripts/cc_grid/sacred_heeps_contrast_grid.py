@@ -20,7 +20,8 @@ os.environ["MKL_NUM_THREADS"] = "1"
 os.environ["NUMEXPR_NUM_THREADS"] = "1"
 # Reduce memory fragmentation in glibc malloc (critical for fork-based multiprocessing)
 os.environ["MALLOC_ARENA_MAX"] = "2"  # Limit number of malloc arenas (reduces fragmentation)
-os.environ["MALLOC_TRIM_THRESHOLD_"] = "134217728"  # Return memory to OS after 128MB freed
+os.environ["MALLOC_TRIM_THRESHOLD_"] = "67108864"  # Return memory to OS after 64MB freed (more aggressive)
+os.environ["MALLOC_MMAP_THRESHOLD_"] = "131072"  # Use mmap for allocations >128KB (bypasses arenas)
 
 import threadpoolctl
 threadpoolctl.threadpool_limits(limits=1, user_api='blas')
@@ -46,8 +47,8 @@ from pathlib import Path
 HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-ex_name = "2026_contrast_curve_tests"
-# ex_name = "2026_contrast_curve_grid"
+# ex_name = "2026_contrast_curve_tests"
+ex_name = "2026_contrast_curve_grid"
 
 ex = Experiment(ex_name)
 
