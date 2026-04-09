@@ -23,7 +23,7 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        psf_ON = crop_cube(psf_ON, ndet)
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=conf['cpu_count'])
     if verbose is True:
         print('Raw contrast curve:')
         print('\u203e'*19)
@@ -41,7 +41,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     # normalize by the peak of the off-axis PSF radial profile
     raw /= np.max(off)
     # tag
-    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, raw]), 'cc_%s%s%s'%('raw', '_%s_%s', tag),
