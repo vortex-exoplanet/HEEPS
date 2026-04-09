@@ -1,3 +1,77 @@
+"""
+Sacred-based HEEPS contrast curve grid simulation.
+
+This script runs a single HEEPS end-to-end simulation for a given band, mode,
+magnitude, and seeing condition, and logs all inputs/outputs via Sacred.
+
+Each run produces:
+  - A combined phase cube (SCAO + water vapour + CBW/NCPA)
+  - On-axis and off-axis PSFs
+  - Raw and post-processed (ADI) contrast curves, with and without background noise
+  - A Sacred entry in the FileStorageObserver database (run.json, metrics, artifacts)
+
+-------------------------------------------------------------------------------
+USAGE
+-------------------------------------------------------------------------------
+
+1. Single run (interactive / testing)
+--------------------------------------
+    python sacred_heeps_contrast_grid.py with band=L mode=CVC seeing=Q2 magnitude=3.0
+
+    Key parameters (all optional, defaults in default_config):
+      band          : L | M | N1 | N2
+      mode          : CVC | RAVC
+      seeing        : Q1 | Q2 | Q3 | Q4
+      magnitude     : float  (band magnitude of the host star)
+      cpu_count     : int    (number of CPU cores for multiprocessing, default 10)
+      dry_run       : bool   (skip all heavy computation, default False)
+      do_f_phase    : bool   (skip phase cube generation if False, default True)
+      do_propagation: bool   (skip PSF computation if False, default True)
+
+2. SLURM array job (production)
+---------------------------------
+Each band/mode combination has a dedicated submission script in jobs_slurm/:
+
+    sbatch jobs_slurm/srun_cc_M_all_seeings.sh          # M-band  CVC,  54 tasks
+    sbatch jobs_slurm/srun_cc_N1_all_seeings.sh         # N1-band CVC,  36 tasks
+    sbatch jobs_slurm/srun_cc_N2_all_seeings.sh         # N2-band CVC,  30 tasks
+    sbatch jobs_slurm/srun_cc_L_CVC_all_seeings.sh      # L-band  CVC,  66 tasks
+    sbatch jobs_slurm/srun_cc_L_RAVC_all_seeings.sh     # L-band  RAVC, 36 tasks
+
+    Or submit the full 222-simulation grid at once:
+    bash jobs_slurm/srun_cc_all.sh
+
+    Each SLURM task calls this script as:
+      python sacred_heeps_contrast_grid.py with magnitude=X band=Y mode=Z seeing=W cpu_count=10
+
+3. First run (pre-generate PSFs at mag=-1.5 before the magnitude sweep)
+------------------------------------------------------------------------
+    bash jobs_slurm/srun_cc_first_run.sh
+
+    This submits 15 simulations at magnitude=-1.5 for all bands/seeings (CVC first,
+    then RAVC with a SLURM dependency). PSFs generated here are reused by the full grid.
+
+-------------------------------------------------------------------------------
+NOTES
+-------------------------------------------------------------------------------
+- PSFs are shared across magnitudes brighter than the ALF grid boundary and
+  stored in a separate dir_output_psf directory. Subsequent runs create symlinks.
+- Phase cubes are cached: if the output .fits file already exists, generation
+  is skipped automatically.
+- SLURM logs go to slog_<JOBID>_<TASKID>.txt in the submission directory.
+- Sacred database location is resolved automatically from the hostname
+  (see get_db_path).
+
+-------------------------------------------------------------------------------
+MEMORY NOTE (HPC)
+-------------------------------------------------------------------------------
+Phase cube generation uses fork-based multiprocessing with large arrays
+(~36000 x npupil x npupil). This can fragment the virtual address space,
+causing numpy MemoryError even when total RAM is sufficient. Malloc tuning
+(MALLOC_ARENA_MAX, MALLOC_MMAP_THRESHOLD) is applied at import time to
+mitigate this. If jobs still fail, reduce cpu_count (e.g. 4-6 instead of 10).
+"""
+
 from sacred import Experiment, Ingredient
 from sacred.observers import FileStorageObserver
 import sys
@@ -55,6 +129,9 @@ ex = Experiment(ex_name)
 
 # More robust db path definition across machines
 def get_db_path(ex_name):
+    '''
+    SPECIFIC DB PATH -- user-specific !
+    '''
     hostname = socket.gethostname()
     machine_paths = {
         'ago-fenrir': '/mnt/disk20tb/METIS/DATABASE_SACRED/',
@@ -263,8 +340,8 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     if do_f_phase:
         sigLF = get_wfe_tip_tilt(band) # in nm rms 
         sigHF = get_wfe_higher_order(band, magnitude, mode, ncpa_freq,
-                                     nzern=ncpa['nmodes'],
-                                     data_dir=dir_input+'/wavefront/alf/') # in nm rms 
+                                     data_dir=dir_input+'/wavefront/alf/'
+                                     nzern=ncpa['nmodes']) # in nm rms 
 
 def get_wfe_tip_tilt(band):
     """
@@ -296,8 +373,7 @@ def get_wfe_tip_tilt(band):
     return qacits_error_nm[band]
 
 
-def get_min_alf_magnitude(band, mode, fr,
-                 data_dir='/home/gorban/python_scripts/alf/results/'):
+def get_min_alf_magnitude(band, mode, fr, data_dir):
     """
     Return the minimum stellar magnitude available in the ALF sensor-noise
     FITS file for the given band, mask, and frame rate.
@@ -312,7 +388,7 @@ def get_min_alf_magnitude(band, mode, fr,
         'CVC', 'RAVC'
     fr : float
         NCPA correction loop frame rate [Hz].
-    data_dir : str, optional
+    data_dir : str
 
     Returns
     -------
@@ -326,9 +402,9 @@ def get_min_alf_magnitude(band, mode, fr,
 
 
 def get_wfe_higher_order(band, magnitude, mode, fr,
-                 nzern=20,
-                 data_dir='/home/gorban/python_scripts/alf/results_data/',
-                 min_clip=True):
+                         data_dir,
+                         nzern=20,
+                         min_clip=True):
     """
     Return the higher-order WFE contributed by ALF (NCPA) sensor noise [nm rms].
 
@@ -351,11 +427,11 @@ def get_wfe_higher_order(band, magnitude, mode, fr,
         'CVC', 'RAVC'
     fr : float
         NCPA correction loop frame rate [Hz].
+    data_dir : str
+        Directory containing the ALF sensor-noise FITS files.
     nzern : int, optional
         Number of Zernike modes corrected by ALF (default 20).
         Does not include piston, tip, or tilt (as of 11/6/2026).
-    data_dir : str, optional
-        Directory containing the ALF sensor-noise FITS files.
     min_clip : bool, optional
         If True, clip the interpolated noise to the minimum tabulated value
         (prevents unphysical extrapolation at bright magnitudes).
@@ -712,50 +788,6 @@ def run_simulation(mode, band, magnitude, duration, dit,
         # _run.add_artifact(f"{conf['dir_output']}/{savename}", name='contrast_curve.png')
 
 
-# if __name__=="__main__":
-#     from multiprocessing import get_context
-#     # import subprocess
-#     import sys
-#     from itertools import product
-#     import numpy as np
-
-#     # Define magnitude ranges per band
-#     dmag=0.5
-#     band_magnitude_ranges = {
-#         # "L": np.arange(-1.5, 9+dmag, dmag),  # Example: L-band magnitudes
-#         # "M": np.arange(-1.5, 7+dmag, dmag),       # Example: M-band magnitudes
-#         # "N1": np.arange(-1.5, 3+dmag, dmag),        # Example: N-band magnitudes
-#         # "N2": np.arange(-1.5, 3+dmag, dmag)        # Example: N-band magnitudes
-#         "L": [6],  # Example: L-band magnitudes
-#     }
-
-#     seeings = ["Q1", "Q2", "Q3"] # ESO definition of percentile (median is between Q2 and Q3)
-#     seeings = ["Q2"] # ESO definition of percentile (median is between Q2 and Q3)
-
-
-#     # Generate all combinations dynamically
-#     grid_configs = []
-#     for band, magnitudes in band_magnitude_ranges.items():
-#         for magnitude, seeing in product(magnitudes, seeings):
-#             grid_configs.append({
-#                 "band": band,
-#                 "magnitude": magnitude,
-#                 "seeing": seeing,
-#                 "dry_run":False
-#             })
-
-#     # # Run each configuration sequentially with stdout capture
-#     for config in grid_configs:
-#         ex.run(config_updates=config, options={'--capture': 'sys'})
-
-#     # # Function to run a single configuration
-#     # def run_single_config(config):
-#     #     result = ex.run(config_updates=config)
-
-#     # # Run in parallel with 4 jobs --> DOES NOT WORK, because create_phase_map_all.py uses multiprocesses !!
-#     # n_job_max = 4
-#     # with get_context('fork').Pool(n_job_max) as pool:
-#     #     pool.map(run_single_config, grid_configs)
 
 
 
