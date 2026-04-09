@@ -1,0 +1,48 @@
+[tool.poetry]
+name = "heeps"
+version = "1.0.0"
+description = "The HCI End-to-End Performance Simulator for ELT/METIS"
+authors = ["Vortex Team <vortex@uliege.be>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/vortex-exoplanet/HEEPS"
+repository = "https://github.com/vortex-exoplanet/HEEPS"
+keywords = ["astronomy", "coronagraph", "high-contrast-imaging", "METIS", "ELT"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Programming Language :: Python :: 3",
+]
+packages = [{include = "heeps"}]
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.13"
+numpy = ">=1.24"
+scipy = ">=1.10"
+matplotlib = ">=3.7"
+astropy = ">=5.3"
+photutils = ">=1.8"
+scikit-image = ">=0.20"
+vip-hci = ">=1.6.0"
+PyPROPER3 = {version = ">=3.3.3", source = "scopesim-wheels"}
+requests = ">=2.28"
+beautifulsoup4 = ">=4.11"
+packaging = ">=21.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyter = ">=1.0"
+ipython = ">=8.0"
+
+[tool.poetry.group.scopesim.dependencies]
+scopesim = ">=0.8"
+synphot = ">=1.1"
+
+[[tool.poetry.source]]
+name = "scopesim-wheels"
+url = "https://scopesim.univie.ac.at/wheels/"
+priority = "supplemental"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
