@@ -340,7 +340,7 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     if do_f_phase:
         sigLF = get_wfe_tip_tilt(band) # in nm rms 
         sigHF = get_wfe_higher_order(band, magnitude, mode, ncpa_freq,
-                                     data_dir=dir_input+'/wavefront/alf/'
+                                     data_dir=dir_input+'/wavefront/alf/',
                                      nzern=ncpa['nmodes']) # in nm rms 
 
 def get_wfe_tip_tilt(band):
