@@ -41,6 +41,14 @@ def resize_cube(cube, new_size, preserve_range=True, mode='reflect',
             case='resize cube', cpu_count=cpu_count, verbose=verbose)
 
 def crop_cube(cube, new_size, margin=0, cpu_count=None, verbose=False):
+    # Early exit: if cube is already the target size and no margin, skip multiprocessing entirely
+    if margin == 0 and cube.ndim >= 2:
+        if type(new_size) is int:
+            if cube.shape[-1] == new_size and cube.shape[-2] == new_size:
+                return cube
+        elif type(new_size) in (tuple, list) and len(new_size) == 2:
+            if cube.shape[-2] == new_size[0] and cube.shape[-1] == new_size[1]:
+                return cube
     posvars = [cube, [new_size]*len(cube)]
     kwargs = dict(margin=margin, verbose=False)
     if cube.ndim < 3:

@@ -18,6 +18,20 @@ def _close_pools():
 
 atexit.register(_close_pools)
 
+
+def terminate_all_pools():
+    """Terminate all cached worker pools and clear the cache.
+    Call this before memory-intensive operations to release worker process RSS.
+    """
+    for key, pool in list(_pool_cache.items()):
+        try:
+            pool.terminate()
+            pool.join()
+        except Exception:
+            pass
+    _pool_cache.clear()
+
+
 def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
         estimate_time=False, case=None, cpu_count=None, verbose=True,
         reuse_pool=True):
@@ -56,6 +70,7 @@ def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
             if pool_key in _pool_cache:
                 p = _pool_cache[pool_key]
             else:
+                # p = mpro.Pool(cpu_count, maxtasksperchild=1)
                 p = mpro.Pool(cpu_count)
                 _pool_cache[pool_key] = p
             # p = pool.Pool(cpu_count)
@@ -64,6 +79,7 @@ def multiCPU(f, posargs=[], posvars=[], kwargs={}, multi_out=False,
             if multi_out is True:
                 res_multi = tuple(np.array(x) for x in res_multi.swapaxes(0, 1))
         else:
+            # p = mpro.Pool(cpu_count, maxtasksperchild=1)
             p = mpro.Pool(cpu_count)
             func = partial(f, *posargs, **kwargs)
             res_multi = np.array(p.starmap(func, zip(*posvars)))

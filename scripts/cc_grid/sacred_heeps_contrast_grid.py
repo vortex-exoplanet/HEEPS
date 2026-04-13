@@ -65,11 +65,22 @@ NOTES
 -------------------------------------------------------------------------------
 MEMORY NOTE (HPC)
 -------------------------------------------------------------------------------
-Phase cube generation uses fork-based multiprocessing with large arrays
-(~36000 x npupil x npupil). This can fragment the virtual address space,
-causing numpy MemoryError even when total RAM is sufficient. Malloc tuning
-(MALLOC_ARENA_MAX, MALLOC_MMAP_THRESHOLD) is applied at import time to
-mitigate this. If jobs still fail, reduce cpu_count (e.g. 4-6 instead of 10).
+The dominant memory cost is in PhaseCubeGenerator.build_all_phase.  The
+combined phase cube is built from three input cubes (SCAO + WV + CBW).  A
+naive implementation keeps all six arrays (scao, wv_unscaled, cbw, scaled_wv,
+two temporaries from the chained addition) alive simultaneously.  For L-band
+(36000 × 285² frames), this amounts to ~140 GB even before any multiprocessing.
+Python's implicit upcast of float32 × Python-float to float64 doubles each
+cube from ~12 GB to ~23 GB, compounding the problem.
+
+build_all_phase now avoids this by:
+  - Casting all cubes to float32 on load
+  - Using in-place += and deleting each term immediately after use
+  - Calling gc.collect() before returning
+
+Peak memory during phase cube build is ~25 GB for L-band (two cubes at a
+time).  With multiprocessing overhead on top, 150 GB is sufficient.
+Jobs were failing because the old code used ~140 GB just in build_all_phase.
 """
 
 from sacred import Experiment, Ingredient
@@ -95,7 +106,7 @@ os.environ["NUMEXPR_NUM_THREADS"] = "1"
 # Reduce memory fragmentation in glibc malloc (critical for fork-based multiprocessing)
 os.environ["MALLOC_ARENA_MAX"] = "2"  # Limit number of malloc arenas (reduces fragmentation)
 os.environ["MALLOC_TRIM_THRESHOLD_"] = "67108864"  # Return memory to OS after 64MB freed (more aggressive)
-os.environ["MALLOC_MMAP_THRESHOLD_"] = "131072"  # Use mmap for allocations >128KB (bypasses arenas)
+# os.environ["MALLOC_MMAP_THRESHOLD_"] = "131072"  # Use mmap for allocations >128KB (bypasses arenas)
 
 import threadpoolctl
 threadpoolctl.threadpool_limits(limits=1, user_api='blas')
@@ -121,8 +132,8 @@ from pathlib import Path
 HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-# ex_name = "2026_contrast_curve_tests"
-ex_name = "2026_contrast_curve_grid"
+ex_name = "2026_contrast_curve_tests"
+# ex_name = "2026_contrast_curve_grid"
 
 ex = Experiment(ex_name)
 
@@ -700,6 +711,23 @@ def run_simulation(mode, band, magnitude, duration, dit,
     print(' Collecting garbage 2')
     gc.collect()
 
+    # Terminate all persistent multiprocessing pool workers before contrast curves.
+    # PSF propagation (cpu_count=5+) workers accumulate 40-120 GB of RSS and
+    # must be released before cc_adi allocates its own large arrays.
+    try:
+        from heeps.util.multiCPU import terminate_all_pools
+        terminate_all_pools()
+        print('  worker pools terminated')
+    except Exception as e:
+        print(f'  terminate_all_pools() failed (non-critical): {e}')
+    gc.collect()
+    try:
+        import ctypes, ctypes.util
+        ctypes.CDLL(ctypes.util.find_library('c')).malloc_trim(0)
+        print('  malloc_trim() completed (pre-contrast)')
+    except Exception as e:
+        print(f'  malloc_trim() failed (non-critical): {e}')
+
     if do_contrast_curves:
         print('---- CONTRAST CURVES ---')
         
@@ -718,8 +746,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         _run.add_artifact(cc_raw_file, name='cc_raw.fits')
 
         # Post-processed 5-sigma contrast curve (without photon noise)
-        conf['cpu_count'] = 1   # this is faster see email 12/3/2026
-        print(f"  setting cpu_count={conf['cpu_count']} for cc_adi --")
+        # conf['cpu_count'] = 1   # this is faster see email 12/3/2026
+        # print(f"  setting cpu_count={conf['cpu_count']} for cc_adi --")
         
         cc_adi_file = os.path.join(dir_output, f'cc_adi_bckg0_{band}_{mode}.fits')
         if os.path.isfile(cc_adi_file):
@@ -729,7 +757,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
             adi1 = cc_adi_data[1]
         else:
             print(' -- Post-processed contrast (w/o photon noise): computing --')
-            sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, **conf)
+            sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, cpu_count_vip=1, **conf)
             print(' Collecting garbage (cc_adi 1)')
             gc.collect()
         _run.add_artifact(cc_adi_file, name='cc_adi.fits')
@@ -745,7 +773,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
         else:
             print(' -- Post-processed contrast (with photon noise): computing --')
             sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savebckg=True, savefits=True,
-                                               verbose=True, **conf)
+                                               verbose=True, cpu_count_vip=1, **conf)
             print(' Collecting garbage (cc_adi 2)')
             gc.collect()
         _run.add_artifact(cc_adi_bckg_file, name='cc_adi_bckg.fits')

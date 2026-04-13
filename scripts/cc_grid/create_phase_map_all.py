@@ -6,6 +6,7 @@ import os
 from astropy.io import fits
 from copy import deepcopy
 import proper
+import gc
 
 # Temporal sampling of the SCAO phase cubes [s]
 # Used to convert NCPA loop frequency [Hz] → frame-decimation factor
@@ -118,6 +119,10 @@ class PhaseCubeGenerator():
             cpu_count=self.cpu_count,
             reuse_pool=False)
 
+        # Free inputs before np.float32(HSF) possibly allocates another full cube
+        del ncpa, zpols_integ, pup, wf
+        gc.collect()
+
         hdr = self._build_fits_header(sigLF, sigHF)
         fits.writeto(self.phase_filename, np.float32(HSF), hdr)
 
@@ -132,40 +137,61 @@ class PhaseCubeGenerator():
         The WV cube is scaled so that its temporal RMS matches ``self.wv_rms``
         (the value from the Sacred config).
 
+        Memory layout
+        -------------
+        All cubes are kept as float32 throughout.  Intermediate terms are added
+        in-place (``ncpa +=``) and deleted immediately after use, so that at most
+        two cube-sized arrays (``ncpa`` + one term being applied) are alive at the
+        same time.  For L-band (36000 × 285² frames) this limits peak RAM to
+        ~25 GB, versus ~140 GB if all arrays were kept alive simultaneously as
+        float64 (which the previous implementation did due to implicit Python-float
+        upcast in ``wv_unscaled * scalar_float64``).
+
         Returns
         -------
         pup : ndarray
             Binary pupil mask (values 0 or 1).
-        ncpa : ndarray
+        ncpa : ndarray, float32
             Combined phase cube [same units as input FITS files].
         """
-        scao       = fits.getdata(self.scao_filename)
-        wv_unscaled = fits.getdata(self.wv_filename)
-        cbw        = fits.getdata(self.cbw_filename)
+        # Load SCAO cube and immediately take ownership as a writable float32 array.
+        # np.array(..., dtype=np.float32) copies the data (freeing the mmap handle),
+        # after which we can del the original reference and use += in place.
+        # This avoids keeping 6 large arrays alive simultaneously (which would
+        # require ~6 × cube_size RAM for L-band: scao + wv_unscaled + cbw + wv +
+        # two temporaries from the chained addition = ~140 GB for L-band).
+        ncpa = np.array(fits.getdata(self.scao_filename), dtype=np.float32)
 
-        if cbw.shape[0] > scao.shape[0]:
-            nframes = cbw.shape[0] - scao.shape[0]
-            print(f'Warning: trimming cbw ncpa by {nframes} frames')
-            cbw = cbw[:-nframes]
-        if cbw.shape[0] < scao.shape[0]:
-            print(f'Warning: cbw ncpa has only {cbw.shape[0]} frames')
-            nrepeat = scao.shape[0] //cbw.shape[0]  
-            print(f'     repeating {nrepeat} times')
-            cbw = np.repeat(cbw, repeats=nrepeat, axis=0)
+        if add_wv:
+            # np.array(..., dtype=np.float32) always allocates a fresh float32
+            # array regardless of the FITS file's native type, which lets us
+            # immediately release the mmap handle and then scale in-place.
+            # Peak memory here = ncpa (11.7 GB L-band) + wv_f32 (11.7 GB) = ~23 GB.
+            wv_f32 = np.array(fits.getdata(self.wv_filename), dtype=np.float32)
+            # Cast scale to float32 to prevent numpy from upcasting wv_f32 to float64.
+            scale = np.float32(self.wv_rms / self.TEMPORAL_RMS_REF)
+            wv_f32 *= scale   # in-place: no extra allocation
+            ncpa += wv_f32    # in-place: no extra allocation
+            del wv_f32
 
+        if add_cbw:
+            cbw = np.array(fits.getdata(self.cbw_filename), dtype=np.float32)
+            if cbw.shape[0] > ncpa.shape[0]:
+                nframes = cbw.shape[0] - ncpa.shape[0]
+                print(f'Warning: trimming cbw ncpa by {nframes} frames')
+                cbw = cbw[:-nframes]
+            if cbw.shape[0] < ncpa.shape[0]:
+                print(f'Warning: cbw ncpa has only {cbw.shape[0]} frames')
+                nrepeat = ncpa.shape[0] // cbw.shape[0]
+                print(f'     repeating {nrepeat} times')
+                cbw = np.repeat(cbw, repeats=nrepeat, axis=0)
+            ncpa += cbw
+            del cbw
 
+        gc.collect()
 
         pup = fits.getdata(self.pup_filename)
         pup[pup <= 0.5] = 0
-
-        wv   = wv_unscaled * self.wv_rms / self.TEMPORAL_RMS_REF
-
-        if add_wv is True and add_cbw is True:
-            ncpa = scao + wv+ cbw
-        elif add_wv is True and add_cbw is False:
-            ncpa = scao + wv
-        elif add_wv is False and add_cbw is True:
-            ncpa = scao +  cbw
 
         return pup, ncpa
 

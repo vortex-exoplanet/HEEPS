@@ -17,7 +17,7 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
         savepsf=False, savebckg=False, starphot=1e11, duration=3600, cpu_count=None,
-        savefits=False, verbose=False, imlib='opencv', **conf):
+        cpu_count_vip=1, savefits=False, verbose=False, imlib='opencv', **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -65,6 +65,9 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             normalization factor for aperture photometry with VIP
         cpu_count (int):
             number of CPU cores to use, 'None' means use maximum number of cores
+        cpu_count_vip (int):
+            number of CPU cores to use for VIP, 'None' means use maximum number of cores.
+            Default : 1
 
 
     Return:
@@ -86,11 +89,10 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        # setting cpu_count in crop_cube to avoid hidden use of max number cores 
-        #   - safety when used on HPC servers
-        # if cpu_count is 1, defaulting to 10 core for cropping
-        ncpu_crop = 10 if cpu_count==1 else cpu_count
-        psf_ON = crop_cube(psf_ON, ndet, cpu_count=ncpu_crop)
+        # Use cpu_count directly; crop_cube skips multiprocessing when already
+        # the right size, and uses cpu_count=1 serial path when cpu_count=1
+        # (avoids spawning unnecessary workers that inflate memory usage on HPC)
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=cpu_count)
     if verbose is True:
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)
@@ -133,9 +135,9 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_ON *= starphot/ap_flux
         psf_OFF_crop *= starphot/ap_flux
     # VIP post-processing algorithm
-    if cpu_count == None:
-        cpu_count = mpro.cpu_count()
-    algo_dict = dict(nproc=cpu_count)
+    if cpu_count_vip == None:
+        cpu_count_vip = mpro.cpu_count()
+    algo_dict = dict(nproc=cpu_count_vip)
     if version.parse(vvip) <= version.parse("1.0.3"):
         algo = vip_hci.medsub.median_sub
     else:
