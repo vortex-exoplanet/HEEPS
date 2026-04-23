@@ -11,7 +11,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     """
 
     # load PSFs: on-axis (star) and off-axis (planet)
-    loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
+    tag = '' if tag is None else '%s_'%tag
+    loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag, '%s', band, mode))
     psf_OFF = fits.getdata(loadname%'offaxis')
     psf_ON = fits.getdata(loadname%'onaxis')
     assert psf_ON.ndim in [2, 3], "on-axis PSF can be 2- or 3-dimensional"
@@ -22,7 +23,7 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        psf_ON = crop_cube(psf_ON, ndet)
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=conf['cpu_count'])
     if verbose is True:
         print('Raw contrast curve:')
         print('\u203e'*19)
@@ -40,7 +41,8 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     # normalize by the peak of the off-axis PSF radial profile
     raw /= np.max(off)
     # tag
-    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, raw]), 'cc_%s%s%s'%('raw', '_%s_%s', tag),

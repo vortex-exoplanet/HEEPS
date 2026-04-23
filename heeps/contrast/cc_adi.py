@@ -16,8 +16,8 @@ vvip = vip_hci.__version__
 def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
-        savepsf=False, starphot=1e11, duration=3600, cpu_count=None,
-        savefits=False, verbose=False, imlib='opencv', **conf):
+        savepsf=False, savebckg=False, starphot=1e11, duration=3600, cpu_count=None,
+        cpu_count_vip=1, savefits=False, verbose=False, imlib='opencv', **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -59,10 +59,15 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             true if ADI psf is saved in a fits file
         savefits (bool):
             true if ADI contrast curve is saved in a fits file
+        savebckg (bool):
+            true if PSF cubes with background and photon noise are saved as fits files
         starphot (float):
             normalization factor for aperture photometry with VIP
         cpu_count (int):
             number of CPU cores to use, 'None' means use maximum number of cores
+        cpu_count_vip (int):
+            number of CPU cores to use for VIP, 'None' means use maximum number of cores.
+            Default : 1
 
 
     Return:
@@ -73,7 +78,8 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     """
 
     # load PSFs: on-axis (star) and off-axis (planet)
-    loadname = os.path.join(dir_output, '%s_PSF_%s_%s.fits'%('%s', band, mode))
+    tag = '' if tag is None else '%s_'%tag
+    loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag,'%s', band, mode))
     psf_OFF = fits.getdata(loadname%'offaxis')
     psf_ON = fits.getdata(loadname%'onaxis')
     header_ON = fits.getheader(loadname%'onaxis')
@@ -83,7 +89,10 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     if nscreens is not None:
         psf_ON = psf_ON[:nscreens]
     if ndet is not None:
-        psf_ON = crop_cube(psf_ON, ndet)
+        # Use cpu_count directly; crop_cube skips multiprocessing when already
+        # the right size, and uses cpu_count=1 serial path when cpu_count=1
+        # (avoids spawning unnecessary workers that inflate memory usage on HPC)
+        psf_ON = crop_cube(psf_ON, ndet, cpu_count=cpu_count)
     if verbose is True:
         print('Apply ADI technique: add_bckg=%s'%add_bckg)
         print('\u203e'*20)
@@ -94,6 +103,13 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         conf.update(mode=mode, dit=dit, mag=mag)
         psf_ON, psf_OFF = background(psf_ON, psf_OFF, header=header_ON,
             verbose=True, **conf)
+        if savebckg is True:
+            savename = os.path.join(dir_output, '%s%s_PSF_bckg1_%s_%s.fits'%(tag, '%s', band, mode))
+            fits.writeto(savename%'onaxis', psf_ON, overwrite=True)
+            fits.writeto(savename%'offaxis', psf_OFF, overwrite=True)
+            if verbose is True:
+                print('   saved background on-axis PSFs  : %s'%os.path.basename(savename%'onaxis'))
+                print('   saved background off-axis PSFs : %s'%os.path.basename(savename%'offaxis'))
     # apply APP Strehl to off-axis PSF (which otherwise would be too nice and optimistic to inject planets)
     if 'APP' in mode:
         psf_OFF *= app_strehl
@@ -119,9 +135,9 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         psf_ON *= starphot/ap_flux
         psf_OFF_crop *= starphot/ap_flux
     # VIP post-processing algorithm
-    if cpu_count == None:
-        cpu_count = mpro.cpu_count()
-    algo_dict = dict(nproc=cpu_count)
+    if cpu_count_vip == None:
+        cpu_count_vip = mpro.cpu_count()
+    algo_dict = dict(nproc=cpu_count_vip)
     if version.parse(vvip) <= version.parse("1.0.3"):
         algo = vip_hci.medsub.median_sub
     else:
@@ -146,14 +162,15 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     else:
         name = 'adi_bckg%s'%int(add_bckg)
     # tag
-    tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
+    tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, adi]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
             dir_output=dir_output, band=band, mode=mode)
     # psf after post-processing
     if savepsf is True:
-        _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False)
+        _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False, imlib=imlib)
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
             dir_output=dir_output, band=band, mode=mode)
 
