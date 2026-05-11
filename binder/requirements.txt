@@ -5,3 +5,4 @@ ipywidgets==8.1.5
 itables==2.2.4
 astropy==6.1.7
 requests==2.32.3
+ipympl==0.9.7

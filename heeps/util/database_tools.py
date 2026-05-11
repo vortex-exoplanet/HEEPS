@@ -1,16 +1,15 @@
 
 import json
-import glob
-import os
 import pandas as pd
 import astropy.io.fits as fits
 from pathlib import Path
 from typing import Callable, Dict, Optional
-from itables import show
 
 import ipywidgets as widgets
 from IPython.display import display, clear_output
-import requests, zipfile, io, pathlib
+import matplotlib.pyplot as plt
+import requests, zipfile, pathlib
+import datetime
 
 def list_contrast_grid_db(
     db_path,
@@ -307,3 +306,488 @@ def on_download(_, status_widget, user_input_widget,
         print("In your plotting notebook, read it with:")
         print("  import pathlib")
         print("  DB_PATH = pathlib.Path('.db_path.txt').read_text().strip()")
+
+
+def build_download_widget(attachment_url, archive_fname, folder_db):
+    """Build and return a VBox widget for credentials input and DB download.
+
+    Creates a username Text, password Password, download Button and Output
+    status area, wires them up to :func:`on_download`, and returns the
+    assembled ``widgets.VBox`` ready to be passed to ``display()``.
+
+    Parameters
+    ----------
+    attachment_url : str
+        URL of the archive to download.
+    archive_fname : str
+        Name of the temporary zip file.
+    folder_db : str
+        Folder where the archive is extracted.
+
+    Returns
+    -------
+    widgets.VBox
+        The assembled widget ready to display.
+    """
+    user_input = widgets.Text(
+        placeholder="XWiki username",
+        description="Username:",
+        layout=widgets.Layout(width="320px"),
+    )
+    pw_input = widgets.Password(
+        placeholder="XWiki password",
+        description="Password:",
+        layout=widgets.Layout(width="320px"),
+    )
+    btn = widgets.Button(description="Download DB", button_style="primary")
+    status = widgets.Output()
+
+    btn.on_click(lambda b: on_download(b, status, user_input, pw_input, btn,
+                                        attachment_url, archive_fname, folder_db))
+    return widgets.VBox([user_input, pw_input, btn, status])
+
+
+def _load_cc(run_dir: Path, artifact_name: str):
+    """Load a 2-row contrast-curve FITS artifact -> (sep, cc) or (None, None)."""
+    fpath = run_dir / artifact_name
+    if not fpath.exists():
+        return None, None
+    try:
+        data = fits.getdata(str(fpath))
+        return data[0], data[1]
+    except Exception as e:
+        print(f'[WARN] Could not load {fpath}: {e}')
+        return None, None
+
+
+def _run_label(run_id, row):
+    """Short descriptive label for a run to use in plot legend."""
+    band = row.get('band', '?')
+    mode = row.get('mode', '?')
+    mag = row.get('magnitude', '?')
+    see = row.get('seeing', '?')
+    return f'#{run_id} {band}/{mode} mag={mag} s={see}'
+
+
+def _run_prefix(run_id, row):
+    """Unique filename prefix: run{id:04d}_{band}_{mode}_mag{mag}_s{seeing}."""
+    band = row.get('band', 'X')
+    mode = row.get('mode', 'X')
+    mag = row.get('magnitude', 0)
+    see = row.get('seeing', 'X')
+    try:
+        mag_str = f'{float(mag):+.2f}'.replace('+', 'p').replace('-', 'm')
+    except (ValueError, TypeError):
+        mag_str = str(mag)
+    return f'run{int(run_id):04d}_{band}_{mode}_mag{mag_str}_s{see}'
+
+
+def _apply_axes_style(ax, band, log_x=True, log_y=True):
+    """Apply axis style consistent with sacred_heeps_contrast_grid.py."""
+    ax.grid(True)
+    ax.grid(which='minor', linestyle=':')
+    if log_x and log_y:
+        ax.loglog()
+    elif log_x:
+        ax.set_xscale('log')
+    elif log_y:
+        ax.set_yscale('log')
+    ax.xaxis.set_major_formatter(plt.ScalarFormatter())
+    if band in ('N1', 'N2'):
+        ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])
+        ax.set_xlim(0.06, 1.3)
+    else:
+        ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
+        ax.set_xlim(0.02, 0.9)
+    ax.set_ylim(1e-8, 1e-3)
+
+
+def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
+    """Build and display an interactive contrast-curve explorer with ZIP export."""
+    db_path = Path(db_path)
+
+    # Shared mutable state (current selection kept in sync with last Plot call)
+    state = {'sel': pd.DataFrame(), 'fig': None}
+
+    def _unique_sorted(col):
+        if col in df.columns:
+            return sorted(df[col].dropna().unique())
+        return []
+
+    bands = _unique_sorted('band')
+    modes = _unique_sorted('mode')
+    seeings = _unique_sorted('seeing')
+    mags = _unique_sorted('magnitude')
+
+    # Selection widgets
+    style = {'description_width': '60px'}
+    layout_sel = widgets.Layout(width='120px')
+    layout_wide = widgets.Layout(width='160px')
+
+    w_band = widgets.SelectMultiple(
+        options=bands,
+        value=bands[:1] if bands else [],
+        description='Band',
+        style=style,
+        layout=layout_sel,
+        rows=min(5, max(len(bands), 1)),
+    )
+    w_mode = widgets.SelectMultiple(
+        options=modes,
+        value=modes[:1] if modes else [],
+        description='Mode',
+        style=style,
+        layout=layout_sel,
+        rows=min(5, max(len(modes), 1)),
+    )
+    w_seeing = widgets.SelectMultiple(
+        options=seeings,
+        value=seeings[:1] if seeings else [],
+        description='Seeing',
+        style=style,
+        layout=layout_sel,
+        rows=min(5, max(len(seeings), 1)),
+    )
+    w_mag = widgets.SelectMultiple(
+        options=mags,
+        value=list(mags) if mags else [],
+        description='Mag',
+        style=style,
+        layout=layout_wide,
+        rows=min(10, max(len(mags), 1)),
+    )
+
+    # Curve-type switches
+    w_raw = widgets.Checkbox(value=True, description='Raw CC', style=style)
+    w_adi = widgets.Checkbox(value=True, description='ADI (no photon noise)', style=style)
+    w_bckg = widgets.Checkbox(value=True, description='ADI (with photon noise)', style=style)
+
+    # Axes options
+    w_logx = widgets.Checkbox(value=True, description='Log x', style=style)
+    w_logy = widgets.Checkbox(value=True, description='Log y', style=style)
+
+    # COMPLETED only filter
+    w_completed_only = widgets.Checkbox(
+        value=True,
+        description='COMPLETED only',
+        style=style,
+    )
+
+    # Run-id override
+    w_ids = widgets.Text(
+        value='',
+        placeholder='e.g. 1,3,7  (blank = use filter)',
+        description='Run IDs:',
+        style={'description_width': '70px'},
+        layout=widgets.Layout(width='340px'),
+    )
+
+    w_button = widgets.Button(
+        description='Plot',
+        button_style='primary',
+        icon='bar-chart',
+        layout=widgets.Layout(width='100px'),
+    )
+
+    # Status filter
+    all_statuses = _unique_sorted('status')
+    w_status = widgets.SelectMultiple(
+        options=all_statuses,
+        value=['COMPLETED'] if 'COMPLETED' in all_statuses else all_statuses,
+        description='Status',
+        style=style,
+        layout=layout_wide,
+        rows=min(5, max(len(all_statuses), 1)),
+    )
+    status_box = widgets.VBox(
+        [widgets.HTML('<b>Status</b>'), w_status],
+        layout=widgets.Layout(margin='0 8px', display='flex' if show_status else 'none'),
+    )
+
+    # Export widgets
+    export_artifacts = [
+        ('cc_raw.fits', 'cc_raw.fits'),
+        ('cc_adi.fits', 'cc_adi.fits'),
+        ('cc_adi_bckg.fits', 'cc_adi_bckg.fits'),
+    ]
+
+    w_export_dir = widgets.Text(
+        value=str(Path.home()),
+        description='Save zip to:',
+        placeholder='directory for the zip file',
+        style={'description_width': '80px'},
+        layout=widgets.Layout(width='400px'),
+    )
+    w_export_btn = widgets.Button(
+        description='Export ZIP',
+        button_style='warning',
+        icon='download',
+        layout=widgets.Layout(width='130px'),
+    )
+    export_out = widgets.Output()
+
+    # Save-plot widgets
+    w_save_dir = widgets.Text(
+        value=str(Path.home()),
+        description='Save PDF to:',
+        placeholder='directory for the PDF file',
+        style={'description_width': '80px'},
+        layout=widgets.Layout(width='400px'),
+    )
+    w_save_btn = widgets.Button(
+        description='Save PDF',
+        button_style='success',
+        icon='file-pdf-o',
+        layout=widgets.Layout(width='130px'),
+    )
+    save_out = widgets.Output()
+
+    out = widgets.Output()
+
+    # Layout
+    row_select = widgets.HBox([
+        widgets.VBox([widgets.HTML('<b>Band</b>'), w_band], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HTML('<b>Mode</b>'), w_mode], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HTML('<b>Seeing</b>'), w_seeing], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HTML('<b>Mag</b>'), w_mag], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HTML('<b>Status filter</b>'), w_completed_only], layout=widgets.Layout(margin='0 8px')),
+        status_box,
+    ])
+
+    col_curves = widgets.VBox([
+        widgets.HTML('<b>Curves &amp; axes</b>'),
+        w_raw,
+        w_adi,
+        w_bckg,
+        widgets.HTML('<hr style="margin:4px 0">'),
+        w_logx,
+        w_logy,
+    ], layout=widgets.Layout(margin='0 16px 0 8px'))
+
+    col_plot = widgets.VBox([
+        widgets.HTML('<b>Plot</b>'),
+        w_ids,
+        w_button,
+        widgets.HTML('<hr style="margin:6px 0">'),
+        widgets.HTML('<b>Save plot</b>'),
+        w_save_dir,
+        w_save_btn,
+        save_out,
+    ], layout=widgets.Layout(margin='0 16px 0 8px'))
+
+    col_export = widgets.VBox([
+        widgets.HTML('<b>Export current selection</b>'),
+        w_export_dir,
+        w_export_btn,
+        export_out,
+    ], layout=widgets.Layout(margin='0 8px'))
+
+    row_controls = widgets.HBox([col_curves, col_plot, col_export])
+
+    ui = widgets.VBox([
+        widgets.HTML('<h3 style="margin:4px 0">HEEPS Contrast Curve Explorer</h3>'),
+        row_select,
+        widgets.HTML('<hr style="margin:6px 0">'),
+        row_controls,
+        out,
+    ])
+
+    def _build_selection():
+        ids_text = w_ids.value.strip()
+        if ids_text:
+            try:
+                requested_ids = [int(x.strip()) for x in ids_text.split(',') if x.strip()]
+            except ValueError:
+                return None, '[ERROR] Run IDs must be comma-separated integers.'
+            return df.loc[[i for i in requested_ids if i in df.index]], None
+
+        sel = df.copy()
+        filters = [
+            ('band', w_band.value),
+            ('mode', w_mode.value),
+            ('seeing', w_seeing.value),
+            ('magnitude', w_mag.value),
+        ]
+        if show_status:
+            filters.append(('status', w_status.value))
+        for col, values in filters:
+            if values and col in sel.columns:
+                sel = sel[sel[col].isin(values)]
+        if w_completed_only.value and 'status' in sel.columns:
+            sel = sel[sel['status'] == 'COMPLETED']
+
+        sort_cols = [c for c in ('band', 'mode', 'magnitude', 'seeing') if c in sel.columns]
+        if sort_cols:
+            sel = sel.sort_values(sort_cols)
+        return sel, None
+
+    def on_plot(_):
+        with out:
+            out.clear_output(wait=True)
+
+            sel, err = _build_selection()
+            if err:
+                print(err)
+                return
+            if sel.empty:
+                print('No runs match the current selection.')
+                return
+
+            state['sel'] = sel
+            print(f'Plotting {len(sel)} run(s): {list(sel.index)}')
+
+            any_raw = w_raw.value
+            any_adi = w_adi.value or w_bckg.value
+            if not (any_raw or any_adi):
+                print('Select at least one curve type to display.')
+                return
+
+            n_panels = int(any_raw) + int(any_adi)
+            fig, ax_arr = plt.subplots(
+                n_panels,
+                1,
+                figsize=(15, 4.5 * n_panels),
+                sharex=False,
+                squeeze=False,
+            )
+
+            ax_raw = ax_arr[0, 0] if any_raw else None
+            ax_adi = ax_arr[int(any_raw), 0] if any_adi else None
+
+            if ax_raw is not None:
+                ax_raw.set_ylabel('Raw contrast')
+                ax_raw.set_title('Raw contrast curve')
+            if ax_adi is not None:
+                ax_adi.set_ylabel(r'5-$\sigma$ ADI sensitivity (contrast)')
+                ax_adi.set_title(r'Post-processed 5-$\sigma$ contrast')
+
+            band = 'L'
+            for i, (run_id, row) in enumerate(sel.iterrows()):
+                run_dir = db_path / str(run_id)
+                color = f'C{i % 10}'
+                label = _run_label(run_id, row)
+                band = row.get('band', 'L')
+
+                if ax_raw is not None:
+                    sep, cc = _load_cc(run_dir, 'cc_raw.fits')
+                    if sep is not None:
+                        ax_raw.plot(
+                            sep,
+                            cc,
+                            color=color,
+                            label=label,
+                            linestyle='-',
+                            marker='d',
+                            markevery=0.12,
+                            markersize=4,
+                        )
+
+                if ax_adi is not None:
+                    if w_adi.value:
+                        sep, cc = _load_cc(run_dir, 'cc_adi.fits')
+                        if sep is not None:
+                            ax_adi.plot(
+                                sep,
+                                cc,
+                                color=color,
+                                label=label,
+                                linestyle='-',
+                                marker='d',
+                                markevery=0.12,
+                                markersize=4,
+                            )
+                    if w_bckg.value:
+                        sep, cc = _load_cc(run_dir, 'cc_adi_bckg.fits')
+                        if sep is not None:
+                            ax_adi.plot(
+                                sep,
+                                cc,
+                                color=color,
+                                label=label + ' (with ph. noise)',
+                                linestyle=':',
+                                marker='d',
+                                markevery=0.12,
+                                markersize=4,
+                            )
+
+            for ax in ax_arr.flat:
+                _apply_axes_style(ax, band, log_x=w_logx.value, log_y=w_logy.value)
+                ax.set_xlabel('Angular separation [arcsec]')
+                ax.legend(
+                    fontsize=7,
+                    loc='upper left',
+                    bbox_to_anchor=(1.01, 1),
+                    borderaxespad=0,
+                    ncol=1,
+                )
+
+            fig.tight_layout(rect=[0, 0, 0.75, 1])
+            state['fig'] = fig
+            # plt.show()
+
+    def on_save_plot(_):
+        with save_out:
+            save_out.clear_output(wait=True)
+
+            fig = state['fig']
+            if fig is None:
+                print('[WARN] Nothing to save - click Plot first.')
+                return
+
+            out_dir = Path(w_save_dir.value.strip() or Path.home())
+            if not out_dir.exists():
+                try:
+                    out_dir.mkdir(parents=True)
+                except Exception as e:
+                    print(f'[ERROR] Cannot create directory {out_dir}: {e}')
+                    return
+
+            ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            pdf_path = out_dir / f'heeps_cc_plot_{ts}.pdf'
+
+            try:
+                fig.savefig(pdf_path, dpi=150, bbox_inches='tight')
+                print('✓ Saved plot')
+                print(f'  -> {pdf_path}')
+            except Exception as e:
+                print(f'[ERROR] Could not save PDF: {e}')
+
+    def on_export(_):
+        with export_out:
+            export_out.clear_output(wait=True)
+
+            sel = state['sel']
+            if sel.empty:
+                print('[WARN] Nothing to export - click Plot first.')
+                return
+
+            out_dir = Path(w_export_dir.value.strip() or Path.home())
+            if not out_dir.exists():
+                try:
+                    out_dir.mkdir(parents=True)
+                except Exception as e:
+                    print(f'[ERROR] Cannot create directory {out_dir}: {e}')
+                    return
+
+            ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+            zip_path = out_dir / f'heeps_cc_export_{ts}.zip'
+
+            n_files = 0
+            with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
+                for run_id, row in sel.iterrows():
+                    run_dir = db_path / str(run_id)
+                    prefix = _run_prefix(run_id, row)
+                    for src_name, suffix in export_artifacts:
+                        src = run_dir / src_name
+                        if src.exists():
+                            zf.write(src, arcname=f'{prefix}_{suffix}')
+                            n_files += 1
+
+            print(f'✓ Exported {n_files} file(s) from {len(sel)} run(s)')
+            print(f'  -> {zip_path}')
+
+    w_button.on_click(on_plot)
+    w_save_btn.on_click(on_save_plot)
+    w_export_btn.on_click(on_export)
+    display(ui)
+    on_plot(None)
