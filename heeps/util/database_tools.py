@@ -8,6 +8,7 @@ from typing import Callable, Dict, Optional
 import ipywidgets as widgets
 from IPython.display import display, clear_output
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import requests, zipfile, pathlib
 import datetime
 
@@ -392,7 +393,7 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True):
         ax.set_xscale('log')
     elif log_y:
         ax.set_yscale('log')
-    ax.xaxis.set_major_formatter(plt.ScalarFormatter())
+    ax.xaxis.set_major_formatter(FormatStrFormatter('%g'))
     if band in ('N1', 'N2'):
         ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])
         ax.set_xlim(0.06, 1.3)
