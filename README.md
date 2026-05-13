@@ -46,3 +46,9 @@ You can use a HEEPS tool to check all corresponding versions: [check_versions.ip
 
 ## Quick start
 This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipynb](https://github.com/vortex-exoplanet/HEEPS/blob/master/notebooks/demo.ipynb)
+
+
+## Database explorer
+To directly interact with the database contrast plotter tools ([database_contrast_plotter.ipynb](notebooks/database_contrast_plotter.ipynb)), use this binder link [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vortex-exoplanet/HEEPS/feature_database_notebooks?urlpath=lab%2Ftree%2Fnotebooks%2Fdatabase_contrast_plotter.ipynb).
+
+> **Note:** downloading the HEEPS contrast curve database requires valid [METIS Science Team](https://svn.mpia.de/metis-science/bin/login/XWiki/XWikiLogin?srid=LTkdIBLn&xredirect=%2Fmetis-science%2Fbin%2Fview%2FMain%2F%3Fsrid%3DLTkdIBLn) XWiki credentials.

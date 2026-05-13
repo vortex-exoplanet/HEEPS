@@ -1,6 +1,6 @@
 numpy
 pandas
-matplotlib
+matplotlib>=3.7
 ipywidgets
 itables
 astropy

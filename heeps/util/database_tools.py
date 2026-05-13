@@ -725,7 +725,8 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
 
             fig.tight_layout(rect=[0, 0, 0.75, 1])
             state['fig'] = fig
-            plt.show()
+            plt.close(fig)
+            display(fig)
 
     def on_save_plot(_):
         with save_out:
