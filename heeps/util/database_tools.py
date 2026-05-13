@@ -394,6 +394,7 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True):
     elif log_y:
         ax.set_yscale('log')
     ax.xaxis.set_major_formatter(FormatStrFormatter('%g'))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%g'))
     if band in ('N1', 'N2'):
         ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])
         ax.set_xlim(0.06, 1.3)
@@ -659,8 +660,8 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
                 ax_raw.set_ylabel('Raw contrast')
                 ax_raw.set_title('Raw contrast curve')
             if ax_adi is not None:
-                ax_adi.set_ylabel(r'5-$\sigma$ ADI sensitivity (contrast)')
-                ax_adi.set_title(r'Post-processed 5-$\sigma$ contrast')
+                ax_adi.set_ylabel('5-σ ADI sensitivity (contrast)')
+                ax_adi.set_title('Post-processed 5-σ contrast')
 
             band = 'L'
             for i, (run_id, row) in enumerate(sel.iterrows()):
@@ -724,7 +725,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
 
             fig.tight_layout(rect=[0, 0, 0.75, 1])
             state['fig'] = fig
-            # plt.show()
+            plt.show()
 
     def on_save_plot(_):
         with save_out:

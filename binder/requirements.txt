@@ -1,8 +1,8 @@
-numpy==1.26.4
-pandas==2.2.2
+numpy
+pandas
 matplotlib
 ipywidgets
-itables==2.2.4
-astropy==6.1.7
-requests==2.32.3
+itables
+astropy
+requests
 ipympl
