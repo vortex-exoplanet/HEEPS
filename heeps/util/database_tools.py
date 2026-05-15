@@ -1,3 +1,18 @@
+"""
+database_tools.py — Utilities for exploring and plotting HEEPS contrast curve databases.
+
+Functions
+---------
+list_contrast_grid_db
+    Load and display the contrast grid database as a formatted table.
+build_contrast_plotter
+    Build an interactive ipywidgets-based contrast curve plotter for use in Jupyter.
+build_download_widget
+    Build an ipywidgets panel to download the HEEPS database from a remote source.
+
+
+Generated with the assistance of GitHub Copilot (Claude Sonnet 4.6)
+"""
 
 import json
 import pandas as pd
@@ -11,6 +26,10 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import requests, zipfile, pathlib
 import datetime
+
+__all__ = ['list_contrast_grid_db', 'build_contrast_plotter', 'build_download_widget']
+__authors__ = 'Gilles Orban de Xivry'
+
 
 def list_contrast_grid_db(
     db_path,
@@ -404,7 +423,7 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True):
     ax.set_ylim(1e-8, 1e-3)
 
 
-def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
+def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, completed_only=True):
     """Build and display an interactive contrast-curve explorer with ZIP export."""
     db_path = Path(db_path)
 
@@ -423,13 +442,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
 
     # Selection widgets
     style = {'description_width': '60px'}
-    layout_sel = widgets.Layout(width='120px')
+    layout_sel = widgets.Layout(width='80px')
     layout_wide = widgets.Layout(width='160px')
 
     w_band = widgets.SelectMultiple(
         options=bands,
         value=bands[:1] if bands else [],
-        description='Band',
+        description='',
         style=style,
         layout=layout_sel,
         rows=min(5, max(len(bands), 1)),
@@ -437,7 +456,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
     w_mode = widgets.SelectMultiple(
         options=modes,
         value=modes[:1] if modes else [],
-        description='Mode',
+        description='',
         style=style,
         layout=layout_sel,
         rows=min(5, max(len(modes), 1)),
@@ -445,35 +464,43 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
     w_seeing = widgets.SelectMultiple(
         options=seeings,
         value=seeings[:1] if seeings else [],
-        description='Seeing',
+        description='',
         style=style,
         layout=layout_sel,
         rows=min(5, max(len(seeings), 1)),
     )
-    w_mag = widgets.SelectMultiple(
-        options=mags,
-        value=list(mags) if mags else [],
-        description='Mag',
-        style=style,
-        layout=layout_wide,
-        rows=min(10, max(len(mags), 1)),
-    )
+    # Magnitudes: four-column checkbox grid so all values are visible at once
+    mag_checks = [widgets.Checkbox(value=True, description=str(m),
+                                   style={'description_width': '0px'},
+                                   layout=widgets.Layout(width='70px', margin='0'))
+                  for m in mags]
+    def _mag_values():
+        return [mags[i] for i, cb in enumerate(mag_checks) if cb.value]
+    # Split into four columns
+    quarter = (len(mag_checks) + 3) // 4
+    w_mag_all = widgets.ToggleButton(value=True, description='All',
+                                     button_style='', icon='check',
+                                     layout=widgets.Layout(width='56px', height='24px'))
+    def _on_mag_all(change):
+        for cb in mag_checks:
+            cb.value = change['new']
+    w_mag_all.observe(_on_mag_all, names='value')
+    col_mag1 = widgets.VBox(mag_checks[:quarter], layout=widgets.Layout(margin='0'))
+    col_mag2 = widgets.VBox(mag_checks[quarter:2*quarter], layout=widgets.Layout(margin='0 0 0 4px'))
+    col_mag3 = widgets.VBox(mag_checks[2*quarter:3*quarter], layout=widgets.Layout(margin='0 0 0 4px'))
+    col_mag4 = widgets.VBox(mag_checks[3*quarter:], layout=widgets.Layout(margin='0 0 0 4px'))
+    mag_grid = widgets.HBox([col_mag1, col_mag2, col_mag3, col_mag4])
 
     # Curve-type switches
-    w_raw = widgets.Checkbox(value=True, description='Raw CC', style=style)
-    w_adi = widgets.Checkbox(value=True, description='ADI (no photon noise)', style=style)
-    w_bckg = widgets.Checkbox(value=True, description='ADI (with photon noise)', style=style)
+    cb_style = {'description_width': 'initial'}
+    w_raw = widgets.Checkbox(value=True, description='Raw CC', style=cb_style)
+    w_adi = widgets.Checkbox(value=True, description='ADI (no photon noise)', style=cb_style)
+    w_bckg = widgets.Checkbox(value=True, description='ADI (with photon noise)', style=cb_style)
 
     # Axes options
-    w_logx = widgets.Checkbox(value=True, description='Log x', style=style)
-    w_logy = widgets.Checkbox(value=True, description='Log y', style=style)
-
-    # COMPLETED only filter
-    w_completed_only = widgets.Checkbox(
-        value=True,
-        description='COMPLETED only',
-        style=style,
-    )
+    w_logx = widgets.Checkbox(value=True, description='Log x', style=cb_style)
+    w_logy = widgets.Checkbox(value=True, description='Log y', style=cb_style)
+    w_legend_inside = widgets.Checkbox(value=False, description='Legend inside', style=cb_style)
 
     # Run-id override
     w_ids = widgets.Text(
@@ -547,30 +574,44 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
     out = widgets.Output()
 
     # Layout
+    col_curves = widgets.VBox([
+        widgets.HTML('<b>Curves</b>'),
+        w_raw,
+        w_adi,
+        w_bckg,
+    ], layout=widgets.Layout(margin='0 0 0 12px', padding='0'))
+
+    col_axes = widgets.VBox([
+        widgets.HTML('<b>Axes</b>'),
+        w_logx,
+        w_logy,
+        w_legend_inside,
+    ], layout=widgets.Layout(margin='0 8px 0 4px', padding='0',
+                             align_items='flex-start'))
+
+    vdivider2 = widgets.HTML('<div style="border-left:1px solid #ccc;height:100%;margin:0 2px"></div>')
+
+    vdivider = widgets.HTML('<div style="border-left:1px solid #ccc;height:100%;margin:0 6px"></div>')
+
     row_select = widgets.HBox([
         widgets.VBox([widgets.HTML('<b>Band</b>'), w_band], layout=widgets.Layout(margin='0 8px')),
         widgets.VBox([widgets.HTML('<b>Mode</b>'), w_mode], layout=widgets.Layout(margin='0 8px')),
         widgets.VBox([widgets.HTML('<b>Seeing</b>'), w_seeing], layout=widgets.Layout(margin='0 8px')),
-        widgets.VBox([widgets.HTML('<b>Mag</b>'), w_mag], layout=widgets.Layout(margin='0 8px')),
-        widgets.VBox([widgets.HTML('<b>Status filter</b>'), w_completed_only], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HBox([widgets.HTML('<b>Magnitudes</b>'), w_mag_all]), mag_grid], layout=widgets.Layout(margin='0 8px')),
         status_box,
+        vdivider,
+        col_curves,
+        vdivider2,
+        col_axes,
     ])
-
-    col_curves = widgets.VBox([
-        widgets.HTML('<b>Curves &amp; axes</b>'),
-        w_raw,
-        w_adi,
-        w_bckg,
-        widgets.HTML('<hr style="margin:4px 0">'),
-        w_logx,
-        w_logy,
-    ], layout=widgets.Layout(margin='0 16px 0 8px'))
 
     col_plot = widgets.VBox([
         widgets.HTML('<b>Plot</b>'),
         w_ids,
         w_button,
-        widgets.HTML('<hr style="margin:6px 0">'),
+    ], layout=widgets.Layout(margin='0 16px 0 8px'))
+
+    col_save = widgets.VBox([
         widgets.HTML('<b>Save plot</b>'),
         w_save_dir,
         w_save_btn,
@@ -584,10 +625,10 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
         export_out,
     ], layout=widgets.Layout(margin='0 8px'))
 
-    row_controls = widgets.HBox([col_curves, col_plot, col_export])
+    row_controls = widgets.HBox([col_plot, col_save, col_export])
 
     ui = widgets.VBox([
-        widgets.HTML('<h3 style="margin:4px 0">HEEPS Contrast Curve Explorer</h3>'),
+        widgets.HTML('<h2 style="margin:4px 0">HEEPS Contrast Curve Explorer</h2>'),
         row_select,
         widgets.HTML('<hr style="margin:6px 0">'),
         row_controls,
@@ -608,14 +649,14 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
             ('band', w_band.value),
             ('mode', w_mode.value),
             ('seeing', w_seeing.value),
-            ('magnitude', w_mag.value),
+            ('magnitude', _mag_values()),
         ]
         if show_status:
             filters.append(('status', w_status.value))
         for col, values in filters:
             if values and col in sel.columns:
                 sel = sel[sel[col].isin(values)]
-        if w_completed_only.value and 'status' in sel.columns:
+        if completed_only and 'status' in sel.columns:
             sel = sel[sel['status'] == 'COMPLETED']
 
         sort_cols = [c for c in ('band', 'mode', 'magnitude', 'seeing') if c in sel.columns]
@@ -645,10 +686,11 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
                 return
 
             n_panels = int(any_raw) + int(any_adi)
+            fig_width = 12 if w_legend_inside.value else 15
             fig, ax_arr = plt.subplots(
                 n_panels,
                 1,
-                figsize=(15, 4.5 * n_panels),
+                figsize=(fig_width, 4.5 * n_panels),
                 sharex=False,
                 squeeze=False,
             )
@@ -715,15 +757,18 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True):
             for ax in ax_arr.flat:
                 _apply_axes_style(ax, band, log_x=w_logx.value, log_y=w_logy.value)
                 ax.set_xlabel('Angular separation [arcsec]')
-                ax.legend(
-                    fontsize=7,
-                    loc='upper left',
-                    bbox_to_anchor=(1.01, 1),
-                    borderaxespad=0,
-                    ncol=1,
-                )
+                if w_legend_inside.value:
+                    ax.legend(fontsize=7, loc='upper right')
+                else:
+                    ax.legend(
+                        fontsize=7,
+                        loc='upper left',
+                        bbox_to_anchor=(1.01, 1),
+                        borderaxespad=0,
+                        ncol=1,
+                    )
 
-            fig.tight_layout(rect=[0, 0, 0.75, 1])
+            fig.tight_layout(rect=[0, 0, 0.75, 1] if not w_legend_inside.value else None)
             state['fig'] = fig
             plt.close(fig)
             display(fig)
