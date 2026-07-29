@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heeps"
+version = "1.1.0"
+description = "High-contrast End-to-End Performance Simulator for the ELT"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "astropy",
+    "scipy",
+    "matplotlib",
+    "pandas",
+    "ipywidgets",
+    "requests",
+    "beautifulsoup4",
+    "packaging",
+    "scikit-image",
+    "ipython",
+    "vip_hci",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["heeps*"]
+
+[tool.setuptools.package-data]
+"heeps" = ["**/*"]
