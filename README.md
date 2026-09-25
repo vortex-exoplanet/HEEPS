@@ -19,6 +19,7 @@ Currently, the simulator includes four coronagraphs:
 - Classical Lyot Coronagraph (CLC)
 
 ## References
+- [Orban de Xivry, Absil, Hammond, et al. 2026](https://arxiv.org/abs/2608.30988), METIS high-contrast imaging simulations: From instrument modelling to science readiness 
 - [Delacroix, Absil, Orban de Xivry, et al. 2022](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12187/121870F/The-High-contrast-End-to-End-Performance-Simulator-HEEPS/10.1117/12.2630341.short), The High-contrast End-to-End Performance Simulator (HEEPS): influence of ELT/METIS instrumental effects
 - [Absil, Delacroix, Orban de Xivry, et al. 2022](https://www.spiedigitallibrary.org/conference-proceedings-of-spie/12185/1218511/Impact-of-water-vapor-seeing-on-mid-infrared-high-contrast/10.1117/12.2627972.short), Impact of water vapor seeing on mid-infrared high-contrast imaging at ELT scale
 - [Shinde, Delacroix, Orban de Xivry, et al. 2022](https://nanolithography.spiedigitallibrary.org/conference-proceedings-of-spie/12187/121870E/Modeling-the-vortex-center-glow-in-the-ELT-METIS-vortex/10.1117/12.2629855.short), Modeling the vortex center glow in the ELT/METIS vortex coronagraph
@@ -50,5 +51,7 @@ This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipy
 
 ## Database explorer
 To directly interact with the database contrast plotter tools ([database_contrast_plotter.ipynb](notebooks/database_contrast_plotter.ipynb)), use this binder link [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vortex-exoplanet/HEEPS/feature_database_notebooks?urlpath=lab%2Ftree%2Fnotebooks%2Fdatabase_contrast_plotter.ipynb).
+
+If you use this database, please cite [Orban de Xivry, Absil, Hammond, et al. 2026](https://arxiv.org/abs/2608.30988)
 
 > **Note:** downloading the HEEPS contrast curve database requires valid [METIS Science Team](https://svn.mpia.de/metis-science/bin/login/XWiki/XWikiLogin?srid=LTkdIBLn&xredirect=%2Fmetis-science%2Fbin%2Fview%2FMain%2F%3Fsrid%3DLTkdIBLn) XWiki credentials.
