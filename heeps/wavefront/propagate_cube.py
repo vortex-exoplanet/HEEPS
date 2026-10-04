@@ -56,7 +56,7 @@ def propagate_cube(wf, phase_screens, amp_screens, tiptilts, apo_misaligns,
             print('   apply classical lyot mask')
 
     # preload Lyot stop when no drift
-    if mode in ['CVC', 'RAVC', 'CLC', 'IMG', 'LMS']:
+    if mode in ['CVC', 'RAVC', 'CLC', 'ELT', 'LMS']:
         if np.all(ls_misaligns[:-1] == ls_misaligns[1:]):
             conf['ls_mask'] = lyot_stop(wf1, apply_ls=False, verbose=verbose, **conf)
         elif verbose is True:
