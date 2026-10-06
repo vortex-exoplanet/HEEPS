@@ -50,7 +50,7 @@ This Jupyter Notebook will walk you through a simple HEEPS simulation: [demo.ipy
 
 
 ## Database explorer
-To directly interact with the database contrast plotter tools ([database_contrast_plotter.ipynb](notebooks/database_contrast_plotter.ipynb)), use this binder link [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vortex-exoplanet/HEEPS/feature_database_notebooks?urlpath=lab%2Ftree%2Fnotebooks%2Fdatabase_contrast_plotter.ipynb).
+To directly interact with the database contrast plotter tools ([database_contrast_plotter.ipynb](notebooks/database_contrast_plotter.ipynb)), use this binder link [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vortex-exoplanet/HEEPS/main?urlpath=lab%2Ftree%2Fnotebooks%2Fdatabase_contrast_plotter.ipynb).
 
 If you use this database, please cite [Orban de Xivry, Absil, Hammond, et al. 2026](https://arxiv.org/abs/2608.30988)
 
