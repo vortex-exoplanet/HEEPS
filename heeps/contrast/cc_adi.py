@@ -80,9 +80,8 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # load PSFs: on-axis (star) and off-axis (planet)
     tag = '' if tag is None else '%s_'%tag
     loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag,'%s', band, mode))
-    psf_OFF = fits.getdata(loadname%'offaxis')
-    psf_ON = fits.getdata(loadname%'onaxis')
-    header_ON = fits.getheader(loadname%'onaxis')
+    psf_OFF, header_OFF = fits.getdata(loadname%'offaxis', header=True)
+    psf_ON, header_ON = fits.getdata(loadname%'onaxis', header=True)
     assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
     assert psf_OFF.ndim == 2, "off-axis PSF frame must be 2-dimensional"
     # cut/crop cube
@@ -101,12 +100,17 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
         conf.update(mode=mode, dit=dit, mag=mag)
-        psf_ON, psf_OFF = background(psf_ON, psf_OFF, header=header_ON,
-            verbose=True, **conf)
+        psf_ON, psf_OFF, det_entries = background(psf_ON, psf_OFF,
+                                                  header=header_ON,
+                                                  verbose=True,
+                                                  return_det_flux=True,
+                                                  **conf)
         if savebckg is True:
+            header_ON.update(det_entries)
+            header_OFF.update(det_entries)
             savename = os.path.join(dir_output, '%s%s_PSF_bckg1_%s_%s.fits'%(tag, '%s', band, mode))
-            fits.writeto(savename%'onaxis', psf_ON, overwrite=True)
-            fits.writeto(savename%'offaxis', psf_OFF, overwrite=True)
+            fits.writeto(savename%'onaxis', psf_ON, header=header_ON, overwrite=True)
+            fits.writeto(savename%'offaxis', psf_OFF, header=header_OFF, overwrite=True)
             if verbose is True:
                 print('   saved background on-axis PSFs  : %s'%os.path.basename(savename%'onaxis'))
                 print('   saved background off-axis PSFs : %s'%os.path.basename(savename%'offaxis'))
