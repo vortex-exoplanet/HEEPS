@@ -168,14 +168,43 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # tag
     # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
+    # provenance header for output fits files
+    hdr = {
+        'BAND':    band,
+        'MODE':    mode,
+        'PSCAL':   pscale,
+        'DIT':     dit,
+        'PSFON':   os.path.abspath(loadname % 'onaxis'),
+        'PSFOFF':  os.path.abspath(loadname % 'offaxis'),
+        'DEC':     dec,
+        'LAT':     lat,
+        'DURAT':   duration,
+        'PA_MIN':  float(np.min(pa)),
+        'PA_MAX':  float(np.max(pa)),
+        'PA_ROT':  float(np.ptp(np.mod(360 + pa, 360))),
+        'FWHM_PX': float(fwhm),
+        'FWHM_AS': float(fwhm * pscale / 1e3),
+        'STARPH':  float(starphot),
+        'SIGMA':   5,
+        'NBRANCH': 1,
+        'IMLIB':   imlib,
+        'NPROC':   cpu_count_vip,
+        'STUDNT':  bool(student_distrib),
+        'ADD_BCK': bool(add_bckg),
+        'MAG':     mag,
+        'APPSTR':  app_strehl,
+        'NSCRNS':  psf_ON.shape[0],
+        'NDET':    psf_ON.shape[1],
+        'FOAT':    f_oat if f_oat is not None else '',
+    }
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, adi]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
-            dir_output=dir_output, band=band, mode=mode)
+            dir_output=dir_output, band=band, mode=mode, header=hdr)
     # psf after post-processing
     if savepsf is True:
         _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False, imlib=imlib)
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
-            dir_output=dir_output, band=band, mode=mode)
+            dir_output=dir_output, band=band, mode=mode, header=hdr)
 
     return sep, adi
