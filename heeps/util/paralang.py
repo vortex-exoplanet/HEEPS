@@ -10,8 +10,8 @@ def paralang(npts, dec, lat, duration=3600):
         np.sum(abs(paralang(2, -61, -24.59, 3600*5)))
         104.42140816101042
         
-    To compute the total field rotation
-        np.ptp(np.mod(360 + pa, 360))    
+    Returns:
+        pa (ndarray): parallactic angles in deg
     """
 
     # hour angle to deg conversion
@@ -24,3 +24,12 @@ def paralang(npts, dec, lat, duration=3600):
     pa = -np.rad2deg(np.arctan2(-np.sin(hr), 
                                  np.cos(dr)*np.tan(lr) - np.sin(dr)*np.cos(hr)))
     return pa
+
+def field_rotation(pa):
+    """ 
+    total field rotation in deg 
+    
+    PARAMETERS:
+    pa (ndarray): parallactic angles in deg
+    """
+    return np.ptp(np.unwrap(pa, period=360))

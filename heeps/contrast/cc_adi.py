@@ -1,7 +1,7 @@
 from .background import background
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
-from heeps.util.paralang import paralang
+from heeps.util.paralang import paralang, field_rotation
 from heeps.util.psf_template import psf_template
 import multiprocessing as mpro
 import vip_hci
@@ -179,9 +179,9 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         'DEC':     dec,
         'LAT':     lat,
         'DURAT':   duration,
-        'PA_MIN':  float(np.min(pa)),
-        'PA_MAX':  float(np.max(pa)),
-        'PA_ROT':  float(np.ptp(np.mod(360 + pa, 360))),
+        'PA_MIN':  float(np.unwrap(pa, period=360).min()),
+        'PA_MAX':  float(np.unwrap(pa, period=360).max()),
+        'PA_ROT':  float(field_rotation(pa)),
         'FWHM_PX': float(fwhm),
         'FWHM_AS': float(fwhm * pscale / 1e3),
         'STARPH':  float(starphot),
