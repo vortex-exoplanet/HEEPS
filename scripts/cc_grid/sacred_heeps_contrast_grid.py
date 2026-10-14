@@ -21,6 +21,7 @@ USAGE
     Key parameters (all optional, defaults in default_config):
       band          : L | M | N1 | N2
       mode          : CVC | RAVC
+      hfov          : float  (half FoV [arcsec]; None -> band default)
       seeing        : Q1 | Q2 | Q3 | Q4
       magnitude     : float  (band magnitude of the host star)
       cpu_count     : int    (number of CPU cores for multiprocessing, default 10)
@@ -132,8 +133,8 @@ from pathlib import Path
 HOMEDIR = os.environ["HOME"] + '/'
 
 # Initialize the experiment
-ex_name = "2026_contrast_curve_tests"
-# ex_name = "2026_contrast_curve_grid"
+# ex_name = "2026_contrast_curve_tests"
+ex_name = "2026_contrast_curve_grid"
 
 ex = Experiment(ex_name)
 
@@ -269,6 +270,9 @@ def default_config():
     
     # Atmosphere parameters
     seeing = "Q2"  # Percentile Q1, Q2, Q3, Q4 = [12.5%, 37.5%, 62.5%, 87.5%]
+
+    # Field of view half-size [arcsec]; None -> band default from HFOV
+    hfov = None
     
     # SCAO configuration
     scao_K = 6  # Default SCAO mode (overridden based on magnitude in derived_config)
@@ -293,7 +297,7 @@ def default_config():
 # --- Derived Configuration (logged per-run by Sacred) ---
 @ex.config
 def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
-                   duration, dit, dir_input, dir_current, scao_K):
+                   duration, dit, dir_input, dir_current, scao_K, hfov):
     """
     Compute all derived scalars and input file paths from the base config and
     ingredient configs.  Everything assigned here is automatically recorded in
@@ -314,7 +318,11 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
 
     # Input file paths
     npupil   = NPUPIL[band]
-    hfov     = HFOV[band]
+    # hfov: explicit config/CLI override wins; None -> band default.
+    # Non-default hfov values get a token in the output dir names so that
+    # PSFs and contrast curves from different FoVs never share a cache dir.
+    hfov = HFOV[band] if hfov is None else hfov
+    _fov = '' if hfov == HFOV[band] else f'_hfov={hfov}'
     f_pupil  = PUP_FILENAMES[band]
     f_cbw    = CBW_FILENAMES[band]
     f_amp = TALBOT_FILENAMES[band]
@@ -335,11 +343,11 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     # PSF output directory: uses fphase_mag (not magnitude) because the PSF
     # is shared by all stars brighter than the ALF grid boundary.
     dir_output_psf = (f'output_files/2026_grid/'
-                      f'{band}_{mode}_s={seeing}_mag={fphase_mag}'
+                      f'{band}_{mode}_s={seeing}_mag={fphase_mag}{_fov}'
                       f'_{duration}s_{dit*1e3:.0f}ms/')
 
     dir_output = (f'output_files/2026_grid/'
-                  f'{band}_{mode}_s={seeing}_mag={magnitude}'
+                  f'{band}_{mode}_s={seeing}_mag={magnitude}{_fov}'
                   f'_{duration}s_{dit*1e3:.0f}ms/')
 
     dir_output_psf=os.path.join(dir_current, dir_output_psf)
@@ -483,7 +491,7 @@ def get_wfe_higher_order(band, magnitude, mode, fr,
 @ex.automain # immediately calls ex.run_commandline(), and then if __name__=='__main__'
 # @ex.main
 def run_simulation(mode, band, magnitude, duration, dit,
-                   seeing, ncpa,
+                   seeing, ncpa, hfov,
                    scao_K, wv_rms, ncpa_freq, sigLF, sigHF,
                    fphase_mag, dir_output, dir_output_psf,
                    f_phase, f_wv, f_cbw, f_scao, f_amp, f_oat, f_pupil,
@@ -518,6 +526,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         Detector integration time [s].
     seeing : str
         Atmospheric seeing percentile: 'Q1', 'Q2', 'Q3', or 'Q4'.
+    hfov : float
+        Half field-of-view [arcsec]; band default (HFOV) unless overridden.
     ncpa : dict
         NCPA ingredient config with keys 'frequency' (Hz), 'lag' (frames),
         'gain_I' (float), 'nmodes' (int).
@@ -602,7 +612,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     print(f"""
     Running simulation:
     - Mode: {mode}, Band: {band}, Magnitude: {magnitude}
-    - Seeing: {seeing}
+    - Seeing: {seeing}, hfov: {hfov} arcsec
     - Water vapor: {wv_rms} nm rms
     - SCAO K-mag: {scao_K}
     - NCPA : lag={ncpa['lag']}, nmodes={ncpa['nmodes']}, {ncpa_freq} Hz
@@ -802,12 +812,12 @@ def run_simulation(mode, band, magnitude, duration, dit,
                 ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2]) # N-band
                 ax.set_xlim(0.06, 1.2)
             else:
-                ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
-                ax.set_xlim(0.02, 0.8)
+                ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5, 1, 2])
+                ax.set_xlim(0.02, hfov)
 
         axes[0].plot(sep, raw, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
         axes[0].legend()
-        axes[0].set_title(f'{mode} {band}-mag = {magnitude}')
+        axes[0].set_title(f'{mode} {band}-mag = {magnitude}, hfov = {hfov} arcsec')
         axes[1].plot(sep1, adi1, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
         axes[1].plot(sep2, adi2, ':C0', label='background', marker='d', markevery=0.12, markersize=4)
         axes[1].legend(ncol=2, loc='upper right')
