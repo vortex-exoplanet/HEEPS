@@ -4,7 +4,7 @@ from astropy.io import fits
 def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3, 
         mag=5, mag_ref=0, flux_star=9e10, flux_bckg=9e4, app_single_psf=0.48, 
         f_vc_trans=None, f_app_trans=None, seed=123456, verbose=False, 
-        call_ScopeSim=False, **conf):
+        call_ScopeSim=False, return_det_flux=False, **conf):
 
     """
     This function applies background and photon noise to intup PSFs (off-axis
@@ -39,6 +39,8 @@ def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3,
             seed used by numpy.random process
         call_ScopeSim (bool):
             true if interfacing ScopeSim
+        return_det_flux (bool):
+            true if returning the detector fluxes for star and background as a dictionary
 
     Return:
         psf_ON (float ndarray):
@@ -83,4 +85,11 @@ def background(psf_ON, psf_OFF, header=None, mode='RAVC', lam=3.8e-6, dit=0.3,
         print('   dit=%s s, thruput=%.4f, mask_trans=%.4f,'%(dit, thruput, mask_trans))
         print('   mag=%s, star_signal=%.2e, bckg_noise=%.2e'%(mag, star_signal, bckg_noise))
 
-    return psf_ON, psf_OFF
+    if return_det_flux is True and call_ScopeSim is False:
+        det_entries = {
+            'DET_STAR':(star_signal, '[ph-el/dit] off-axis star flux at detector plane'),
+            'DET_BCKG':(bckg_noise, '[ph-el/dit/px] background flux at detector plane'),
+        }
+        return psf_ON, psf_OFF, det_entries
+    else:
+        return psf_ON, psf_OFF
