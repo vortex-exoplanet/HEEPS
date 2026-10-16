@@ -1,0 +1,3 @@
+# requirements.txt
+https://dox.uliege.be/s/4p94sAmtQbSELSG/download/heeps-1.1.0-py3-none-any.whl  # heeps wheel
+https://dox.uliege.be/s/HJK44BRNex62iaf/download/pyproper3-3.3.3-cp312-cp312-linux_x86_64.whl  # pyproper wheel
