@@ -57,6 +57,10 @@ class PhaseCubeGenerator():
         self.band     = config['band']
         self.npupil   = config['npupil']
         self.wv_rms   = config['wv_rms']
+        # Optional provenance keys (present in the Sacred grid configs); recorded
+        # in the output header when available.
+        self.seeing   = config.get('seeing')
+        self.scao_K   = config.get('scao_K')
 
         # NCPA closed-loop parameters (from ncpa ingredient)
         # nzern = number of ALF-corrected higher-order modes (excludes piston, tip, tilt)
@@ -70,7 +74,11 @@ class PhaseCubeGenerator():
         # Both tip-tilt (LF) and higher-order (HF) use the same NCPA frequency here;
         # extend with a separate key if they need to differ.
         self.ncpa_freq = config['ncpa_freq']
-        self.n_decim   = max(1, round(1.0 / (PHASE_SCREEN_DIT * self.ncpa_freq)))
+        # n_decim is only used by the closed-loop correction; tolerate
+        # ncpa_freq=None (normal imaging: no NCPA loop) so that the same class
+        # can build the plain scao+wv+cbw sum via run(..., apply_correction=False).
+        self.n_decim   = (max(1, round(1.0 / (PHASE_SCREEN_DIT * self.ncpa_freq)))
+                          if self.ncpa_freq is not None else 1)
 
         self.cpu_count=config['cpu_count']
 
@@ -212,6 +220,8 @@ class PhaseCubeGenerator():
         entries = {
             'BAND':    (self.band,                          'observing band'),
             'NPUPIL':  (self.npupil,                        'pupil grid size [pix]'),
+            'SEEING':  (self.seeing,                        'seeing percentile'),
+            'SCAO_K':  (self.scao_K,                        'SCAO K-mag of the residuals cube'),
             'WVRMS':   (self.wv_rms,                        'water-vapour OPD rms [nm]'),
             'WVRMSREF':(self.TEMPORAL_RMS_REF,              'ref. temporal rms for WV scaling [nm]'),
             'NZERN':   (self.nzern,                         'ALF HO Zernike modes (no piston/tip/tilt)'),
