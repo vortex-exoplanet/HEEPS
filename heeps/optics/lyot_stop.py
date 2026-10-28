@@ -60,7 +60,7 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
         Modified wavefront object.
     """
 
-    if mode in ['CVC', 'RAVC', 'CLC', 'ELT', 'LMS']:
+    if mode in ['CVC', 'RAVC', 'CLC', 'IMG', 'LMS']:
 
         # case 1: mask already preloaded
         if ls_mask is not None:
