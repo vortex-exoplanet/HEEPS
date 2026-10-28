@@ -4,7 +4,7 @@ import os
 import numpy as np
 
 def save2fits(data, name, dir_output='output_files', band='L', mode='RAVC', 
-        pscale=5.47, dit=0.3, **conf):
+        pscale=5.47, dit=0.3, header=None, **conf):
 
     ''' Save data to a fits file. '''
     
@@ -38,5 +38,11 @@ def save2fits(data, name, dir_output='output_files', band='L', mode='RAVC',
             for key, value in conf.items():
                 if type(value) not in (dict, list, np.ndarray):
                     hdul[0].header.append((key[:8], str(value)[-50:], key))        
+
+    # merge user-supplied header cards (e.g. provenance metadata from cc_adi)
+    if header is not None:
+        with fits.open(filename, 'update') as hdul:
+            for key, value in header.items():
+                hdul[0].header[key[:8]] = value
 
     return filename
