@@ -30,7 +30,7 @@ def lyot_stop(wf, ls_mask=None, f_lyot_stop='', f_lyot_stop_phase='',
     npupil : int, optional
         Size of pupil.
     mode : str, optional
-        Mode of operation. Options are 'RAVC', 'CVC', 'CLC', 'ELT', 'LMS'.
+        Mode of operation. Options are 'RAVC', 'CVC', 'CLC', 'IMG', 'LMS'.
     ravc_r : float, optional
         Radius of apodizer in RAVC mode.
     ls_dRext : float, optional
