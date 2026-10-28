@@ -88,7 +88,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
             elif conf['mode'] in ['CLC']:
                 conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
                     COLD_STOPS['ULS-LM']['f_lyot_stop']
-            elif conf['mode'] in ['ELT']:
+            elif conf['mode'] in ['IMG']:
                 conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
                     COLD_STOPS['SPM-LM']['f_lyot_stop']
             else:
@@ -101,7 +101,7 @@ def update_config(band='L', band_specs={'L':{}}, mode='RAVC', lam=3.8e-6,
             elif conf['mode'] in ['CLC']:
                 conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
                     COLD_STOPS['ULS-N']['f_lyot_stop']
-            elif conf['mode'] in ['ELT']:
+            elif conf['mode'] in ['IMG']:
                 # see also backup stop SPM-N-b
                 conf['f_lyot_stop'] = Path(conf['f_lyot_stop']) / \
                     COLD_STOPS['SPM-N']['f_lyot_stop']
