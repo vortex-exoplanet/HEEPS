@@ -78,9 +78,11 @@ def read_config(verbose=False, **update_conf):
     #    3. mode = 'APP'  for Apodizing Phase Plate
     #    4. mode = 'SPP'  for Shaped Pupil Plate
     #    5. mode = 'CLC'  for Classical Lyot Coronagraph
-    #    6. mode = 'ELT'  for no coronagraph (only telescope)
+    #    6. mode = 'IMG'  for no coronagraph with Lyot/cold stop 
+    #    7. (not a real mode) mode = 'ELT'  for no coronagraph no Lyot/cold stop (only telescope) 
+    #                       --> theoretical throughput of the telescope
     # Multiple HCI modes
-    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
+    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'IMG'],
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
     band = 'L',                         # spectral band
