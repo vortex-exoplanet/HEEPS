@@ -239,7 +239,7 @@ def create_disc_sequence(
         imlib=imlib,
     )
 
-    # normalise by the stellar flux that we removed earlier (units of contrast)
+    # normalize by the stellar flux that we removed earlier (units of contrast)
     cube /= star_val
 
     # add the disc model
