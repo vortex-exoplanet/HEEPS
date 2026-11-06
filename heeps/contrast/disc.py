@@ -52,11 +52,11 @@ def create_disc_sequence(
     seeing_q : int, default=2
         Seeing quartile (1-3) to select the PSF. Uses a default seeing of Q2 if not specified.
     source_xy : Union[tuple, list, None], optional
-        (x, y) pixel coordinates of the source for which extinction is applied.
+        (x, y) pixel coordinates in ``disc_model`` of the source for which extinction is applied.
     extinction : Union[int, float], default=0
         Extinction in magnitudes to apply to the source at ``source_xy``.
     starphot : float, default=1e11
-        Photometric scaling factor for the star.
+        User-defined normalization factor for aperture photometry with VIP (see cc_adi function).
     do_rdi : bool, default=True
         Whether to prepare a reference cube for RDI (Reference Differential Imaging). If ``True``, a reference cube is
         returned as the third output of this function.
@@ -87,6 +87,9 @@ def create_disc_sequence(
     if do_rdi and rdi_mag is None:
         rdi_mag = conf["mag"]
         print("Note: rdi_mag was not set. Using mag in the conf dictionary.", flush=True)
+    elif do_rdi:
+        # make sure the RDI magnitude is in the grid, round to the closest available magnitude
+        rdi_mag = _check_grid(rdi_mag, conf["band"], conf["mode"])
 
     # prepare the path for loading the PSF grid directory
     # make sure db_path ends with a slash
@@ -111,29 +114,11 @@ def create_disc_sequence(
     while disc_model.ndim > 2:
         disc_model = disc_model[0]
 
-    # record the stellar flux in the model for flux normalisation, and set its pixel to 0 (it will be in the on-axis PSF)
+    # record the stellar flux in the model for flux normalization, and set its pixel to 0 (it will be in the on-axis PSF)
     # some codes have the star on the centre 4 pixels instead of the centre pixel only so we need to sum the values
     mask = disc_model == disc_model.max()
     star_val = disc_model[mask].sum()
     disc_model[mask] = 0
-
-    # ensure the model has an odd size
-    if disc_model.shape[-1] % 2 == 0:
-        print("Converting input disc model to odd-dimensions.", flush=True)
-        disc_model = frame_shift(disc_model, shift_y=0.5, shift_x=0.5, imlib=imlib)
-        disc_model = disc_model[1:, 1:]
-
-    psf_OFF = open_fits(loadname % 'offaxis', verbose=False)
-    print(f"Using off-axis PSF from {loadname%'offaxis'}")
-    assert psf_OFF.ndim == 2, "off-axis PSF frame must be 2-dimensional"
-
-    # crop everything to a common size
-    min_crop = min(psf_OFF.shape[-1], disc_model.shape[-1], conf["ndet"])
-    conf["ndet"] = min_crop
-    if psf_OFF.shape[-1] > min_crop:
-        psf_OFF = frame_crop(psf_OFF, min_crop, verbose=False)
-    if disc_model.shape[-1] > min_crop:
-        disc_model = frame_crop(disc_model, min_crop, verbose=False)
 
     # apply extinction if requested
     if extinction > 0 and source_xy is not None:
@@ -141,6 +126,34 @@ def create_disc_sequence(
         extinction_factor = 10 ** (-0.4 * extinction)
         disc_model[source_y, source_x] *= extinction_factor
         print("Applied extinction of %.2f mag to source at (x, y) = (%d, %d)" % (extinction, source_x, source_y), flush=True)
+
+    # ensure the model has an odd size
+    if disc_model.shape[-1] % 2 == 0:
+        print("Converting input disc model to odd-dimensions.", flush=True)
+        disc_model = frame_shift(disc_model, shift_y=0.5, shift_x=0.5, imlib=imlib)
+        disc_model = disc_model[1:, 1:]
+
+    # load the off-axis PSF
+    psf_OFF = open_fits(loadname % 'offaxis', verbose=False)
+    print(f"Using off-axis PSF from {loadname%'offaxis'}")
+    assert psf_OFF.ndim == 2, "off-axis PSF frame must be 2-dimensional"
+
+    # load the on-axis PSF
+    psf_ON = open_fits(loadname % 'onaxis', verbose=False)
+    print(f"Using on-axis PSF from {loadname % 'onaxis'}")
+    assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
+
+    # crop everything to a common size, set by the smallest of the disc model, the on-axis PSF, and the user choice
+    min_crop = min(disc_model.shape[-1], conf["ndet"], psf_ON.shape[-1])
+    if min_crop % 2 == 0:
+        min_crop -= 1  # ensure odd size
+    conf["ndet"] = min_crop
+    if psf_OFF.shape[-1] > min_crop:  # crop to speed up the rest of the code
+        psf_OFF = frame_crop(psf_OFF, min_crop, verbose=False)
+    if disc_model.shape[-1] > min_crop:
+        disc_model = frame_crop(disc_model, min_crop, verbose=False)
+    if psf_ON.shape[-1] > min_crop:
+        psf_ON = cube_crop_frames(psf_ON, min_crop, verbose=False)
 
     # load coronagraph transmission depending on the mode and band
     if conf["mode"] == "ELT" or conf["mode"] is None:  # no coronagraph
@@ -154,14 +167,6 @@ def create_disc_sequence(
         print(f"Using transmission from {conf['f_oat']}")
     else: # TODO
         raise NotImplementedError(f"Mode {conf['mode']} not implemented for disc injection.")
-
-    # open and crop sequence
-    psf_ON = open_fits(loadname % 'onaxis', verbose=False)
-    print(f"Using on-axis PSF from {loadname % 'onaxis'}")
-    assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
-
-    if psf_ON.shape[-1] > min_crop:
-        psf_ON = cube_crop_frames(psf_ON, min_crop, verbose=False)
 
     nframes = psf_ON.shape[0]
 
@@ -225,7 +230,7 @@ def create_disc_sequence(
         pa,
         transmission=transmission,
         psf=psf_OFF,
-        normalize_psf=False,
+        normalize_psf=False,  # to account for difference between throughput of the coronagraph and the off-axis PSF
         nproc=conf["cpu_count"],
         mask_val=0,
         edge_blend="interp",
