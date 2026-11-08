@@ -2,12 +2,36 @@
 Sacred-based HEEPS contrast curve grid simulation.
 
 This script runs a single HEEPS end-to-end simulation for a given band, mode,
-magnitude, and seeing condition, and logs all inputs/outputs via Sacred.
+magnitude, and seeing condition, and logs all inputs/outputs via Sacred.  It
+covers both the vortex coronagraphic modes (CVC / RAVC) and normal imaging
+(mode = 'IMG',  no coronagraph) in a single script.
+
+Phase model (the only mode-dependent part):
+  - CVC / RAVC: NCPA correction is emulated with a closed ALF loop
+    (PhaseCubeGenerator): the combined phase cube includes SCAO residuals,
+    water vapour, CBW (static NCPA), ALF sensor noise and QACITS tip-tilt.
+  - IMG: no NCPA correction; the combined phase cube is simply the sum
+    scao + wv + cbw (PhaseCubeGenerator with apply_correction=False).
+
+Shared by all modes:
+  - hfov is 1.3'' for all four bands
+  - SCAO residual cubes are available at ``wavefront/dfull/2026_grid/`` for
+    K-mag = [6, 8, 9, 10, 10.5, 11, 11.5, 12] (one series per seeing
+    condition); SCAO_K_THRES is extended accordingly.
+  - contrast curves are computed for two declinations: dec=-5 (standard, ~40
+    degree field rotation over the 1 h sequence) and dec=+18 (~20 degree
+    field rotation).  cc_raw is dec-independent and saved once; the cc_adi
+    curves and the post-processed PSF cubes (psf_adi) are saved for both
+    decs, with a '_dec18' token in the dec=+18 filenames.
+  - the magnitude and seeing extents of the grid are defined by the SLURM
+    submission scripts (jobs_slurm/), not by this script.
 
 Each run produces:
   - A combined phase cube (SCAO + water vapour + CBW/NCPA)
   - On-axis and off-axis PSFs
-  - Raw and post-processed (ADI) contrast curves, with and without background noise
+  - Raw contrast curve (dec-independent, saved once) and post-processed (ADI)
+    contrast curves, with and without background noise, for dec=-5 (standard)
+    and dec=+18 (low field rotation)
   - A Sacred entry in the FileStorageObserver database (run.json, metrics, artifacts)
 
 -------------------------------------------------------------------------------
@@ -17,11 +41,12 @@ USAGE
 1. Single run (interactive / testing)
 --------------------------------------
     python sacred_heeps_contrast_grid.py with band=L mode=CVC seeing=Q2 magnitude=3.0
+    python sacred_heeps_contrast_grid.py with band=L mode=IMG seeing=Q2 magnitude=8.0
 
     Key parameters (all optional, defaults in default_config):
       band          : L | M | N1 | N2
-      mode          : CVC | RAVC
-      hfov          : float  (half FoV [arcsec]; None -> band default)
+      mode          : CVC | RAVC | IMG  (IMG = normal imaging, no coronagraph)
+      hfov          : float  (half FoV [arcsec]; None -> 1.3'' for all bands)
       seeing        : Q1 | Q2 | Q3 | Q4
       magnitude     : float  (band magnitude of the host star)
       cpu_count     : int    (number of CPU cores for multiprocessing, default 10)
@@ -39,11 +64,15 @@ Each band/mode combination has a dedicated submission script in jobs_slurm/:
     sbatch jobs_slurm/srun_cc_L_CVC_all_seeings.sh      # L-band  CVC,  66 tasks
     sbatch jobs_slurm/srun_cc_L_RAVC_all_seeings.sh     # L-band  RAVC, 36 tasks
 
-    Or submit the full 222-simulation grid at once:
+    Or submit the full grid at once:
     bash jobs_slurm/srun_cc_all.sh
 
     Each SLURM task calls this script as:
       python sacred_heeps_contrast_grid.py with magnitude=X band=Y mode=Z seeing=W cpu_count=10
+
+    Normal-imaging submission scripts are identical except for mode=IMG.
+    The magnitude and seeing extents of each grid are defined by the SLURM
+    submission scripts, not by this script.
 
 3. First run (pre-generate PSFs at mag=-1.5 before the magnitude sweep)
 ------------------------------------------------------------------------
@@ -55,8 +84,10 @@ Each band/mode combination has a dedicated submission script in jobs_slurm/:
 -------------------------------------------------------------------------------
 NOTES
 -------------------------------------------------------------------------------
-- PSFs are shared across magnitudes brighter than the ALF grid boundary and
-  stored in a separate dir_output_psf directory. Subsequent runs create symlinks.
+- PSFs are shared across magnitudes within a phase-cube cache bin and
+  stored in a separate dir_output_psf directory. Subsequent runs create
+  symlinks.  For CVC/RAVC the cache bin is the ALF magnitude boundary
+  (fphase_mag); for IMG it is the SCAO K-mag bin.
 - Phase cubes are cached: if the output .fits file already exists, generation
   is skipped automatically.
 - SLURM logs go to slog_<JOBID>_<TASKID>.txt in the submission directory.
@@ -74,7 +105,8 @@ two temporaries from the chained addition) alive simultaneously.  For L-band
 Python's implicit upcast of float32 × Python-float to float64 doubles each
 cube from ~12 GB to ~23 GB, compounding the problem.
 
-build_all_phase now avoids this by:
+PhaseCubeGenerator.build_all_phase (used by both the VC and the IMG phase
+models) avoids this by:
   - Casting all cubes to float32 on load
   - Using in-place += and deleting each term immediately after use
   - Calling gc.collect() before returning
@@ -182,7 +214,8 @@ def default_ncpa():
 # Module-level constants — immutable, not logged by Sacred
 # ---------------------------------------------------------------------------
 NPUPIL = {'L': 285, 'M': 227, 'N1': 155, 'N2': 119}
-HFOV = {'L': 0.8, 'M': 0.8, 'N1': 1.3, 'N2': 1.3}
+# Half FoV [arcsec]: 1.3'' for all four bands (both the VC and the IMG grids)
+HFOV = {'L': 1.3, 'M': 1.3, 'N1': 1.3, 'N2': 1.3}
 
 PHASE_DIR  = 'wavefront/dfull/2026_grid/'
 WV_DIR     = 'wavefront/wv/2026_grid/'
@@ -228,9 +261,23 @@ NCPA_MAG_THRES = {
 # NCPA loop frequency used when the star is too faint for the 10Hz nominal cadence
 NCPA_FREQ_FALLBACK = 1  # Hz
 
+# SCAO residual K-magnitudes available (one cube series per seeing condition)
+SCAO_K_MAGS = [6, 8, 9, 10, 10.5, 11, 11.5, 12]
 # SCAO K-magnitude step-up thresholds: list of (mag_threshold, K) in descending order.
 # First threshold that magnitude meets or exceeds wins; falls back to default K=6.
-SCAO_K_THRES = [(8.5, 9), (7.5, 8)]
+# Extended wrt earlier grids ([(8.5, 9), (7.5, 8)]) to cover the SCAO
+# simulations at K-mag = [10, 10.5, 11, 11.5, 12].
+SCAO_K_THRES = [(11.5, 12), (11.0, 11.5), (10.5, 11), (10.0, 10.5),
+                 (9.5, 10), (8.5, 9), (7.5, 8)]
+
+# Declinations [deg] for which the contrast curves are computed (the field
+# rotation of the ADI sequence is set by the declination via the parallactic
+# angles in cc_adi).  dec=-5 is the standard case (~40 deg field rotation over
+# the 1 h sequence) and keeps the standard (untagged) filenames and Sacred
+# artifact names.  dec=+18 (~20 deg field rotation) is an additional case with
+# a '_dec18' token in the output filenames and artifact names.
+DEC_STD  = -5
+DEC_LIST = [-5, 18]
 
 
 # QACITS residual tip-tilt error in mas
@@ -250,7 +297,7 @@ MASK_TAGS={'L':  {'CVC': 'CLS-LM', 'RAVC': 'RLS-LM'},
 @ex.config
 def default_config():
     tag=None        # this is used as prefix for HEEPS files (onaxis offaxis)
-    mode = "CVC"  # "CVC" or "RAVC"
+    mode = "CVC"  # "CVC" or "RAVC" (vortex coronagraph), "IMG" (normal imaging)
     band = "L"  # Default band
     nframes=36000
     duration = 3600
@@ -271,7 +318,7 @@ def default_config():
     # Atmosphere parameters
     seeing = "Q2"  # Percentile Q1, Q2, Q3, Q4 = [12.5%, 37.5%, 62.5%, 87.5%]
 
-    # Field of view half-size [arcsec]; None -> band default from HFOV
+    # Field of view half-size [arcsec]; None -> 1.3'' for all bands (HFOV)
     hfov = None
     
     # SCAO configuration
@@ -280,7 +327,8 @@ def default_config():
     # Other HEEPS specific variables
     nstep=1
     nframes_avg=100
-    dec=-5
+    dec=DEC_STD   # standard declination [deg]; the contrast curves are also
+                  # computed for the extra declinations in DEC_LIST
     add_phase=True
     add_amp=True
 
@@ -313,54 +361,68 @@ def derived_config(band, magnitude, mode, seeing, ncpa, do_f_phase,
     # RMS water-vapour OPD [nm]
     wv_rms = WV_TABLE[band][seeing]
 
-    # NCPA AO-loop frequency [Hz]
-    ncpa_freq = ncpa['frequency'] if magnitude <= NCPA_MAG_THRES[band][mode] else NCPA_FREQ_FALLBACK
-
     # Input file paths
-    npupil   = NPUPIL[band]
-    # hfov: explicit config/CLI override wins; None -> band default.
-    # Non-default hfov values get a token in the output dir names so that
-    # PSFs and contrast curves from different FoVs never share a cache dir.
+    npupil = NPUPIL[band]
+    # hfov: explicit config/CLI override wins; None -> band default (1.3'' for
+    # all bands).  Non-default hfov values get a token in the output dir names
+    # so that PSFs and contrast curves from different FoVs never share a cache dir.
     hfov = HFOV[band] if hfov is None else hfov
     _fov = '' if hfov == HFOV[band] else f'_hfov={hfov}'
-    f_pupil  = PUP_FILENAMES[band]
-    f_cbw    = CBW_FILENAMES[band]
-    f_amp = TALBOT_FILENAMES[band]
-    f_oat    = OAT_DIR    + f'oat_{band}_{mode}.fits'
-    f_wv     = (WV_DIR     + f'cube_WV_20260225_3600_100ms_'
-                          + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
-    f_scao   = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
-                          + f'_Kmag{scao_K}_0piston_meters_scao_only_{npupil}.fits')
-    # For f_phase, the magnitude is floored to the minimum magnitude available in
-    # the ALF sensor-noise files, so that bright stars share a single phase cube
-    # with the faintest star for which ALF data exists.
-    _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq,
-                                         data_dir=dir_input+'/wavefront/alf/')
-    fphase_mag   = max(magnitude, _min_alf_mag)
-    f_phase  = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
-                          + f'_Kmag{scao_K}_{band}mag{fphase_mag}_{mode}_all_{npupil}.fits')
+    f_pupil = PUP_FILENAMES[band]
+    f_cbw   = CBW_FILENAMES[band]
+    f_amp   = TALBOT_FILENAMES[band]
+    f_wv    = (WV_DIR + f'cube_WV_20260225_3600_100ms_'
+                     + f'Kmag2_0piston_meters_scao_only_{npupil}.fits')
+    f_scao  = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                      + f'_Kmag{scao_K}_0piston_meters_scao_only_{npupil}.fits')
 
-    # PSF output directory: uses fphase_mag (not magnitude) because the PSF
-    # is shared by all stars brighter than the ALF grid boundary.
-    dir_output_psf = (f'output_files/2026_grid/'
-                      f'{band}_{mode}_s={seeing}_mag={fphase_mag}{_fov}'
-                      f'_{duration}s_{dit*1e3:.0f}ms/')
+    if 'VC' in mode:
+        # Coronagraphic modes (CVC / RAVC): NCPA correction is emulated with a
+        # closed ALF loop (see PhaseCubeGenerator).
+        # NCPA AO-loop frequency [Hz]
+        ncpa_freq = ncpa['frequency'] if magnitude <= NCPA_MAG_THRES[band][mode] else NCPA_FREQ_FALLBACK
+        f_oat = OAT_DIR + f'oat_{band}_{mode}.fits'
+        # For f_phase, the magnitude is floored to the minimum magnitude available in
+        # the ALF sensor-noise files, so that bright stars share a single phase cube
+        # with the faintest star for which ALF data exists.
+        _min_alf_mag = get_min_alf_magnitude(band, mode, ncpa_freq,
+                                             data_dir=dir_input+'/wavefront/alf/')
+        fphase_mag = max(magnitude, _min_alf_mag)
+        f_phase = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                              + f'_Kmag{scao_K}_{band}mag{fphase_mag}_{mode}_all_{npupil}.fits')
+        # PSF output directory: uses fphase_mag (not magnitude) because the PSF
+        # is shared by all stars brighter than the ALF grid boundary.
+        dir_output_psf = (f'output_files/2026_grid/'
+                          f'{band}_{mode}_s={seeing}_mag={fphase_mag}{_fov}'
+                          f'_{duration}s_{dit*1e3:.0f}ms/')
+        # WFE noise scalars — computed based on NCPA parameters
+        sigLF = get_wfe_tip_tilt(band)  # in nm rms
+        sigHF = get_wfe_higher_order(band, magnitude, mode, ncpa_freq,
+                                     data_dir=dir_input+'/wavefront/alf/',
+                                     nzern=ncpa['nmodes'])  # in nm rms
+    else:
+        # Normal imaging (IMG): no NCPA correction, the combined phase cube is
+        # simply scao + wv + cbw (PhaseCubeGenerator with apply_correction=False).
+        # It depends on the magnitude only through the SCAO K-mag bin.
+        ncpa_freq = None
+        f_oat = ''
+        fphase_mag = None
+        f_phase = (PHASE_DIR + f'cube_Dfull_2026_{seeing}_3600_100ms'
+                              + f'_Kmag{scao_K}_{band}_scao+wv+cbw_{npupil}.fits')
+        sigLF = None  # in nm rms
+        sigHF = None  # in nm rms
+        # PSF output directory: shared by all magnitudes mapping to the same SCAO
+        # K-mag (the phase cube -- and hence the PSF -- is identical within a bin).
+        dir_output_psf = (f'output_files/2026_grid/'
+                          f'{band}_{mode}_s={seeing}_Kmag{scao_K}{_fov}'
+                          f'_{duration}s_{dit*1e3:.0f}ms/')
 
     dir_output = (f'output_files/2026_grid/'
                   f'{band}_{mode}_s={seeing}_mag={magnitude}{_fov}'
                   f'_{duration}s_{dit*1e3:.0f}ms/')
 
-    dir_output_psf=os.path.join(dir_current, dir_output_psf)
-    dir_output=os.path.join(dir_current, dir_output)
-
-    # WFE noise scalars — computed based on NCPA parameters
-    sigLF = None    # in nm rms 
-    sigHF = None    # in nm rms 
-    if do_f_phase:
-        sigLF = get_wfe_tip_tilt(band) # in nm rms 
-        sigHF = get_wfe_higher_order(band, magnitude, mode, ncpa_freq,
-                                     data_dir=dir_input+'/wavefront/alf/',
-                                     nzern=ncpa['nmodes']) # in nm rms 
+    dir_output_psf = os.path.join(dir_current, dir_output_psf)
+    dir_output = os.path.join(dir_current, dir_output)
 
 def get_wfe_tip_tilt(band):
     """
@@ -491,9 +553,9 @@ def get_wfe_higher_order(band, magnitude, mode, fr,
 @ex.automain # immediately calls ex.run_commandline(), and then if __name__=='__main__'
 # @ex.main
 def run_simulation(mode, band, magnitude, duration, dit,
-                   seeing, ncpa, hfov,
+                   seeing, ncpa, hfov, npupil,
                    scao_K, wv_rms, ncpa_freq, sigLF, sigHF,
-                   fphase_mag, dir_output, dir_output_psf,
+                   fphase_mag, dir_input, dir_output, dir_output_psf,
                    f_phase, f_wv, f_cbw, f_scao, f_amp, f_oat, f_pupil,
                    do_f_phase, do_propagation, do_contrast_curves,
                    dry_run,
@@ -503,9 +565,12 @@ def run_simulation(mode, band, magnitude, duration, dit,
     
     This function orchestrates a complete end-to-end HCI simulation including:
     1. Environment fingerprinting (HEEPS + VIP git info, package versions)
-    2. Combined phase cube generation (SCAO + WV + NCPA with closed-loop correction)
+    2. Combined phase cube generation (CVC/RAVC: SCAO + WV + NCPA with
+       closed-loop correction; IMG: scao + wv + cbw sum, no NCPA correction)
     3. HEEPS wavefront propagation (pupil, on-axis and off-axis PSFs)
-    4. Contrast curve computation (raw and post-processed with/without photon noise)
+    4. Contrast curve computation: cc_raw once (dec-independent), and cc_adi
+       (with/without photon noise) plus the post-processed PSF cubes for each
+       declination in DEC_LIST (dec=-5 standard, dec=+18 low field rotation)
     5. Visualization and artifact logging to Sacred FileStorageObserver
     
     All parameters are provided automatically by Sacred from the experiment config
@@ -515,7 +580,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     Parameters
     ----------
     mode : str
-        HCI mode, one of 'CVC', 'RAVC', 'APP', 'SPP', 'CLC', 'ELT'.
+        HCI mode: 'CVC' or 'RAVC' (vortex coronagraph), 'IMG' (normal imaging).
     band : str
         Observing band, one of 'L', 'M', 'N1', 'N2'.
     magnitude : float
@@ -527,7 +592,9 @@ def run_simulation(mode, band, magnitude, duration, dit,
     seeing : str
         Atmospheric seeing percentile: 'Q1', 'Q2', 'Q3', or 'Q4'.
     hfov : float
-        Half field-of-view [arcsec]; band default (HFOV) unless overridden.
+        Half field-of-view [arcsec]; 1.3'' for all bands (HFOV) unless overridden.
+    npupil : int
+        Pupil grid size [pix] (derived from band via NPUPIL).
     ncpa : dict
         NCPA ingredient config with keys 'frequency' (Hz), 'lag' (frames),
         'gain_I' (float), 'nmodes' (int).
@@ -536,19 +603,26 @@ def run_simulation(mode, band, magnitude, duration, dit,
     wv_rms : float
         RMS water-vapour OPD [nm] (derived from band and seeing via WV_TABLE).
     ncpa_freq : float
-        NCPA correction loop frequency [Hz] (derived from magnitude and NCPA_MAG_THRES).
+        NCPA correction loop frequency [Hz] (derived from magnitude and
+        NCPA_MAG_THRES); None for IMG.
     sigLF : float
-        Tip-tilt WFE [nm rms] from QACITS centering error (derived in main config).
+        Tip-tilt WFE [nm rms] from QACITS centering error (derived in main config);
+        None for IMG.
     sigHF : float
-        Higher-order WFE per mode [nm rms] from ALF sensor noise (derived in main config).
+        Higher-order WFE per mode [nm rms] from ALF sensor noise (derived in main
+        config); None for IMG.
     fphase_mag : float
-        Magnitude label for phase cube filename (floored to min ALF magnitude).
+        Magnitude label for phase cube filename (floored to min ALF magnitude);
+        None for IMG.
+    dir_input : str
+        Input directory (phase cubes, pupil, amplitude screens live under it).
     dir_output : str
         Output directory for this specific magnitude run.
     dir_output_psf : str
         Shared PSF output directory (magnitude-independent for caching).
     f_phase : str
-        Combined phase cube filename (SCAO + WV + NCPA).
+        Combined phase cube filename (SCAO + WV + NCPA for CVC/RAVC;
+        scao + wv + cbw for IMG).
     f_wv : str
         Water-vapour phase cube filename.
     f_cbw : str
@@ -558,7 +632,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     f_amp : str
         Talbot effect (amplitude screen) filename.
     f_oat : str
-        Vortex off-axis transmission filename.
+        Vortex off-axis transmission filename ('' for IMG).
     f_pupil : str
         Entrance pupil mask filename.
     do_f_phase : bool
@@ -580,15 +654,19 @@ def run_simulation(mode, band, magnitude, duration, dit,
         All outputs are saved to disk and logged as Sacred artifacts:
         - fingerprint.txt: environment info
         - conf_{band}_{mode}.pkl: HEEPS configuration
-        - cc_raw_{band}_{mode}.fits: raw contrast curve
+        - cc_raw_{band}_{mode}.fits: raw contrast curve (dec-independent, saved once)
         - cc_adi_bckg0_{band}_{mode}.fits: post-processed contrast (no photon noise)
-        - cc_adi_bckg1_{band}_{mode}.fits: post-processed contrast (with photon noise)
+        - cc_adi_bckg1_{band}_{mode}_mag{magnitude}.fits: post-processed contrast (with photon noise)
+        - psf_adi_bckg0_{band}_{mode}.fits / psf_adi_bckg1_{band}_{mode}_mag{magnitude}.fits:
+          post-processed PSF cubes
+        - the cc_adi curves and psf_adi cubes for dec=+18 with a '_dec18' token
+          (e.g. cc_adi_bckg0_dec18_{band}_{mode}.fits)
         - contrast_curve.png: visualization (not logged to reduce redundancy)
     
     Notes
     -----
     - PSF files (pupil, onaxis_PSF, offaxis_PSF) are shared across magnitudes
-      brighter than the ALF magnitude boundary and stored in dir_output_psf.
+      within a phase-cube cache bin and stored in dir_output_psf.
       Magnitude-specific runs create symlinks to these shared files.
     - If output files already exist, they are reused (cached) to avoid redundant
       computation.
@@ -597,7 +675,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
     
     See Also
     --------
-    PhaseCubeGenerator : Generates combined phase cubes with NCPA correction.
+    PhaseCubeGenerator : Generates combined phase cubes (NCPA closed-loop correction
+        for CVC/RAVC; plain scao + wv + cbw sum with apply_correction=False for IMG).
     get_wfe_tip_tilt : Computes tip-tilt WFE from QACITS error.
     get_wfe_higher_order : Computes higher-order WFE from ALF sensor noise.
     """
@@ -609,7 +688,8 @@ def run_simulation(mode, band, magnitude, duration, dit,
         do_f_phase = do_propagation = do_contrast_curves = False
 
     # Log the final configuration
-    print(f"""
+    if 'VC' in mode:
+        print(f"""
     Running simulation:
     - Mode: {mode}, Band: {band}, Magnitude: {magnitude}
     - Seeing: {seeing}, hfov: {hfov} arcsec
@@ -617,6 +697,7 @@ def run_simulation(mode, band, magnitude, duration, dit,
     - SCAO K-mag: {scao_K}
     - NCPA : lag={ncpa['lag']}, nmodes={ncpa['nmodes']}, {ncpa_freq} Hz
     - WFE noise: sigLF={sigLF:.1f} nm rms, sigHF={sigHF:.1f} nm rms, sigHF_all={np.sqrt(ncpa['nmodes'])*sigHF:.1f} nm rms
+    - Contrast curves for dec = {DEC_LIST} (standard: dec = {DEC_STD})
     -> f_phase : {f_phase}
 
     Input files:
@@ -626,6 +707,26 @@ def run_simulation(mode, band, magnitude, duration, dit,
     - f_cbw    : {f_cbw}
     - f_amp    : {f_amp}
     - f_oat    : {f_oat}
+
+
+    """)
+    else:
+        print(f"""
+    Running simulation (normal imaging):
+    - Mode: {mode}, Band: {band}, Magnitude: {magnitude}
+    - Seeing: {seeing}, hfov: {hfov} arcsec
+    - Water vapor: {wv_rms} nm rms
+    - SCAO K-mag: {scao_K}
+    - No NCPA correction: phase = scao + wv + cbw
+    - Contrast curves for dec = {DEC_LIST} (standard: dec = {DEC_STD})
+    -> f_phase : {f_phase}
+
+    Input files:
+    - f_pupil  : {f_pupil}
+    - f_scao   : {f_scao}
+    - f_wv     : {f_wv}
+    - f_cbw    : {f_cbw}
+    - f_amp    : {f_amp}
 
 
     """)
@@ -643,9 +744,14 @@ def run_simulation(mode, band, magnitude, duration, dit,
     #*****************#
     print('\n *** GENERATE PHASE CUBE ***')
     print(f' f_phase = {f_phase}')
-    if do_f_phase and not os.path.isfile(f_phase):
+    if do_f_phase and not os.path.isfile(os.path.join(dir_input, f_phase)):
         generator = PhaseCubeGenerator(_config)
-        generator.run(sigLF, sigHF)
+        if 'VC' in mode:
+            generator.run(sigLF, sigHF)
+        else:
+            # Normal imaging (IMG): no NCPA correction (apply_correction=False),
+            # the combined phase cube is simply scao + wv + cbw
+            generator.run(0.0, 0.0, apply_correction=False)
         del generator  # Explicit deletion
     else:
         print('--- SKIPPING creation of f_phase ---')
@@ -740,8 +846,10 @@ def run_simulation(mode, band, magnitude, duration, dit,
 
     if do_contrast_curves:
         print('---- CONTRAST CURVES ---')
+        os.makedirs(dir_output, exist_ok=True)
         
-        # Raw contrast
+        # Raw contrast: a radial profile involves no field rotation, so the
+        # curve is dec-independent and is computed/saved once (standard name).
         cc_raw_file = os.path.join(dir_output, f'cc_raw_{band}_{mode}.fits')
         if os.path.isfile(cc_raw_file):
             print(' -- Raw contrast: loading existing file --')
@@ -755,40 +863,88 @@ def run_simulation(mode, band, magnitude, duration, dit,
             gc.collect()
         _run.add_artifact(cc_raw_file, name='cc_raw.fits')
 
-        # Post-processed 5-sigma contrast curve (without photon noise)
-        # conf['cpu_count'] = 1   # this is faster see email 12/3/2026
-        # print(f"  setting cpu_count={conf['cpu_count']} for cc_adi --")
-        
-        cc_adi_file = os.path.join(dir_output, f'cc_adi_bckg0_{band}_{mode}.fits')
-        if os.path.isfile(cc_adi_file):
-            print(' -- Post-processed contrast (w/o photon noise): loading existing file --')
-            cc_adi_data = fits.getdata(cc_adi_file)
-            sep1 = cc_adi_data[0]
-            adi1 = cc_adi_data[1]
-        else:
-            print(' -- Post-processed contrast (w/o photon noise): computing --')
-            sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=True, verbose=True, cpu_count_vip=1, **conf)
-            print(' Collecting garbage (cc_adi 1)')
-            gc.collect()
-        _run.add_artifact(cc_adi_file, name='cc_adi.fits')
+        # The field rotation of the ADI sequence is set by the declination
+        # (parallactic angles in cc_adi): dec=-5 is the standard case (~40 deg
+        # over the 1 h sequence), dec=+18 is the low-rotation case (~20 deg).
+        # The on-axis/off-axis PSFs do not depend on dec (the parallactic angles
+        # only enter the ADI post-processing), so they are saved once, in
+        # dir_output_psf.
+        for dec in DEC_LIST:
+            conf['dec'] = dec
+            conf['add_bckg'] = False
+            # The standard declination keeps the standard (untagged) filenames
+            # and Sacred artifact names; extra declinations get a '_dec<dec>' token.
+            _dec = '' if dec == DEC_STD else f'_dec{dec}'
+            print(f'\n-- dec = {dec} deg --')
 
-        # Post-processed contrast with star flux + background + photon noise
-        conf['add_bckg'] = True
-        cc_adi_bckg_file = os.path.join(dir_output, f'cc_adi_bckg1_mag{magnitude}_{band}_{mode}.fits')
-        if os.path.isfile(cc_adi_bckg_file):
-            print(' -- Post-processed contrast (with photon noise): loading existing file --')
-            cc_adi_bckg_data = fits.getdata(cc_adi_bckg_file)
-            sep2 = cc_adi_bckg_data[0]
-            adi2 = cc_adi_bckg_data[1]
-        else:
-            print(' -- Post-processed contrast (with photon noise): computing --')
-            sep2, adi2 = heeps.contrast.cc_adi(savepsf=True, savebckg=True, savefits=True,
-                                               verbose=True, cpu_count_vip=1, **conf)
-            print(' Collecting garbage (cc_adi 2)')
-            gc.collect()
-        _run.add_artifact(cc_adi_bckg_file, name='cc_adi_bckg.fits')
+            # Post-processed 5-sigma contrast curve (without photon noise)
+            cc_adi_file = os.path.join(dir_output, f'cc_adi_bckg0_{band}_{mode}{_dec}.fits')
+            if os.path.isfile(cc_adi_file):
+                print(' -- Post-processed contrast (w/o photon noise): loading existing file --')
+                cc_adi_data = fits.getdata(cc_adi_file)
+                sep1 = cc_adi_data[0]
+                adi1 = cc_adi_data[1]
+            else:
+                print(' -- Post-processed contrast (w/o photon noise): computing --')
+                # heeps writes the psf_adi cube under a fixed standard name in
+                # dir_output: protect the standard-dec cube (if any) while
+                # computing this dec, then rename the new cube to its dec-tagged
+                # filename (the standard dec keeps the standard name)
+                _psf_std = os.path.join(dir_output, f'psf_adi_bckg0_{band}_{mode}.fits')
+                _psf_bak = _psf_std + '.bak'
+                if _dec != '' and os.path.isfile(_psf_std):
+                    os.rename(_psf_std, _psf_bak)
+                sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=False,
+                                                  verbose=True, cpu_count_vip=1, **conf)
+                # same output as save2fits (float32, no header for cc files)
+                fits.writeto(cc_adi_file, np.float32(np.array([sep1, adi1])), overwrite=True)
+                if _dec != '' and os.path.isfile(_psf_std):
+                    os.rename(_psf_std, os.path.join(dir_output, f'psf_adi_bckg0_{band}_{mode}{_dec}.fits'))
+                if os.path.isfile(_psf_bak):
+                    os.rename(_psf_bak, _psf_std)
+                print(' Collecting garbage (cc_adi 1)')
+                gc.collect()
+            _run.add_artifact(cc_adi_file, name=f'cc_adi{_dec}.fits')
 
-        # Create figure
+            # Post-processed contrast with star flux + background + photon noise
+            conf['add_bckg'] = True
+            cc_adi_bckg_file = os.path.join(dir_output, f'cc_adi_bckg1_{band}_{mode}_mag{magnitude}{_dec}.fits')
+            if os.path.isfile(cc_adi_bckg_file):
+                print(' -- Post-processed contrast (with photon noise): loading existing file --')
+                cc_adi_bckg_data = fits.getdata(cc_adi_bckg_file)
+                sep2 = cc_adi_bckg_data[0]
+                adi2 = cc_adi_bckg_data[1]
+            else:
+                print(' -- Post-processed contrast (with photon noise): computing --')
+                # savebckg only for the standard dec: the background PSF cubes do
+                # not depend on dec (no parallactic angles involved), save once
+                # heeps writes the psf_adi cube under a fixed name in dir_output
+                # (mag before band/mode, no dec token): protect any pre-existing
+                # cube, then move the fresh cube to its dec-tagged filename
+                _psf_std = os.path.join(dir_output, f'psf_adi_bckg1_mag{magnitude}_{band}_{mode}.fits')
+                _psf_tgt = os.path.join(dir_output, f'psf_adi_bckg1_{band}_{mode}_mag{magnitude}{_dec}.fits')
+                _psf_bak = _psf_std + '.bak'
+                if os.path.isfile(_psf_std):
+                    os.rename(_psf_std, _psf_bak)
+                sep2, adi2 = heeps.contrast.cc_adi(savepsf=True,
+                                                   savebckg=(dec == DEC_STD), savefits=False,
+                                                   verbose=True, cpu_count_vip=1, **conf)
+                # same output as save2fits (float32, no header for cc files)
+                fits.writeto(cc_adi_bckg_file, np.float32(np.array([sep2, adi2])), overwrite=True)
+                if os.path.isfile(_psf_std):
+                    os.rename(_psf_std, _psf_tgt)
+                if os.path.isfile(_psf_bak):
+                    os.rename(_psf_bak, _psf_std)
+                print(' Collecting garbage (cc_adi 2)')
+                gc.collect()
+            _run.add_artifact(cc_adi_bckg_file, name=f'cc_adi_bckg{_dec}.fits')
+
+            # keep the standard-dec curves for the figure below
+            if dec == DEC_STD:
+                sep1_std, adi1_std = sep1, adi1
+                sep2_std, adi2_std = sep2, adi2
+
+        # Create figure (standard declination)
         print('  -- Create figure -- ')
         savename = 'contrast_curve.png'
         xlabel = 'Angular separation $[arcsec]$'
@@ -798,28 +954,25 @@ def run_simulation(mode, band, magnitude, duration, dit,
         fig.subplots(2, 1, sharex=True)
         fig.subplots_adjust(hspace=0.02)
         axes = fig.axes
-        axes[0].set_ylim(1e-6, 1e-2)
-        axes[1].set_ylim(1e-8, 1e-3)
+        # Generous limits, valid for both the vortex modes and normal imaging
+        # (no vortex suppression in IMG, the raw contrast is much higher);
+        # tighten after inspection.
+        axes[0].set_ylim(1e-7, 1)
+        axes[1].set_ylim(1e-10, 1e-1)
         axes[1].set_xlabel(xlabel)
         for j, (ax, ylabel) in enumerate(zip(axes, [ylabel_raw, ylabel_adi])):
             ax.set_ylabel(ylabel)
             ax.grid(True), ax.grid(which='minor', linestyle=':')
             ax.loglog()
             ax.xaxis.set_major_formatter(plt.ScalarFormatter())
-            # ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])  # N-band
-            # ax.set_xlim(0.06, 1.2)
-            if band=='N2' or band=='N1':
-                ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2]) # N-band
-                ax.set_xlim(0.06, 1.2)
-            else:
-                ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5, 1, 2])
-                ax.set_xlim(0.02, hfov)
+            ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5, 1, 1.3])
+            ax.set_xlim(0.02, hfov)
 
         axes[0].plot(sep, raw, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
         axes[0].legend()
-        axes[0].set_title(f'{mode} {band}-mag = {magnitude}, hfov = {hfov} arcsec')
-        axes[1].plot(sep1, adi1, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
-        axes[1].plot(sep2, adi2, ':C0', label='background', marker='d', markevery=0.12, markersize=4)
+        axes[0].set_title(f'{mode} {band}-mag = {magnitude}, hfov = {hfov} arcsec, dec = {DEC_STD} deg')
+        axes[1].plot(sep1_std, adi1_std, 'C0', label=mode, marker='d', markevery=0.12, markersize=4)
+        axes[1].plot(sep2_std, adi2_std, ':C0', label='background', marker='d', markevery=0.12, markersize=4)
         axes[1].legend(ncol=2, loc='upper right')
         fig.savefig(f"{conf['dir_output']}/{savename}", dpi=300, transparent=True)
         # -- removing png from db -> redundant with the cc_adi files that are already copy to db
