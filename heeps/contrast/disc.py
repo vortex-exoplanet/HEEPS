@@ -156,7 +156,7 @@ def create_disc_sequence(
         psf_ON = cube_crop_frames(psf_ON, min_crop, verbose=False)
 
     # load coronagraph transmission depending on the mode and band
-    if conf["mode"] == "ELT" or conf["mode"] is None:  # no coronagraph
+    if conf["mode"] == "IMG" or conf["mode"] is None:  # no coronagraph
         transmission = None
     elif "VC" in conf["mode"]:
         if conf["band"] in ("L", "M"):
