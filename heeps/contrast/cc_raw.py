@@ -43,9 +43,19 @@ def cc_raw(dir_output='output_files', band='L', mode='RAVC', pscale=5.47,
     # tag
     # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
+    # provenance header for output fits file
+    hdr = {
+        'BAND':   band,
+        'MODE':   mode,
+        'PSCAL':  pscale,
+        'PSFON':  os.path.abspath(loadname % 'onaxis'),
+        'PSFOFF': os.path.abspath(loadname % 'offaxis'),
+        'NSCRNS': psf_ON.shape[0],
+        'NDET':   psf_ON.shape[1],
+    }
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, raw]), 'cc_%s%s%s'%('raw', '_%s_%s', tag),
-            dir_output=dir_output, band=band, mode=mode)
+            dir_output=dir_output, band=band, mode=mode, header=hdr)
 
     return sep, raw
