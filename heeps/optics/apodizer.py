@@ -134,6 +134,8 @@ def apodizer(wf, mode='RAVC', ravc_t=0.8, ravc_r=0.6, ngrid=1024, npupil=285,
                     f_spp_amp))
             SPP_amp = fits.getdata(f_spp_amp)
         else:
+            if verbose is True:
+                print(f" no SPP file {f_spp_amp} found, onaxis={onaxis}")
             SPP_amp = np.ones((npupil, npupil))
         # resize to npupil
         SPP_amp = impro.resize_img(SPP_amp, npupil)

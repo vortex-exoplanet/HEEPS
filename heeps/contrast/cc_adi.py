@@ -1,7 +1,7 @@
 from .background import background
 from heeps.util.save2fits import save2fits
 from heeps.util.img_processing import crop_cube
-from heeps.util.paralang import paralang
+from heeps.util.paralang import paralang, field_rotation
 from heeps.util.psf_template import psf_template
 import multiprocessing as mpro
 import vip_hci
@@ -80,9 +80,8 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # load PSFs: on-axis (star) and off-axis (planet)
     tag = '' if tag is None else '%s_'%tag
     loadname = os.path.join(dir_output, '%s%s_PSF_%s_%s.fits'%(tag,'%s', band, mode))
-    psf_OFF = fits.getdata(loadname%'offaxis')
-    psf_ON = fits.getdata(loadname%'onaxis')
-    header_ON = fits.getheader(loadname%'onaxis')
+    psf_OFF, header_OFF = fits.getdata(loadname%'offaxis', header=True)
+    psf_ON, header_ON = fits.getdata(loadname%'onaxis', header=True)
     assert psf_ON.ndim == 3, "on-axis PSF cube must be 3-dimensional"
     assert psf_OFF.ndim == 2, "off-axis PSF frame must be 2-dimensional"
     # cut/crop cube
@@ -101,12 +100,17 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # add background and photon noise: include star flux and HCI mode transmission
     if add_bckg is True:
         conf.update(mode=mode, dit=dit, mag=mag)
-        psf_ON, psf_OFF = background(psf_ON, psf_OFF, header=header_ON,
-            verbose=True, **conf)
+        psf_ON, psf_OFF, det_entries = background(psf_ON, psf_OFF,
+                                                  header=header_ON,
+                                                  verbose=True,
+                                                  return_det_flux=True,
+                                                  **conf)
         if savebckg is True:
+            header_ON.update(det_entries)
+            header_OFF.update(det_entries)
             savename = os.path.join(dir_output, '%s%s_PSF_bckg1_%s_%s.fits'%(tag, '%s', band, mode))
-            fits.writeto(savename%'onaxis', psf_ON, overwrite=True)
-            fits.writeto(savename%'offaxis', psf_OFF, overwrite=True)
+            fits.writeto(savename%'onaxis', psf_ON, header=header_ON, overwrite=True)
+            fits.writeto(savename%'offaxis', psf_OFF, header=header_OFF, overwrite=True)
             if verbose is True:
                 print('   saved background on-axis PSFs  : %s'%os.path.basename(savename%'onaxis'))
                 print('   saved background off-axis PSFs : %s'%os.path.basename(savename%'offaxis'))
@@ -164,14 +168,43 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
     # tag
     # tag = '_%s'%tag.replace('/', '_') if tag != None else ''
     tag = '' if tag == None or tag == '' else '_%s'%tag.replace('/', '_')
+    # provenance header for output fits files
+    hdr = {
+        'BAND':    band,
+        'MODE':    mode,
+        'PSCAL':   pscale,
+        'DIT':     dit,
+        'PSFON':   os.path.abspath(loadname % 'onaxis'),
+        'PSFOFF':  os.path.abspath(loadname % 'offaxis'),
+        'DEC':     dec,
+        'LAT':     lat,
+        'DURAT':   duration,
+        'PA_MIN':  float(np.unwrap(pa, period=360).min()),
+        'PA_MAX':  float(np.unwrap(pa, period=360).max()),
+        'PA_ROT':  float(field_rotation(pa)),
+        'FWHM_PX': float(fwhm),
+        'FWHM_AS': float(fwhm * pscale / 1e3),
+        'STARPH':  float(starphot),
+        'SIGMA':   5,
+        'NBRANCH': 1,
+        'IMLIB':   imlib,
+        'NPROC':   cpu_count_vip,
+        'STUDNT':  bool(student_distrib),
+        'ADD_BCK': bool(add_bckg),
+        'MAG':     mag,
+        'APPSTR':  app_strehl,
+        'NSCRNS':  psf_ON.shape[0],
+        'NDET':    psf_ON.shape[1],
+        'FOAT':    f_oat if f_oat is not None else '',
+    }
     # save contrast curves as fits file
     if savefits == True:
         save2fits(np.array([sep, adi]), 'cc_%s%s%s'%(name, '_%s_%s', tag),
-            dir_output=dir_output, band=band, mode=mode)
+            dir_output=dir_output, band=band, mode=mode, header=hdr)
     # psf after post-processing
     if savepsf is True:
         _, _, psf_pp = algo(psf_ON, pa, full_output=True, verbose=False, imlib=imlib)
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
-            dir_output=dir_output, band=band, mode=mode)
+            dir_output=dir_output, band=band, mode=mode, header=hdr)
 
     return sep, adi

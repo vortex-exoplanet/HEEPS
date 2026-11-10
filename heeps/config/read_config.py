@@ -78,9 +78,11 @@ def read_config(verbose=False, **update_conf):
     #    3. mode = 'APP'  for Apodizing Phase Plate
     #    4. mode = 'SPP'  for Shaped Pupil Plate
     #    5. mode = 'CLC'  for Classical Lyot Coronagraph
-    #    6. mode = 'ELT'  for no coronagraph (only telescope)
+    #    6. mode = 'IMG'  for no coronagraph with Lyot/cold stop 
+    #    7. (not a real mode) mode = 'ELT'  for no coronagraph no Lyot/cold stop (only telescope) 
+    #                       --> theoretical throughput of the telescope
     # Multiple HCI modes
-    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'ELT'],
+    modes = ['RAVC', 'CVC', 'CLC', 'APP', 'SPP', 'IMG'],
     # Default mode: L-band Ring Apodized Vortex
     mode = 'RAVC',                      # HCI mode
     band = 'L',                         # spectral band
@@ -141,30 +143,30 @@ def read_config(verbose=False, **update_conf):
     # Multiple spectral bands
     bands = ['L', 'M', 'N1', 'N2'],
     band_specs = {
-        'L': {'lam': 3.81e-6,
-            'pscale': 5.47,
-            'flux_star': 7.570e+10,                 # HCI-L long
-            'flux_bckg': 9.565e+04},
+        'L': {'lam': 3.81e-6,               # [meters]
+              'pscale': 5.47,               # [mas/pix]
+              'flux_star': 9.497e+10,       # [e-/s] for mag=0 star, HCI-L long
+              'flux_bckg': 9.496e+04},      # [e-/s/pix] for HCI-L long
         'M': {'lam': 4.79e-6,
             'pscale': 5.47,
-            'flux_star': 1.882e+10,                 # CO ref
-            'flux_bckg': 7.8317e+05},
+            'flux_star': 2.471e+10,         # CO ref
+            'flux_bckg': 1.052e+06},
         'N1': {'lam': 8.70e-6,
             'pscale': 6.79,
-            'flux_star': 3.139e+10,                 # GeoSnap N1
-            'flux_bckg': 4.677e+07},
+            'flux_star': 3.550e+10,         # N1, GeoSnap
+            'flux_bckg': 4.590e+07},
         'N2': {'lam': 11.33e-6, 
             'pscale': 6.79,
-            'flux_star': 3.145e+10,                 # GeoSnap N2
-            'flux_bckg': 1.1309e+08},
-        'N1a': {'lam': 8.67e-6, 
-            'pscale': 10.78,
-            'flux_star': 2.979e+10,                 # Aquarius N1
-            'flux_bckg': 9.630e+07},
-        'N2a': {'lam': 11.21e-6, 
-            'pscale': 10.78,
-            'flux_star': 2.823e+10,                 # Aquarius N2
-            'flux_bckg': 2.142e+08}
+            'flux_star': 3.816e+10,         # N2, GeoSnap
+            'flux_bckg': 1.128e+08},
+        # 'N1a': {'lam': 8.67e-6, 
+        #     'pscale': 10.78,
+        #     'flux_star': 2.979e+10,        # N1, Aquarius (obsolete)
+        #     'flux_bckg': 9.630e+07},
+        # 'N2a': {'lam': 11.21e-6, 
+        #     'pscale': 10.78,
+        #     'flux_star': 2.823e+10,        # N2, Aquarius (obsolete)
+        #     'flux_bckg': 2.142e+08}
         },
 
 

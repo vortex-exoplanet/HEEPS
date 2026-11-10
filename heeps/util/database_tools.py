@@ -629,6 +629,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
 
     ui = widgets.VBox([
         widgets.HTML('<h2 style="margin:4px 0">HEEPS Contrast Curve Explorer</h2>'),
+        widgets.HTML(
+            '<p style="color:#000; margin:4px 0">'
+            '<b style="color:#f28c28">WARNING:</b> '
+            'Please check the table at the top of this notebook '
+            'for the <b>saturation limits</b> of each mode.'
+            '</p>'
+        ),
         row_select,
         widgets.HTML('<hr style="margin:6px 0">'),
         row_controls,
