@@ -122,6 +122,7 @@ import sys
 import time
 import os
 import heeps
+from heeps.util.save2fits import save2fits
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend for headless environments
@@ -179,7 +180,8 @@ def get_db_path(ex_name):
     hostname = socket.gethostname()
     machine_paths = {
         'ago-fenrir': '/mnt/disk20tb/METIS/DATABASE_SACRED/',
-        'lm4': '/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/'
+        'lm4': '/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/',
+        'drg3': '/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/',
     }
 
     for machine, base_path in machine_paths.items():
@@ -894,10 +896,14 @@ def run_simulation(mode, band, magnitude, duration, dit,
                 _psf_bak = _psf_std + '.bak'
                 if _dec != '' and os.path.isfile(_psf_std):
                     os.rename(_psf_std, _psf_bak)
-                sep1, adi1 = heeps.contrast.cc_adi(savepsf=True, savefits=False,
-                                                  verbose=True, cpu_count_vip=1, **conf)
-                # same output as save2fits (float32, no header for cc files)
-                fits.writeto(cc_adi_file, np.float32(np.array([sep1, adi1])), overwrite=True)
+                sep1, adi1, hdr1 = heeps.contrast.cc_adi(savepsf=True, savefits=False,
+                                                         return_hdr=True,
+                                                         verbose=True, cpu_count_vip=1, **conf)
+                # save via heeps' save2fits (float32) under the dec-tagged filename,
+                # WITH the provenance header built inside cc_adi (hdr): the name
+                # pattern below reproduces exactly cc_adi_file
+                save2fits(np.array([sep1, adi1]), f'cc_adi_bckg0_%s_%s{_dec}',
+                          dir_output=dir_output, band=band, mode=mode, header=hdr1)
                 if _dec != '' and os.path.isfile(_psf_std):
                     os.rename(_psf_std, os.path.join(dir_output, f'psf_adi_bckg0_{band}_{mode}{_dec}.fits'))
                 if os.path.isfile(_psf_bak):
@@ -926,11 +932,15 @@ def run_simulation(mode, band, magnitude, duration, dit,
                 _psf_bak = _psf_std + '.bak'
                 if os.path.isfile(_psf_std):
                     os.rename(_psf_std, _psf_bak)
-                sep2, adi2 = heeps.contrast.cc_adi(savepsf=True,
-                                                   savebckg=(dec == DEC_STD), savefits=False,
-                                                   verbose=True, cpu_count_vip=1, **conf)
-                # same output as save2fits (float32, no header for cc files)
-                fits.writeto(cc_adi_bckg_file, np.float32(np.array([sep2, adi2])), overwrite=True)
+                sep2, adi2, hdr2 = heeps.contrast.cc_adi(savepsf=True,
+                                                         savebckg=(dec == DEC_STD), savefits=False,
+                                                         return_hdr=True,
+                                                         verbose=True, cpu_count_vip=1, **conf)
+                # save via heeps' save2fits (float32) under the dec-tagged filename,
+                # WITH the provenance header built inside cc_adi (hdr): the name
+                # pattern below reproduces exactly cc_adi_bckg_file
+                save2fits(np.array([sep2, adi2]), f'cc_adi_bckg1_%s_%s_mag{magnitude}{_dec}',
+                          dir_output=dir_output, band=band, mode=mode, header=hdr2)
                 if os.path.isfile(_psf_std):
                     os.rename(_psf_std, _psf_tgt)
                 if os.path.isfile(_psf_bak):

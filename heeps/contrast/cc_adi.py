@@ -17,7 +17,7 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         pscale=5.47, dit=0.3, mag=5, lat=-24.59, dec=-5, app_strehl=0.64, 
         nscreens=None, ndet=None, tag=None, f_oat=None, student_distrib=True, 
         savepsf=False, savebckg=False, starphot=1e11, duration=3600, cpu_count=None,
-        cpu_count_vip=1, savefits=False, verbose=False, imlib='opencv', **conf):
+        cpu_count_vip=1, savefits=False, return_hdr=False, verbose=False, imlib='opencv', **conf):
 
     """
     This function calculates and draws the contrast curve (5-sigma sensitivity) 
@@ -59,6 +59,11 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
             true if ADI psf is saved in a fits file
         savefits (bool):
             true if ADI contrast curve is saved in a fits file
+        return_hdr (bool):
+            true to also return the provenance header dict as a third return
+            value, i.e. (sep, adi, hdr). Useful when the caller saves the
+            curve itself (savefits=False, e.g. to control the filename) but
+            still wants the header in the saved fits file.
         savebckg (bool):
             true if PSF cubes with background and photon noise are saved as fits files
         starphot (float):
@@ -207,4 +212,6 @@ def cc_adi(dir_output='output_files', band='L', mode='RAVC', add_bckg=False,
         save2fits(psf_pp, 'psf_%s%s%s'%(name, '_%s_%s', tag), 
             dir_output=dir_output, band=band, mode=mode, header=hdr)
 
+    if return_hdr:
+        return sep, adi, hdr
     return sep, adi
