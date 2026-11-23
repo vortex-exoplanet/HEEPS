@@ -27,8 +27,67 @@ from matplotlib.ticker import FormatStrFormatter
 import requests, zipfile, pathlib
 import datetime
 
-__all__ = ['list_contrast_grid_db', 'build_contrast_plotter', 'build_download_widget']
+__all__ = ['list_contrast_grid_db', 'build_contrast_plotter', 'build_download_widget',
+           'merge_sacred_dbs', 'dec_artifact_suffix', 'DEC_STD', 'DEC_OPTIONS']
 __authors__ = 'Gilles Orban de Xivry'
+
+# Declination options produced by sacred_heeps_contrast_grid.py (DEC_LIST).
+# The standard dec keeps untagged artifact names; the other declinations get a
+# '_dec<dec>' token in the ADI artifact filenames (cc_adi_dec18.fits, ...).
+DEC_STD = -5
+DEC_OPTIONS = (-5, 18)
+
+
+def dec_artifact_suffix(dec):
+    """Artifact-name suffix for a declination: '' for the standard dec (-5),
+    else '_dec<dec>' (e.g. '_dec18')."""
+    return '' if int(dec) == DEC_STD else f'_dec{int(dec)}'
+
+
+def merge_sacred_dbs(src_paths, dst_dir, hardlink=True):
+    """
+    Merge several Sacred FileStorageObserver databases into one folder.
+
+    Run directories are numeric in each source DB; they are renumbered with a
+    running index in ``dst_dir`` to avoid ID collisions. Non-numeric entries
+    (e.g. '_sources') are skipped. Existing numeric runs in ``dst_dir`` are kept
+    and numbering continues after them. Returns the number of runs copied.
+
+    Example
+    -------
+    merge_sacred_dbs(['/local/VC/2026_contrast_curve_grid',
+                      '/globalscratch/ulg/PSILab/gorban/DATABASE_SACRED/2026_contrast_curve_grid'],
+                     './merged_db/2026_contrast_curve_grid')
+    """
+    import os
+    import shutil
+    dst_dir = Path(dst_dir)
+    dst_dir.mkdir(parents=True, exist_ok=True)
+    next_id = 1
+    for p in dst_dir.iterdir():
+        if p.is_dir() and p.name.isdigit():
+            next_id = max(next_id, int(p.name) + 1)
+    n = 0
+    for src in src_paths:
+        src = Path(src)
+        if not src.is_dir():
+            print(f'[WARN] merge_sacred_dbs: {src} is not a directory, skipped')
+            continue
+        for p in sorted(src.iterdir()):
+            if not (p.is_dir() and p.name.isdigit()):
+                continue
+            target = dst_dir / str(next_id)
+            try:
+                shutil.copytree(p, target, dirs_exist_ok=True,
+                                copy_function=os.link if hardlink else shutil.copy2)
+            except OSError:
+                # e.g. hardlink not permitted (cross-device): real copy, possibly
+                # over a partially created target from the failed attempt
+                shutil.copytree(p, target, dirs_exist_ok=True)
+            next_id += 1
+            n += 1
+    print(f'[merge_sacred_dbs] copied {n} run(s) into {dst_dir}')
+    return n
 
 
 def list_contrast_grid_db(
@@ -166,8 +225,13 @@ def list_contrast_grid_db(
             except Exception:
                 pass
 
-        # Flag available artifacts
-        for artifact_name in ('cc_raw.fits', 'cc_adi.fits', 'cc_adi_bckg.fits', 'conf_heeps.pkl'):
+        # Flag available artifacts (base + dec-tagged ADI variants)
+        _artifacts = ['cc_raw.fits', 'cc_adi.fits', 'cc_adi_bckg.fits', 'conf_heeps.pkl']
+        for _d in DEC_OPTIONS:
+            _s = dec_artifact_suffix(_d)
+            if _s:
+                _artifacts += [f'cc_adi{_s}.fits', f'cc_adi_bckg{_s}.fits']
+        for artifact_name in _artifacts:
             flat[f'has_{artifact_name.replace(".", "_")}'] = (run_dir / artifact_name).exists()
 
         records.append(flat)
@@ -380,13 +444,16 @@ def _load_cc(run_dir: Path, artifact_name: str):
         return None, None
 
 
-def _run_label(run_id, row):
+def _run_label(run_id, row, dec=None):
     """Short descriptive label for a run to use in plot legend."""
     band = row.get('band', '?')
     mode = row.get('mode', '?')
     mag = row.get('magnitude', '?')
     see = row.get('seeing', '?')
-    return f'#{run_id} {band}/{mode} mag={mag} s={see}'
+    label = f'#{run_id} {band}/{mode} mag={mag} s={see}'
+    if dec is not None:
+        label += f' dec={int(dec)}'
+    return label
 
 
 def _run_prefix(run_id, row):
@@ -402,8 +469,14 @@ def _run_prefix(run_id, row):
     return f'run{int(run_id):04d}_{band}_{mode}_mag{mag_str}_s{see}'
 
 
-def _apply_axes_style(ax, band, log_x=True, log_y=True):
-    """Apply axis style consistent with sacred_heeps_contrast_grid.py."""
+def _apply_axes_style(ax, band, log_x=True, log_y=True, ylim=None):
+    """Apply axis style consistent with sacred_heeps_contrast_grid.py.
+
+    ylim : tuple, optional
+        Override for the y-axis limits (default (1e-8, 1e-3)). Pass wider limits
+        (e.g. (1e-8, 1.0)) when IMG runs are plotted: without a vortex the raw
+        contrast is orders of magnitude higher.
+    """
     ax.grid(True)
     ax.grid(which='minor', linestyle=':')
     if log_x and log_y:
@@ -420,11 +493,20 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True):
     else:
         ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
         ax.set_xlim(0.02, 0.9)
-    ax.set_ylim(1e-8, 1e-3)
+    ax.set_ylim(*(ylim if ylim is not None else (1e-8, 1e-3)))
 
 
-def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, completed_only=True):
-    """Build and display an interactive contrast-curve explorer with ZIP export."""
+def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, completed_only=True,
+                           dec=DEC_STD):
+    """
+    Build and display an interactive contrast-curve explorer with ZIP export.
+
+    dec : int, optional
+        Declination whose ADI artifacts are plotted/exported (one of DEC_OPTIONS,
+        default -5 = standard). The standard dec uses the untagged artifacts
+        (cc_adi.fits, cc_adi_bckg.fits), dec=18 the '_dec18' ones; cc_raw.fits is
+        dec-independent. Changeable interactively via the 'Dec [deg]' dropdown.
+    """
     db_path = Path(db_path)
 
     # Shared mutable state (current selection kept in sync with last Plot call)
@@ -468,6 +550,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
         style=style,
         layout=layout_sel,
         rows=min(5, max(len(seeings), 1)),
+    )
+    w_dec = widgets.Dropdown(
+        options=list(DEC_OPTIONS),
+        value=int(dec) if int(dec) in DEC_OPTIONS else DEC_STD,
+        description='Dec [deg]',
+        style=style,
+        layout=layout_wide,
     )
     # Magnitudes: four-column checkbox grid so all values are visible at once
     mag_checks = [widgets.Checkbox(value=True, description=str(m),
@@ -534,11 +623,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
     )
 
     # Export widgets
-    export_artifacts = [
-        ('cc_raw.fits', 'cc_raw.fits'),
-        ('cc_adi.fits', 'cc_adi.fits'),
-        ('cc_adi_bckg.fits', 'cc_adi_bckg.fits'),
-    ]
+    # (export_artifacts is built per selected dec inside on_export)
 
     w_export_dir = widgets.Text(
         value=str(Path.home()),
@@ -597,6 +682,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
         widgets.VBox([widgets.HTML('<b>Band</b>'), w_band], layout=widgets.Layout(margin='0 8px')),
         widgets.VBox([widgets.HTML('<b>Mode</b>'), w_mode], layout=widgets.Layout(margin='0 8px')),
         widgets.VBox([widgets.HTML('<b>Seeing</b>'), w_seeing], layout=widgets.Layout(margin='0 8px')),
+        widgets.VBox([widgets.HTML('<b>Dec</b>'), w_dec], layout=widgets.Layout(margin='0 8px')),
         widgets.VBox([widgets.HBox([widgets.HTML('<b>Magnitudes</b>'), w_mag_all]), mag_grid], layout=widgets.Layout(margin='0 8px')),
         status_box,
         vdivider,
@@ -686,6 +772,15 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             state['sel'] = sel
             print(f'Plotting {len(sel)} run(s): {list(sel.index)}')
 
+            dec_sel = int(w_dec.value)
+            suf = dec_artifact_suffix(dec_sel)
+            if suf:
+                missing = [rid for rid in sel.index
+                           if not (db_path / str(rid) / f'cc_adi{suf}.fits').exists()]
+                if missing:
+                    print(f'[note] {len(missing)} run(s) have no dec={dec_sel} artifacts '
+                          f'(ADI curves skipped for them): {list(missing)}')
+
             any_raw = w_raw.value
             any_adi = w_adi.value or w_bckg.value
             if not (any_raw or any_adi):
@@ -710,13 +805,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                 ax_raw.set_title('Raw contrast curve')
             if ax_adi is not None:
                 ax_adi.set_ylabel('5-σ ADI sensitivity (contrast)')
-                ax_adi.set_title('Post-processed 5-σ contrast')
+                ax_adi.set_title(f'Post-processed 5-σ contrast (dec={dec_sel} deg)')
 
             band = 'L'
             for i, (run_id, row) in enumerate(sel.iterrows()):
                 run_dir = db_path / str(run_id)
                 color = f'C{i % 10}'
-                label = _run_label(run_id, row)
+                label = _run_label(run_id, row, dec=dec_sel)
                 band = row.get('band', 'L')
 
                 if ax_raw is not None:
@@ -735,7 +830,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
 
                 if ax_adi is not None:
                     if w_adi.value:
-                        sep, cc = _load_cc(run_dir, 'cc_adi.fits')
+                        sep, cc = _load_cc(run_dir, f'cc_adi{suf}.fits')
                         if sep is not None:
                             ax_adi.plot(
                                 sep,
@@ -748,7 +843,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                                 markersize=4,
                             )
                     if w_bckg.value:
-                        sep, cc = _load_cc(run_dir, 'cc_adi_bckg.fits')
+                        sep, cc = _load_cc(run_dir, f'cc_adi_bckg{suf}.fits')
                         if sep is not None:
                             ax_adi.plot(
                                 sep,
@@ -761,8 +856,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                                 markersize=4,
                             )
 
+            # IMG (no vortex) has a much higher raw contrast: widen y-limits then
+            has_img = 'mode' in sel.columns and bool((sel['mode'] == 'IMG').any())
+            ylim_raw = (1e-8, 1.0) if has_img else None
+            ylim_adi = (1e-10, 1e-1) if has_img else None
             for ax in ax_arr.flat:
-                _apply_axes_style(ax, band, log_x=w_logx.value, log_y=w_logy.value)
+                yl = ylim_raw if ax is ax_raw else (ylim_adi if ax is ax_adi else None)
+                _apply_axes_style(ax, band, log_x=w_logx.value, log_y=w_logy.value, ylim=yl)
                 ax.set_xlabel('Angular separation [arcsec]')
                 if w_legend_inside.value:
                     ax.legend(fontsize=7, loc='upper right')
@@ -827,6 +927,12 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             zip_path = out_dir / f'heeps_cc_export_{ts}.zip'
 
+            suf_x = dec_artifact_suffix(int(w_dec.value))
+            export_artifacts = [
+                ('cc_raw.fits', 'cc_raw.fits'),
+                (f'cc_adi{suf_x}.fits', f'cc_adi{suf_x}.fits'),
+                (f'cc_adi_bckg{suf_x}.fits', f'cc_adi_bckg{suf_x}.fits'),
+            ]
             n_files = 0
             with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
                 for run_id, row in sel.iterrows():
