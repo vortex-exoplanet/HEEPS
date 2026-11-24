@@ -823,10 +823,11 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                 ax_adi.set_title('Post-processed 5-σ contrast (dec='
                                  + ','.join(str(d) for d in decs) + ' deg)')
 
-            # One linestyle per declination (same color per run) so several
-            # decs can be compared on the same panel.
-            adi_styles = ['-', '--', '-.']
-            bckg_styles = [':', (0, (3, 1, 1, 1)), (0, (1, 1))]
+            # Decs are distinguished by marker and transparency only (same
+            # color per run, same linestyle per curve type): the standard
+            # dec uses the diamond at full opacity, other decs (e.g. 18)
+            # a different marker drawn semi-transparent.
+            dec_markers = ['d', 'o', 's']
 
             band = 'L'
             for i, (run_id, row) in enumerate(sel.iterrows()):
@@ -852,6 +853,8 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                     for j, d in enumerate(decs):
                         suf = dec_artifact_suffix(d)
                         label = _run_label(run_id, row, dec=d)
+                        alpha = 1.0 if d == DEC_STD else 0.4
+                        marker = dec_markers[j % len(dec_markers)]
                         if w_adi.value:
                             sep, cc = _load_cc(run_dir, f'cc_adi{suf}.fits')
                             if sep is not None:
@@ -860,8 +863,9 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                                     cc,
                                     color=color,
                                     label=label,
-                                    linestyle=adi_styles[j % len(adi_styles)],
-                                    marker='d',
+                                    linestyle='-',
+                                    alpha=alpha,
+                                    marker=marker,
                                     markevery=0.12,
                                     markersize=4,
                                 )
@@ -873,8 +877,9 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                                     cc,
                                     color=color,
                                     label=label + ' (with ph. noise)',
-                                    linestyle=bckg_styles[j % len(bckg_styles)],
-                                    marker='d',
+                                    linestyle=':',
+                                    alpha=alpha,
+                                    marker=marker,
                                     markevery=0.12,
                                     markersize=4,
                                 )
