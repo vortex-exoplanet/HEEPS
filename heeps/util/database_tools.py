@@ -452,7 +452,7 @@ def _run_label(run_id, row, dec=None):
     see = row.get('seeing', '?')
     label = f'#{run_id} {band}/{mode} mag={mag} s={see}'
     if dec is not None:
-        label += f' dec={int(dec)}'
+        label += f' dec={int(dec):+d}'
     return label
 
 
@@ -472,10 +472,15 @@ def _run_prefix(run_id, row):
 def _apply_axes_style(ax, band, log_x=True, log_y=True, ylim=None):
     """Apply axis style consistent with sacred_heeps_contrast_grid.py.
 
+    band : str or iterable of str
+        Band(s) of the plotted runs. The N-band x-range (starting at 0.06")
+        is used only when all bands are N1/N2; as soon as L is plotted
+        (possibly together with N bands) the wider L-band range starting
+        at 0.02" is used.
+
     ylim : tuple, optional
-        Override for the y-axis limits (default (1e-8, 1e-3)). Pass wider limits
-        (e.g. (1e-8, 1.0)) when IMG runs are plotted: without a vortex the raw
-        contrast is orders of magnitude higher.
+        Override for the y-axis limits (default (1e-7, 1e-2)). Pass wider
+        limits (e.g. (1e-8, 1.0)) if curves exceed the default range.
     """
     ax.grid(True)
     ax.grid(which='minor', linestyle=':')
@@ -487,13 +492,15 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True, ylim=None):
         ax.set_yscale('log')
     ax.xaxis.set_major_formatter(FormatStrFormatter('%g'))
     ax.yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    if band in ('N1', 'N2'):
+    bands = {band} if isinstance(band, str) else set(band)
+    if bands and bands <= {'N1', 'N2'}:
         ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])
         ax.set_xlim(0.06, 1.3)
     else:
+        # L band present (or a mix including L): extend to the L-band limit
         ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5, 1, 1.2])
         ax.set_xlim(0.02, 1.3)
-    ax.set_ylim(*(ylim if ylim is not None else (1e-8, 1e-3)))
+    ax.set_ylim(*(ylim if ylim is not None else (1e-7, 1e-2)))
 
 
 def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, completed_only=True,
@@ -821,7 +828,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             if ax_adi is not None:
                 ax_adi.set_ylabel('5-σ ADI sensitivity (contrast)')
                 ax_adi.set_title('Post-processed 5-σ contrast (dec='
-                                 + ','.join(str(d) for d in decs) + ' deg)')
+                                 + ','.join(f'{int(d):+d}' for d in decs) + ' deg)')
 
             # Decs are distinguished by marker and transparency only (same
             # color per run, same linestyle per curve type): the standard
@@ -829,11 +836,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             # a different marker drawn semi-transparent.
             dec_markers = ['d', 'o', 's']
 
-            band = 'L'
+            # Bands of the selected runs: the x-range follows the widest band
+            # (L) whenever L is plotted together with N bands
+            bands = set(sel['band'].dropna()) if 'band' in sel.columns else set()
+            bands = bands or {'L'}
             for i, (run_id, row) in enumerate(sel.iterrows()):
                 run_dir = db_path / str(run_id)
                 color = f'C{i % 10}'
-                band = row.get('band', 'L')
 
                 if ax_raw is not None:
                     sep, cc = _load_cc(run_dir, 'cc_raw.fits')
@@ -884,13 +893,12 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                                     markersize=4,
                                 )
 
-            # IMG (no vortex) has a much higher raw contrast: widen y-limits then
-            has_img = 'mode' in sel.columns and bool((sel['mode'] == 'IMG').any())
-            ylim_raw = (1e-8, 1.0) if has_img else None
-            ylim_adi = (1e-10, 1e-1) if has_img else None
+            # Fixed y-limits: raw 1e-2 down to 1e-7, ADI 1e-3 down to 1e-8
+            ylim_raw = (1e-7, 1e-2)
+            ylim_adi = (1e-8, 1e-3)
             for ax in ax_arr.flat:
                 yl = ylim_raw if ax is ax_raw else (ylim_adi if ax is ax_adi else None)
-                _apply_axes_style(ax, band, log_x=w_logx.value, log_y=w_logy.value, ylim=yl)
+                _apply_axes_style(ax, bands, log_x=w_logx.value, log_y=w_logy.value, ylim=yl)
                 ax.set_xlabel('Angular separation [arcsec]')
                 if w_legend_inside.value:
                     ax.legend(fontsize=7, loc='upper right')
