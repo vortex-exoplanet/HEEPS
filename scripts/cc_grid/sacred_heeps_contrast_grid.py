@@ -165,6 +165,26 @@ from pathlib import Path
 # Generic homedir definition
 HOMEDIR = os.environ["HOME"] + '/'
 
+
+def wait_for_files(paths, timeout=3600, poll=15):
+    """Wait until all files in `paths` exist (another concurrent grid task may
+    be writing them right now). Returns True if they all appeared, else False.
+
+    Used to make the shared cache writes (phase cube, PSF cube) race-safe:
+    several array tasks of the same (seeing, K-mag) bin can start together and
+    all pass the `not isfile(...)` check; astropy refuses to overwrite, so the
+    losers of the race get an OSError -- they then wait for the winner's files
+    and reuse the cache instead of crashing.
+    """
+    t0 = time.time()
+    while True:
+        if all(os.path.isfile(p) for p in paths):
+            return True
+        if time.time() - t0 >= timeout:
+            return False
+        time.sleep(poll)
+
+
 # Initialize the experiment
 # ex_name = "2026_contrast_curve_tests"
 ex_name = "2026_contrast_curve_grid"
@@ -747,14 +767,22 @@ def run_simulation(mode, band, magnitude, duration, dit,
     print('\n *** GENERATE PHASE CUBE ***')
     print(f' f_phase = {f_phase}')
     if do_f_phase and not os.path.isfile(os.path.join(dir_input, f_phase)):
-        generator = PhaseCubeGenerator(_config)
-        if 'VC' in mode:
-            generator.run(sigLF, sigHF)
-        else:
-            # Normal imaging (IMG): no NCPA correction (apply_correction=False),
-            # the combined phase cube is simply scao + wv + cbw
-            generator.run(0.0, 0.0, apply_correction=False)
-        del generator  # Explicit deletion
+        try:
+            generator = PhaseCubeGenerator(_config)
+            if 'VC' in mode:
+                generator.run(sigLF, sigHF)
+            else:
+                # Normal imaging (IMG): no NCPA correction (apply_correction=False),
+                # the combined phase cube is simply scao + wv + cbw
+                generator.run(0.0, 0.0, apply_correction=False)
+            del generator  # Explicit deletion
+        except OSError:
+            # Check-then-write race: a concurrent task of the same cache bin
+            # wrote f_phase while we were building it. Wait for it and reuse.
+            if wait_for_files([os.path.join(dir_input, f_phase)]):
+                print('--- f_phase appeared meanwhile (concurrent task) - reusing cache ---')
+            else:
+                raise
     else:
         print('--- SKIPPING creation of f_phase ---')
     print(' Collecting garbage 1')
@@ -785,31 +813,39 @@ def run_simulation(mode, band, magnitude, duration, dit,
     print('---- PROPAGATION ---')
     if do_propagation:
         if not _psf_exists:
-            print('-- Initialize pupil & wavefront --')
-            conf['dir_output'] = dir_output_psf   # direct HEEPS output to shared PSF directory
-
-            wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
-
-            # Create off-axis PSF
-            heeps.wavefront.propagate(wf, onaxis=False, avg=True, savefits=True, verbose=True, **conf)
-
-            # Aggressive memory management before on-axis propagation to prevent fork() fragmentation
-            print('  aggressive memory cleanup before on-axis propagation')
-            gc.collect()
-            gc.collect()
-            # Trim malloc memory pools to reduce fragmentation
             try:
-                import ctypes
-                import ctypes.util
-                libc = ctypes.CDLL(ctypes.util.find_library('c'))
-                libc.malloc_trim(0)  # Release unused memory back to OS
-                print('  malloc_trim() completed')
-            except Exception as e:
-                print(f'  malloc_trim() failed (non-critical): {e}')
-            
-            # Create on-axis PSF --- computationally intensive !
-            heeps.wavefront.propagate(wf, onaxis=True, savefits=True, verbose=True, **conf)
+                print('-- Initialize pupil & wavefront --')
+                conf['dir_output'] = dir_output_psf   # direct HEEPS output to shared PSF directory
 
+                wf = heeps.pupil.pupil(savefits=True, verbose=True, **conf)
+
+                # Create off-axis PSF
+                heeps.wavefront.propagate(wf, onaxis=False, avg=True, savefits=True, verbose=True, **conf)
+
+                # Aggressive memory management before on-axis propagation to prevent fork() fragmentation
+                print('  aggressive memory cleanup before on-axis propagation')
+                gc.collect()
+                gc.collect()
+                # Trim malloc memory pools to reduce fragmentation
+                try:
+                    import ctypes
+                    import ctypes.util
+                    libc = ctypes.CDLL(ctypes.util.find_library('c'))
+                    libc.malloc_trim(0)  # Release unused memory back to OS
+                    print('  malloc_trim() completed')
+                except Exception as e:
+                    print(f'  malloc_trim() failed (non-critical): {e}')
+
+                # Create on-axis PSF --- computationally intensive !
+                heeps.wavefront.propagate(wf, onaxis=True, savefits=True, verbose=True, **conf)
+            except OSError:
+                # Check-then-write race: a concurrent task of the same cache bin
+                # wrote the shared PSF files while we were propagating. Wait for
+                # all of them and reuse the cache.
+                if wait_for_files([_pupil_file, _onaxis_file, _offaxis_file]):
+                    print('--- PSF cache appeared meanwhile (concurrent task) - reusing it ---')
+                else:
+                    raise
             conf['dir_output'] = dir_output       # reset to per-magnitude dir for contrast curves
         else:
             print('--- SKIPPING PROPAGATION (output files already exist) ---')
