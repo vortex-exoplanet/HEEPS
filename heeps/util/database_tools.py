@@ -491,23 +491,36 @@ def _apply_axes_style(ax, band, log_x=True, log_y=True, ylim=None):
         ax.set_xticks([0.06, 0.1, 0.2, 0.5, 1, 1.2])
         ax.set_xlim(0.06, 1.3)
     else:
-        ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5])
-        ax.set_xlim(0.02, 0.9)
+        ax.set_xticks([0.02, 0.05, 0.1, 0.2, 0.5, 1, 1.2])
+        ax.set_xlim(0.02, 1.3)
     ax.set_ylim(*(ylim if ylim is not None else (1e-8, 1e-3)))
 
 
 def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, completed_only=True,
-                           dec=DEC_STD):
+                           dec=None):
     """
     Build and display an interactive contrast-curve explorer with ZIP export.
 
-    dec : int, optional
-        Declination whose ADI artifacts are plotted/exported (one of DEC_OPTIONS,
-        default -5 = standard). The standard dec uses the untagged artifacts
+    dec : int or iterable of int, optional
+        Declination(s) whose ADI artifacts are plotted/exported (members of
+        DEC_OPTIONS). The standard dec (-5) uses the untagged artifacts
         (cc_adi.fits, cc_adi_bckg.fits), dec=18 the '_dec18' ones; cc_raw.fits is
-        dec-independent. Changeable interactively via the 'Dec [deg]' dropdown.
+        dec-independent. Several declinations can be selected at once in the
+        'Dec' list to plot them together for comparison (one linestyle per
+        dec, same color per run). Default None selects all DEC_OPTIONS.
     """
     db_path = Path(db_path)
+
+    def _dec_list(d):
+        """Normalize a dec argument / widget value to a list of valid decs."""
+        if d is None:
+            return [int(x) for x in DEC_OPTIONS]
+        if isinstance(d, (list, tuple, set)):
+            vals = [int(x) for x in d]
+        else:
+            vals = [int(d)]
+        vals = [v for v in vals if v in DEC_OPTIONS]
+        return vals or [DEC_STD]
 
     # Shared mutable state (current selection kept in sync with last Plot call)
     state = {'sel': pd.DataFrame(), 'fig': None}
@@ -551,12 +564,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
         layout=layout_sel,
         rows=min(5, max(len(seeings), 1)),
     )
-    w_dec = widgets.Dropdown(
+    w_dec = widgets.SelectMultiple(
         options=list(DEC_OPTIONS),
-        value=int(dec) if int(dec) in DEC_OPTIONS else DEC_STD,
-        description='Dec [deg]',
+        value=_dec_list(dec),
+        description='',
         style=style,
-        layout=layout_wide,
+        layout=layout_sel,
+        rows=min(5, max(len(DEC_OPTIONS), 1)),
     )
     # Magnitudes: four-column checkbox grid so all values are visible at once
     mag_checks = [widgets.Checkbox(value=True, description=str(m),
@@ -772,14 +786,15 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             state['sel'] = sel
             print(f'Plotting {len(sel)} run(s): {list(sel.index)}')
 
-            dec_sel = int(w_dec.value)
-            suf = dec_artifact_suffix(dec_sel)
-            if suf:
-                missing = [rid for rid in sel.index
-                           if not (db_path / str(rid) / f'cc_adi{suf}.fits').exists()]
-                if missing:
-                    print(f'[note] {len(missing)} run(s) have no dec={dec_sel} artifacts '
-                          f'(ADI curves skipped for them): {list(missing)}')
+            decs = _dec_list(w_dec.value)
+            for d in decs:
+                suf = dec_artifact_suffix(d)
+                if suf:
+                    missing = [rid for rid in sel.index
+                               if not (db_path / str(rid) / f'cc_adi{suf}.fits').exists()]
+                    if missing:
+                        print(f'[note] {len(missing)} run(s) have no dec={d} artifacts '
+                              f'(ADI curves skipped for them): {list(missing)}')
 
             any_raw = w_raw.value
             any_adi = w_adi.value or w_bckg.value
@@ -805,13 +820,18 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                 ax_raw.set_title('Raw contrast curve')
             if ax_adi is not None:
                 ax_adi.set_ylabel('5-σ ADI sensitivity (contrast)')
-                ax_adi.set_title(f'Post-processed 5-σ contrast (dec={dec_sel} deg)')
+                ax_adi.set_title('Post-processed 5-σ contrast (dec='
+                                 + ','.join(str(d) for d in decs) + ' deg)')
+
+            # One linestyle per declination (same color per run) so several
+            # decs can be compared on the same panel.
+            adi_styles = ['-', '--', '-.']
+            bckg_styles = [':', (0, (3, 1, 1, 1)), (0, (1, 1))]
 
             band = 'L'
             for i, (run_id, row) in enumerate(sel.iterrows()):
                 run_dir = db_path / str(run_id)
                 color = f'C{i % 10}'
-                label = _run_label(run_id, row, dec=dec_sel)
                 band = row.get('band', 'L')
 
                 if ax_raw is not None:
@@ -821,7 +841,7 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                             sep,
                             cc,
                             color=color,
-                            label=label,
+                            label=_run_label(run_id, row),
                             linestyle='-',
                             marker='d',
                             markevery=0.12,
@@ -829,32 +849,35 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
                         )
 
                 if ax_adi is not None:
-                    if w_adi.value:
-                        sep, cc = _load_cc(run_dir, f'cc_adi{suf}.fits')
-                        if sep is not None:
-                            ax_adi.plot(
-                                sep,
-                                cc,
-                                color=color,
-                                label=label,
-                                linestyle='-',
-                                marker='d',
-                                markevery=0.12,
-                                markersize=4,
-                            )
-                    if w_bckg.value:
-                        sep, cc = _load_cc(run_dir, f'cc_adi_bckg{suf}.fits')
-                        if sep is not None:
-                            ax_adi.plot(
-                                sep,
-                                cc,
-                                color=color,
-                                label=label + ' (with ph. noise)',
-                                linestyle=':',
-                                marker='d',
-                                markevery=0.12,
-                                markersize=4,
-                            )
+                    for j, d in enumerate(decs):
+                        suf = dec_artifact_suffix(d)
+                        label = _run_label(run_id, row, dec=d)
+                        if w_adi.value:
+                            sep, cc = _load_cc(run_dir, f'cc_adi{suf}.fits')
+                            if sep is not None:
+                                ax_adi.plot(
+                                    sep,
+                                    cc,
+                                    color=color,
+                                    label=label,
+                                    linestyle=adi_styles[j % len(adi_styles)],
+                                    marker='d',
+                                    markevery=0.12,
+                                    markersize=4,
+                                )
+                        if w_bckg.value:
+                            sep, cc = _load_cc(run_dir, f'cc_adi_bckg{suf}.fits')
+                            if sep is not None:
+                                ax_adi.plot(
+                                    sep,
+                                    cc,
+                                    color=color,
+                                    label=label + ' (with ph. noise)',
+                                    linestyle=bckg_styles[j % len(bckg_styles)],
+                                    marker='d',
+                                    markevery=0.12,
+                                    markersize=4,
+                                )
 
             # IMG (no vortex) has a much higher raw contrast: widen y-limits then
             has_img = 'mode' in sel.columns and bool((sel['mode'] == 'IMG').any())
@@ -927,12 +950,13 @@ def build_contrast_plotter(df: pd.DataFrame, db_path, show_status=True, complete
             ts = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
             zip_path = out_dir / f'heeps_cc_export_{ts}.zip'
 
-            suf_x = dec_artifact_suffix(int(w_dec.value))
-            export_artifacts = [
-                ('cc_raw.fits', 'cc_raw.fits'),
-                (f'cc_adi{suf_x}.fits', f'cc_adi{suf_x}.fits'),
-                (f'cc_adi_bckg{suf_x}.fits', f'cc_adi_bckg{suf_x}.fits'),
-            ]
+            export_artifacts = [('cc_raw.fits', 'cc_raw.fits')]
+            for d in _dec_list(w_dec.value):
+                suf_x = dec_artifact_suffix(d)
+                export_artifacts += [
+                    (f'cc_adi{suf_x}.fits', f'cc_adi{suf_x}.fits'),
+                    (f'cc_adi_bckg{suf_x}.fits', f'cc_adi_bckg{suf_x}.fits'),
+                ]
             n_files = 0
             with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_DEFLATED) as zf:
                 for run_id, row in sel.iterrows():
